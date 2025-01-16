@@ -662,6 +662,14 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
     private LuaValue getNBTTag(String key) {
         return convertToLuaValue(luaData.get(key));
     }
+    
+    public void setLuaTag(String key, Object value) {
+        luaData.put(key, value);
+    }
+    
+    public Object getLuaTag(String key) {
+        return luaData.get(key);
+    }
 
     public void setIndividualCG(LuaValue stockUnit) {
         List<List<EntityCoupleableRollingStock>> allUnit = getUnit(false);
