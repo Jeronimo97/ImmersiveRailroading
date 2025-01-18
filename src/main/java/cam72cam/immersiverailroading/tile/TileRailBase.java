@@ -64,6 +64,8 @@ import cam72cam.mod.util.Facing;
 import cam72cam.mod.util.SingleCache;
 
 public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneProvider {
+
+    boolean pzbActive = false;
     @TagField("parent")
     private Vec3i parent;
     @TagField("height")
@@ -804,31 +806,37 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
                     break;
                 case PZB: {
                     Locomotive loco = this.getStockNearBy(Locomotive.class);
+
                     if (loco != null) {
                         int power = getWorld().getRedstone(getPos());
                         switch (pzbMode) {
                             case HZ1000:
-                                if (power == 0) {
+                                if (power == 0 && !pzbActive) {
                                     loco.setLuaTag("pzb", "1000Hz");
+                                    pzbActive = true;
                                 } else {
                                     loco.setLuaTag("pzb", "");
                                 }
                                 break;
                             case HZ500:
-                                if (power == 0) {
+                                if (power == 0 && !pzbActive) {
                                     loco.setLuaTag("pzb", "500Hz");
+                                    pzbActive = true;
                                 } else {
                                     loco.setLuaTag("pzb", "");
                                 }
                                 break;
                             case HZ2000:
-                                if (power == 0) {
+                                if (power == 0 && !pzbActive) {
                                     loco.setLuaTag("pzb", "2000Hz");
+                                    pzbActive = true;
                                 } else {
                                     loco.setLuaTag("pzb", "");
                                 }
                                 break;
                         }
+                    } else {
+                        pzbActive = false;
                     }
                 }
                     break;
