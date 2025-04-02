@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -106,6 +107,8 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
     private EntityMoveableRollingStock overhead;
     @TagField("pushPull")
     private boolean pushPull = true;
+    private UUID currentStock = UUID.fromString("00000000-0000-0000-0000-000000000000");
+    private int stockCount = 0;
 
     public void setBedHeight(final float height) {
         this.bedHeight = height;
@@ -762,6 +765,26 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
                             if (stock instanceof FreightTank) {
                                 newRedstone =
                                         ((FreightTank) stock).getPercentLiquidFull() * 15 / 100;
+                            }
+                            break;
+                        case STOCKCOUNT:
+                            if (stock != null && !currentStock.equals(stock.getUUID())) {
+                                currentStock = stock.getUUID();
+                                stockCount++;
+                            }
+                            if (stock == null && stockCount == 0 && currentStock != UUID
+                                    .fromString("00000000-0000-0000-0000-000000000000")) {
+                                currentStock =
+                                        UUID.fromString("00000000-0000-0000-0000-000000000000");
+                            }
+                            if (stockCount != 0) {
+                                this.redstoneLevel = 0;
+                                this.markDirty();
+                            }
+                            if (stockCount > 0 && this.ticksExisted % 10 == 0) {
+                                System.out.println("Stockcounter: " + stockCount);
+                                stockCount--;
+                                newRedstone = 15;
                             }
                             break;
                     }

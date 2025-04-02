@@ -362,8 +362,8 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
         }
 
         double yOffset = 1;
-        System.out.println("ERRS World: " + passenger.getWorld());
-        if (passenger.getWorld().isClient && !walkableSpaceDefinition.yMap.isEmpty()) {
+        if (passenger.getWorld().isClient
+                && !getDefinition().walkableSpaceDefinition.yMap.isEmpty()) {
             yOffset = getHeightAtPlayerPosition(offset);
         }
 
@@ -376,7 +376,7 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
         }
         offset = offset.add(0, Math.sin(Math.toRadians(this.getRotationPitch())) * offset.z, 0);
 
-        if (seat == null && !walkableSpaceDefinition.yMap.isEmpty()) {
+        if (seat == null && !getDefinition().walkableSpaceDefinition.yMap.isEmpty()) {
             offset = new Vec3d(offset.x, yOffset, offset.z);
         }
         return offset;
