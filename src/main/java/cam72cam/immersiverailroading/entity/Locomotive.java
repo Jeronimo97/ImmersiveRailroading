@@ -448,8 +448,6 @@ public abstract class Locomotive extends FreightTank {
         if (!cogging && Math.abs(appliedTractiveEffort) > 0) {
             double staticTractiveEffort = getStaticTractiveEffort(speed);
 
-            System.out.println("Static Tractive: " + staticTractiveEffort);
-
             if (Math.abs(appliedTractiveEffort) > staticTractiveEffort) {
                 // This is a guess, but seems to be fairly accurate
 

@@ -124,7 +124,7 @@ public class LocomotiveSteam extends Locomotive {
          */
 
         double traction = Math.copySign(
-                getHorsePower(speed) / 0.7457f / Math.max(Math.abs(speed.metric()), 1.0) * 300,
+                getHorsePower(speed) / 0.7457f / Math.max(Math.abs(speed.metric()), 1.0f) * 30,
                 getReverser());
 
         // Cap the max "effective" reverser. At high speeds having a fully open reverser
@@ -141,7 +141,6 @@ public class LocomotiveSteam extends Locomotive {
         // reverser);
 
         // System.out.println("Zugkraft 1: " + traction_N);
-        System.out.println("Zugkraft: " + traction);
         // System.out.println("Zugkraft 3: " + traction_N * multiplier);
         return traction;
     }
@@ -157,58 +156,83 @@ public class LocomotiveSteam extends Locomotive {
         }
     }
 
+    public boolean isSlipping() {
+        return Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) > getStaticTractiveEffort(
+                getCurrentSpeed());
+    }
+
+    public double speedPercent(final Speed speed) {
+        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
+    }
+
     private void chestPressureCalc() {
         double maxChestPressure = 0;
-        if (getBoilerPressure() != 0) {
-            maxChestPressure = getBoilerPressure() * 0.06894757 - 0.5;
-        }
 
-        // Anstieg Schieberkastendruck
-        if (getChestPressure() < maxChestPressure) {
-            chestPressure +=
-                    0.1 * Math.pow(getBoilerPressure() * 0.06894757 - 0.5, 0.5) * getThrottle();
+        if (Config.isFuelRequired(gauge)) {
+            if (getBoilerPressure() != 0) {
+                maxChestPressure = getBoilerPressure() * 0.06894757f - 0.5f;
+            }
+
+            // Anstieg Schieberkastendruck
+            if (getChestPressure() < maxChestPressure) {
+                chestPressure += 0.1f * Math.pow(getBoilerPressure() * 0.06894757f - 0.5f, 0.5f)
+                        * getThrottle();
+            }
+        } else {
+            maxChestPressure = this.getDefinition().getMaxPSI(gauge) * 0.06894757f - 0.5f;
+
+            if (getChestPressure() < maxChestPressure) {
+                chestPressure += 0.1f
+                        * Math.pow(this.getDefinition().getMaxPSI(gauge) * 0.06894757f - 0.5f, 0.5f)
+                        * getThrottle();
+            }
         }
 
         // Abfall Schieberkastendruck
         if (getChestPressure() > 0) {
-            if (getChestPressure() < 2 && getThrottle() < 0.05) {
-                chestPressure -= 0.25; // unter 2 Bar schlagartig raus
+            if (getChestPressure() < 2 && getThrottle() < 0.05f) {
+                chestPressure -= 0.25f; // unter 2 Bar schlagartig raus
             }
             if (cylinderDrainsEnabled()) {
-                chestPressure -= 0.07; // Zylinderentwässerung
+                chestPressure -= 0.07f; // Zylinderentwässerung
+            }
+            if (isSlipping()) {
+                chestPressure -= 0.1f; // wenn Schleudert
+            }
+            if (isSliding()) {
+                chestPressure -= 0.1f; // wieder entfernen?
             }
             if (getChestPressure() < 0) {
                 chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
             }
         }
 
-        double minPressure = 8 * Math.pow(getThrottle(), 0.25);
+        // Verbrauch Schieberkastendruck
+        double minPressure = 8 * Math.pow(getThrottle(), 0.25f);
         if (getChestPressure() > minPressure) {
-            chestPressure -= (float) (0.005f * chestPressure * Math.abs(getReverser())
-                    * Math.abs(getCurrentSpeed().metric())
-                    / (getDefinition().getMaxSpeed(gauge).metric()) * Math.PI * 1.4f);
+            chestPressure -= (float) (0.01f * chestPressure * Math.abs(getReverser())
+                    * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
             // TODO Versuchen an Schläge ran zu kommen
-            // TODO Kein Fuel Required -> Max Kesseldruck annehmen
             // TODO Scheiße mit Reverser und Schleudern ausbaden
         }
     }
 
-    private double getHorsePower(final Speed speed) {
-        float defaultPower = 1620 * 5; // this.getDefinition().getStartingTractionNewtons(gauge)
-
-        float power = defaultPower * (getChestPressurePercent() * Math.abs(getReverser()));
-        if (getReverser() != 0) {
-            power += defaultPower
-                    * (getChestPressurePercent() * Math.abs(getReverser() * (Math.log(1)
-                            - Math.log(Math.abs(getReverser())) * Math.abs(speed.metric()))));
-        }
-        System.out.println("Horsepower: " + power);
-        return power;
+    public double getHorsePower(final Speed speed) {
+        return this.getDefinition().getHorsePower(gauge) * 5
+                * (getChestPressurePercent() * Math.abs(getReverser())
+                        + getChestPressurePercent() * Math.abs(getReverser())
+                                * (Math.log10(1) - Math.log10(Math.abs(getReverser()))))
+                * Math.max(Math.abs(speed.metric()), 1.0f);
     }
 
     @Override
     public double getTractiveEffortNewtons(final Speed speed) {
-        System.out.println("Tractive Effort Newtons: " + super.getTractiveEffortNewtons(speed));
+        if (isSlipping()) {
+            System.out.println("Static Tractive: " + getStaticTractiveEffort(speed));
+            System.out.println("Applied Tractive: " + getAppliedTractiveEffort(speed));
+            System.out.println("Horsepower: " + getHorsePower(speed));
+            System.out.println("Reverser: " + getReverser());
+        }
         return (getDefinition().cab_forward ? -1 : 1) * super.getTractiveEffortNewtons(speed);
     }
 
