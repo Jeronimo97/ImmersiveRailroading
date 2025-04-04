@@ -24,6 +24,7 @@ import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
+import net.minecraft.util.text.TextComponentString;
 
 public abstract class Locomotive extends FreightTank {
     private static final float throttleDelta = 0.04f;
@@ -412,20 +413,7 @@ public abstract class Locomotive extends FreightTank {
      * Maximum force that can be between the wheels and the rails before it slips
      */
     protected final double getStaticTractiveEffort(final Speed speed) {
-        double slipMult = 1;
-        World world = getWorld();
-        if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
-            if (world.isRaining(getBlockPosition())) {
-                slipMult *= 0.6f;
-            }
-            if (world.isSnowing(getBlockPosition())) {
-                slipMult *= 0.4f;
-            }
-        }
-        if (slipping) {
-            slipMult *= 0.5f;
-        }
-        return this.getDefinition().getStartingTractionNewtons(gauge) * slipMult
+        return this.getDefinition().getStartingTractionNewtons(gauge) * slipCoefficient(speed)
                 * (4 / getDefinition().factorOfAdhesion())
                 * Config.ConfigBalance.tractionMultiplier;
 
@@ -449,6 +437,9 @@ public abstract class Locomotive extends FreightTank {
         double adhesionFactor = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()))
                 / getStaticTractiveEffort(getCurrentSpeed());
         System.out.println("Wheel slip");
+        getPassengers().forEach(p -> {
+            p.internal.sendMessage(new TextComponentString("Schlupf"));
+        });
         return Math.copySign((adhesionFactor - 1) / 5, getReverser());
     }
 
@@ -460,31 +451,13 @@ public abstract class Locomotive extends FreightTank {
     }
 
     public double getTractiveEffortNewtons(final Speed speed) {
-        if (!this.isBuilt())
-            return 0;
-
-        if (Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft())
+        if (!this.isBuilt()
+                // || Math.abs(speed.minecraft()) >
+                // this.getDefinition().getMaxSpeed(gauge).minecraft()
+                || slipping)
             return 0;
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
-
-        /*
-         * if (!cogging && Math.abs(appliedTractiveEffort) > 0) { double
-         * staticTractiveEffort = getStaticTractiveEffort(speed);
-         * 
-         * if (Math.abs(appliedTractiveEffort) > staticTractiveEffort) { // This is a
-         * guess, but seems to be fairly accurate
-         * 
-         * // Reduce tractive effort to max static translated into kinetic double
-         * tractiveEffortNewtons = staticTractiveEffort / STEEL.staticFriction(STEEL)
-         * STEEL.kineticFriction(STEEL);
-         * 
-         * // How badly tractive effort is overwhelming static effort
-         * tractiveEffortNewtons *= staticTractiveEffort / tractiveEffortNewtons;
-         * 
-         * return Math.copySign(tractiveEffortNewtons, appliedTractiveEffort); } }
-         */
-
         double frictionForce = getFrictionForce(speed);
 
         if (frictionForce > Math.abs(appliedTractiveEffort))
@@ -659,8 +632,7 @@ public abstract class Locomotive extends FreightTank {
     }
 
     public double slipCoefficient(final Speed speed) {
-        double slipMult = 0.5; // TODO Assumes dirty rails. Set this back to 1.0 and adjust physics
-                               // coefficients
+        double slipMult = 1;
         World world = getWorld();
         if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
             if (world.isRaining(getBlockPosition())) {
@@ -669,6 +641,9 @@ public abstract class Locomotive extends FreightTank {
             if (world.isSnowing(getBlockPosition())) {
                 slipMult *= 0.4;
             }
+        }
+        if (slipping) {
+            slipMult *= 0.5f;
         }
         return slipMult;
     }

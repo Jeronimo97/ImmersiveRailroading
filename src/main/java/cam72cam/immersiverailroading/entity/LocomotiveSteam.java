@@ -114,34 +114,12 @@ public class LocomotiveSteam extends Locomotive {
         if (getDefinition().isCabCar())
             return 0;
 
-        // This is terrible, but allows wheel slip for both legacy and updated hp vs te
-        /*
-         * double traction_N =
-         * Math.max(this.getDefinition().getStartingTractionNewtons(gauge),
-         * getHorsePower(speed) / 0.7457 * 375 / Math.max(Math.abs(speed.imperial()),
-         * 1.0)); if (Config.isFuelRequired(gauge)) { traction_N = traction_N /
-         * this.getDefinition().getMaxPSI(gauge) * this.getBoilerPressure(); }
-         */
+        System.out.println("Leistung: " + getHorsePower(speed));
+        double traction = Math
+                .copySign(getHorsePower(speed) / 0.7457f / Math.max(Math.abs(speed.metric()), 1.0f)
+                        * 8 * getDefinition().getMaxSpeed(gauge).metric(), getReverser()); // *2
 
-        double traction = Math.copySign(
-                getHorsePower(speed) / 0.7457f / Math.max(Math.abs(speed.metric()), 1.0f) * 30,
-                getReverser());
-
-        // Cap the max "effective" reverser. At high speeds having a fully open reverser
-        // just damages equipment
-        // double reverser = getReverser();
-        // double reverserCap = 0.25;
-        // double maxReverser = 1 - Math.abs(getCurrentSpeed().metric())
-        // / getDefinition().getMaxSpeed(gauge).metric() * reverserCap;
-
-        // This should probably be tuned...
-        // double multiplier = Math.copySign(
-        // Math.pow(getChestPressurePercent() * Math.min(Math.abs(reverser),
-        // maxReverser), 3),
-        // reverser);
-
-        // System.out.println("Zugkraft 1: " + traction_N);
-        // System.out.println("Zugkraft 3: " + traction_N * multiplier);
+        System.out.println("Zugkraft: " + traction);
         return traction;
     }
 
@@ -170,14 +148,14 @@ public class LocomotiveSteam extends Locomotive {
 
             // Anstieg Schieberkastendruck
             if (getChestPressure() < maxChestPressure) {
-                chestPressure += 0.1f * Math.pow(getBoilerPressure() * 0.06894757f - 0.5f, 0.5f)
+                chestPressure += 0.06f * Math.pow(getBoilerPressure() * 0.06894757f - 0.5f, 0.5f)
                         * getThrottle();
             }
         } else {
             maxChestPressure = this.getDefinition().getMaxPSI(gauge) * 0.06894757f - 0.5f;
 
             if (getChestPressure() < maxChestPressure) {
-                chestPressure += 0.1f
+                chestPressure += 0.06f
                         * Math.pow(this.getDefinition().getMaxPSI(gauge) * 0.06894757f - 0.5f, 0.5f)
                         * getThrottle();
             }
@@ -205,44 +183,26 @@ public class LocomotiveSteam extends Locomotive {
         // Verbrauch Schieberkastendruck
         double minPressure = 8 * Math.pow(getThrottle(), 0.25f);
         if (getChestPressure() > minPressure) {
-            chestPressure -= (float) (0.01f * chestPressure * Math.abs(getReverser())
+            chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
                     * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
             // TODO Versuchen an Schläge ran zu kommen
+            // TODO Verbrauch untersuchen
+            // TODO kein Schlupf über x km/h oder Explosion
+            //
         }
     }
 
     public double getHorsePower(final Speed speed) {
-        return this.getDefinition().getHorsePower(gauge) * 5
+        return this.getDefinition().getHorsePower(gauge)
                 * (getChestPressurePercent() * Math.abs(getReverser())
                         + getChestPressurePercent() * Math.abs(getReverser())
                                 * (Math.log10(1) - Math.log10(Math.abs(getReverser()))))
-                * Math.max(Math.abs(speed.metric()), 1.0f);
+                * Math.max(1 - Math.abs(speedPercent(speed)), 0.01f);
     }
 
     @Override
     public double getTractiveEffortNewtons(final Speed speed) {
         return (getDefinition().cab_forward ? -1 : 1) * super.getTractiveEffortNewtons(speed);
-    }
-
-    // TODO never used
-    @Override
-    public double slipCoefficient(final Speed speed) {
-        double slipMult = super.slipCoefficient(speed); // Wheel balance messing with friction
-        if (speed.metric() != 0) {
-            double balance = 1d / (Math.abs(speed.metric()) + 300) / (1d / 300);
-            slipMult *= balance;
-        }
-
-        // TODO better approximation // assume wheel diameter == 5m
-        double ratio = 0.35;
-        double hammer = ratio + (slipping ? 0
-                : Math.abs(
-                        Math.sin(Math.toRadians(360 * distanceTraveled / (5f * gauge.scale() / 2)))
-                                * (1 - ratio)));
-        slipMult *= hammer;
-
-        System.out.println("Multiplikator: " + slipMult);
-        return slipMult;
     }
 
     @Override
