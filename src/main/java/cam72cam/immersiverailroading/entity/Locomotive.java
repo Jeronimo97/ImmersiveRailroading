@@ -1,7 +1,5 @@
 package cam72cam.immersiverailroading.entity;
 
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.STEEL;
-
 import java.util.OptionalDouble;
 import java.util.UUID;
 
@@ -414,26 +412,51 @@ public abstract class Locomotive extends FreightTank {
      * Maximum force that can be between the wheels and the rails before it slips
      */
     protected final double getStaticTractiveEffort(final Speed speed) {
-        return (Config.ConfigBalance.FuelRequired ? this.getWeight() : this.getMaxWeight()) // KG
-                * 9.8 // M/S/S
-                * (slipping ? STEEL.kineticFriction(STEEL) / 2 : STEEL.staticFriction(STEEL))
-                * slipCoefficient(speed) * (4 / getDefinition().factorOfAdhesion()) // Physics are
-                                                                                    // tuned to an
-                                                                                    // adhesion
-                                                                                    // factor of 4
+        double slipMult = 1;
+        World world = getWorld();
+        if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
+            if (world.isRaining(getBlockPosition())) {
+                slipMult *= 0.6f;
+            }
+            if (world.isSnowing(getBlockPosition())) {
+                slipMult *= 0.4f;
+            }
+        }
+        if (slipping) {
+            slipMult *= 0.5f;
+        }
+        return this.getDefinition().getStartingTractionNewtons(gauge) * slipMult
+                * (4 / getDefinition().factorOfAdhesion())
                 * Config.ConfigBalance.tractionMultiplier;
+
+        /*
+         * return (Config.ConfigBalance.FuelRequired ? this.getWeight() :
+         * this.getMaxWeight()) // KG 9.8 // M/S/S (slipping ?
+         * STEEL.kineticFriction(STEEL) / 2 : STEEL.staticFriction(STEEL))
+         * slipCoefficient(speed) * (4 / getDefinition().factorOfAdhesion()) // Physics
+         * are // tuned to an // adhesion // factor of 4
+         * Config.ConfigBalance.tractionMultiplier;
+         */
     }
 
     protected double simulateWheelSlip() {
-        if (cogging)
+        slipping = Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) > getStaticTractiveEffort(
+                getCurrentSpeed());
+
+        if (cogging || !slipping)
             return 0;
 
         double adhesionFactor = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()))
                 / getStaticTractiveEffort(getCurrentSpeed());
-        slipping = adhesionFactor > 1;
-        if (slipping)
-            return Math.copySign((adhesionFactor - 1) / 5, getReverser());
-        return 0;
+        System.out.println("Wheel slip");
+        return Math.copySign((adhesionFactor - 1) / 5, getReverser());
+    }
+
+    public double getFrictionForce(final Speed speed) {
+        double rollFriction = 0.002f * this.getDefinition().getWeight(gauge) * 9.81f;
+        double airFriction = 4.38f * Math.pow(Math.abs(speed.metersPerSecond()), 2);
+
+        return rollFriction + airFriction;
     }
 
     public double getTractiveEffortNewtons(final Speed speed) {
@@ -445,24 +468,32 @@ public abstract class Locomotive extends FreightTank {
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
 
-        if (!cogging && Math.abs(appliedTractiveEffort) > 0) {
-            double staticTractiveEffort = getStaticTractiveEffort(speed);
+        /*
+         * if (!cogging && Math.abs(appliedTractiveEffort) > 0) { double
+         * staticTractiveEffort = getStaticTractiveEffort(speed);
+         * 
+         * if (Math.abs(appliedTractiveEffort) > staticTractiveEffort) { // This is a
+         * guess, but seems to be fairly accurate
+         * 
+         * // Reduce tractive effort to max static translated into kinetic double
+         * tractiveEffortNewtons = staticTractiveEffort / STEEL.staticFriction(STEEL)
+         * STEEL.kineticFriction(STEEL);
+         * 
+         * // How badly tractive effort is overwhelming static effort
+         * tractiveEffortNewtons *= staticTractiveEffort / tractiveEffortNewtons;
+         * 
+         * return Math.copySign(tractiveEffortNewtons, appliedTractiveEffort); } }
+         */
 
-            if (Math.abs(appliedTractiveEffort) > staticTractiveEffort) {
-                // This is a guess, but seems to be fairly accurate
+        double frictionForce = getFrictionForce(speed);
 
-                // Reduce tractive effort to max static translated into kinetic
-                double tractiveEffortNewtons = staticTractiveEffort / STEEL.staticFriction(STEEL)
-                        * STEEL.kineticFriction(STEEL);
+        if (frictionForce > Math.abs(appliedTractiveEffort))
+            return 0;
 
-                // How badly tractive effort is overwhelming static effort
-                tractiveEffortNewtons *= staticTractiveEffort / tractiveEffortNewtons;
+        System.out.println("Applied Force: " + appliedTractiveEffort);
+        System.out.println("Static Force: " + getStaticTractiveEffort(speed));
 
-                return Math.copySign(tractiveEffortNewtons, appliedTractiveEffort);
-            }
-        }
-
-        return appliedTractiveEffort;
+        return appliedTractiveEffort - Math.copySign(frictionForce, appliedTractiveEffort);
     }
 
     @Override

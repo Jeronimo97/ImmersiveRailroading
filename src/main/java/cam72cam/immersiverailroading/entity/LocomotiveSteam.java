@@ -156,11 +156,6 @@ public class LocomotiveSteam extends Locomotive {
         }
     }
 
-    public boolean isSlipping() {
-        return Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) > getStaticTractiveEffort(
-                getCurrentSpeed());
-    }
-
     public double speedPercent(final Speed speed) {
         return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
     }
@@ -196,7 +191,7 @@ public class LocomotiveSteam extends Locomotive {
             if (cylinderDrainsEnabled()) {
                 chestPressure -= 0.07f; // Zylinderentwässerung
             }
-            if (isSlipping()) {
+            if (slipping) {
                 chestPressure -= 0.1f; // wenn Schleudert
             }
             if (isSliding()) {
@@ -213,7 +208,6 @@ public class LocomotiveSteam extends Locomotive {
             chestPressure -= (float) (0.01f * chestPressure * Math.abs(getReverser())
                     * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
             // TODO Versuchen an Schläge ran zu kommen
-            // TODO Scheiße mit Reverser und Schleudern ausbaden
         }
     }
 
@@ -227,26 +221,19 @@ public class LocomotiveSteam extends Locomotive {
 
     @Override
     public double getTractiveEffortNewtons(final Speed speed) {
-        if (isSlipping()) {
-            System.out.println("Static Tractive: " + getStaticTractiveEffort(speed));
-            System.out.println("Applied Tractive: " + getAppliedTractiveEffort(speed));
-            System.out.println("Horsepower: " + getHorsePower(speed));
-            System.out.println("Reverser: " + getReverser());
-        }
         return (getDefinition().cab_forward ? -1 : 1) * super.getTractiveEffortNewtons(speed);
     }
 
+    // TODO never used
     @Override
     public double slipCoefficient(final Speed speed) {
-        double slipMult = super.slipCoefficient(speed);
-        // Wheel balance messing with friction
+        double slipMult = super.slipCoefficient(speed); // Wheel balance messing with friction
         if (speed.metric() != 0) {
             double balance = 1d / (Math.abs(speed.metric()) + 300) / (1d / 300);
             slipMult *= balance;
         }
 
-        // TODO better approximation
-        // assume wheel diameter == 5m
+        // TODO better approximation // assume wheel diameter == 5m
         double ratio = 0.35;
         double hammer = ratio + (slipping ? 0
                 : Math.abs(
@@ -254,6 +241,7 @@ public class LocomotiveSteam extends Locomotive {
                                 * (1 - ratio)));
         slipMult *= hammer;
 
+        System.out.println("Multiplikator: " + slipMult);
         return slipMult;
     }
 
