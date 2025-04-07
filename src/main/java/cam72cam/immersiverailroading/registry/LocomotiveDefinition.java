@@ -26,6 +26,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private boolean isLinkedBrakeThrottle;
     private boolean isCog;
     private double factorOfAdhesion;
+    private boolean speedLimiter;
 
     LocomotiveDefinition(final Class<? extends EntityRollingStock> type, final String defID,
             final DataBlock data) throws Exception {
@@ -67,6 +68,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         isLinkedBrakeThrottle = properties.getValue("isLinkedBrakeThrottle").asBoolean();
         toggleBell = properties.getValue("toggle_bell").asBoolean();
         isCog = properties.getValue("cog").asBoolean();
+        speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
     }
 
     protected boolean readCabCarFlag(final DataBlock data) {
@@ -131,5 +133,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
 
     public double factorOfAdhesion() {
         return this.factorOfAdhesion;
+    }
+
+    public boolean isSpeedLimiter() {
+        return this.speedLimiter;
     }
 }

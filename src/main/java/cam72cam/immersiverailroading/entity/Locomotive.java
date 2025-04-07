@@ -453,9 +453,8 @@ public abstract class Locomotive extends FreightTank {
 
     public double getTractiveEffortNewtons(final Speed speed) {
         if (!this.isBuilt()
-        // || Math.abs(speed.minecraft()) >
-        // this.getDefinition().getMaxSpeed(gauge).minecraft()
-        )
+                || Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()
+                        && this.getDefinition().isSpeedLimiter())
             return 0;
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
