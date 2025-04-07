@@ -466,6 +466,7 @@ public abstract class Locomotive extends FreightTank {
 
         System.out.println("Applied Force: " + appliedTractiveEffort);
         System.out.println("Static Force: " + getStaticTractiveEffort());
+        System.out.println("Friction Force: " + frictionForce);
 
         return appliedTractiveEffort - Math.copySign(frictionForce, appliedTractiveEffort);
     }

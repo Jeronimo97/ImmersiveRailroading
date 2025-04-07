@@ -114,12 +114,12 @@ public class LocomotiveSteam extends Locomotive {
         if (getDefinition().isCabCar())
             return 0;
 
-        System.out.println("Leistung: " + getHorsePower(speed));
+        // System.out.println("Leistung: " + getHorsePower(speed));
         double traction = Math.copySign(getHorsePower(speed) * 0.7457f
-                / Math.max(Math.abs(speed.metric()), this.getDefinition().slipSpeed) * 650
+                / Math.max(Math.abs(speed.metric()), this.getDefinition().slipSpeed) * 7200
                 * this.getDefinition().powerMultiplier, getReverser());
 
-        System.out.println("Zugkraft: " + traction);
+        // System.out.println("Zugkraft: " + traction);
         return traction;
     }
 

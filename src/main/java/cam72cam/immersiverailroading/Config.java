@@ -114,11 +114,11 @@ public class Config {
         @Range(min = 0, max = 10)
         public static double brakeMultiplier = 1.0;
 
-        @Comment("Traction Multiplier: Higher numbers decreases wheel slip, lower numders increase wheel slip")
+        @Comment("Traction Multiplier: Higher numbers decreases wheel slip, lower numbers increase wheel slip")
         @Range(min = 0, max = 10)
         public static double tractionMultiplier = 1.0;
 
-        @Comment("Traction Multiplier: Higher numbers decreases wheel slip, lower numders increase wheel slip")
+        @Comment("Friction Multiplier: Higher numbers increase friction force, lower numbers decrease friction force")
         @Range(min = 0, max = 10)
         public static double frictionMultiplier = 1.0;
 
