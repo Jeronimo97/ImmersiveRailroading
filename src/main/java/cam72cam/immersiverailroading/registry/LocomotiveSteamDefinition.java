@@ -1,18 +1,18 @@
 package cam72cam.immersiverailroading.registry;
 
+import java.io.IOException;
+import java.util.List;
+
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.LocomotiveSteam;
-import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.model.SteamLocomotiveModel;
 import cam72cam.immersiverailroading.model.StockModel;
+import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.util.FluidQuantity;
 import cam72cam.mod.resource.Identifier;
-
-import java.io.IOException;
-import java.util.List;
 
 public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     public Quilling quill;
@@ -27,8 +27,10 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     private double width;
     public boolean tender_auto_feed;
     public boolean cab_forward;
+    public double slipSpeed;
+    public double powerMultiplier;
 
-    public LocomotiveSteamDefinition(String defID, DataBlock data) throws Exception {
+    public LocomotiveSteamDefinition(final String defID, final DataBlock data) throws Exception {
         super(LocomotiveSteam.class, defID, data);
     }
 
@@ -38,7 +40,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     }
 
     @Override
-    public void loadData(DataBlock data) throws Exception {
+    public void loadData(final DataBlock data) throws Exception {
         super.loadData(data);
         DataBlock properties = data.getBlock("properties");
         if (isCabCar()) {
@@ -49,15 +51,14 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
             tender_auto_feed = false;
         } else {
             DataBlock firebox = data.getBlock("firebox");
-
-            tankCapacity_l = properties.getValue("water_capacity_l").asInteger() * internal_inv_scale;
+            tankCapacity_l =
+                    properties.getValue("water_capacity_l").asInteger() * internal_inv_scale;
             maxPSI = Math.ceil(properties.getValue("max_psi").asInteger() * internal_inv_scale);
             numSlots = Math.ceil(firebox.getValue("slots").asInteger() * internal_inv_scale);
             width = Math.ceil(firebox.getValue("width").asInteger() * internal_inv_scale);
             tender_auto_feed = properties.getValue("tender_auto_feed").asBoolean(true);
         }
         cab_forward = properties.getValue("cab_forward").asBoolean(false);
-
         DataBlock sounds = data.getBlock("sounds");
         whistle = SoundDefinition.getOrDefault(sounds, "whistle");
         idle = SoundDefinition.getOrDefault(sounds, "idle");
@@ -65,13 +66,16 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
         pressure = sounds.getValue("pressure").asIdentifier();
         bell = SoundDefinition.getOrDefault(sounds, "bell");
         cylinder_drain = sounds.getValue("cylinder_drain").asIdentifier();
+        slipSpeed = Math.ceil(properties.getValue("slip_speed").asInteger(30));
+        powerMultiplier = Math.ceil(properties.getValue("power_multiplier").asDouble(1));
 
         List<DataBlock> quilling = sounds.getBlocks("quilling");
         if (quilling != null) {
             quill = new Quilling(quilling);
         }
         if (whistle == null && (quill == null || !quill.canLoad())) {
-            quill = new Quilling(new Identifier(ImmersiveRailroading.MODID, "sounds/steam/default/quill.ogg"));
+            quill = new Quilling(
+                    new Identifier(ImmersiveRailroading.MODID, "sounds/steam/default/quill.ogg"));
         }
     }
 
@@ -82,30 +86,34 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
 
     @Override
     public StockModel<?, ?> getModel() {
-        return (SteamLocomotiveModel) super.getModel();
+        return super.getModel();
     }
 
     @Override
-    protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
-        return readCabCarFlag(data) ?
-                GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/cab_car.caml")) :
-                GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/steam.caml"));
+    protected GuiBuilder getDefaultOverlay(final DataBlock data) throws IOException {
+        return readCabCarFlag(data)
+                ? GuiBuilder.parse(
+                        new Identifier(ImmersiveRailroading.MODID, "gui/default/cab_car.caml"))
+                : GuiBuilder.parse(
+                        new Identifier(ImmersiveRailroading.MODID, "gui/default/steam.caml"));
     }
 
-    public FluidQuantity getTankCapacity(Gauge gauge) {
-        FluidQuantity cap = FluidQuantity.FromLiters((int) Math.ceil(this.tankCapacity_l * gauge.scale())).min(FluidQuantity.FromBuckets(1));
+    public FluidQuantity getTankCapacity(final Gauge gauge) {
+        FluidQuantity cap =
+                FluidQuantity.FromLiters((int) Math.ceil(this.tankCapacity_l * gauge.scale()))
+                        .min(FluidQuantity.FromBuckets(1));
         return Config.ConfigBalance.RoundStockTankToNearestBucket ? cap.roundBuckets() : cap;
     }
 
-    public int getMaxPSI(Gauge gauge) {
+    public int getMaxPSI(final Gauge gauge) {
         return (int) Math.ceil(this.maxPSI * gauge.scale());
     }
 
-    public int getInventorySize(Gauge gauge) {
+    public int getInventorySize(final Gauge gauge) {
         return (int) Math.ceil(numSlots * gauge.scale());
     }
 
-    public int getInventoryWidth(Gauge gauge) {
+    public int getInventoryWidth(final Gauge gauge) {
         return (int) Math.max(3, Math.ceil(width * gauge.scale()));
     }
 }

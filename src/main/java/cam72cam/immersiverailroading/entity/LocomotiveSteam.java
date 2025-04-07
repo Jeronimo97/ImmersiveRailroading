@@ -116,7 +116,8 @@ public class LocomotiveSteam extends Locomotive {
 
         System.out.println("Leistung: " + getHorsePower(speed));
         double traction = Math.copySign(getHorsePower(speed) * 0.7457f
-                / Math.max(Math.abs(speed.metersPerSecond()), 10) * 2400, getReverser());
+                / Math.max(Math.abs(speed.metric()), this.getDefinition().slipSpeed) * 650
+                * this.getDefinition().powerMultiplier, getReverser());
 
         System.out.println("Zugkraft: " + traction);
         return traction;
@@ -172,6 +173,7 @@ public class LocomotiveSteam extends Locomotive {
                 chestPressure -= 0.1f; // wenn Schleudert
             }
             if (isSliding()) {
+                System.out.println("Sliding!");
                 chestPressure -= 0.1f; // wieder entfernen?
             }
             if (getChestPressure() < 0) {
@@ -179,14 +181,9 @@ public class LocomotiveSteam extends Locomotive {
             }
         }
 
-        // Verbrauch Schieberkastendruck
-        double minPressure = 8 * Math.pow(getThrottle(), 0.25f);
-        if (getChestPressure() > minPressure) {
-            chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
-                    * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
-            // TODO Versuchen an Schläge ran zu kommen
-            // TODO Verbrauch untersuchen
-        }
+        // TODO Verbrauch Schieberkastendruck
+        chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
+                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
     }
 
     public double getHorsePower(final Speed speed) {

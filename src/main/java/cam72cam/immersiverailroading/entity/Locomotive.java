@@ -412,49 +412,50 @@ public abstract class Locomotive extends FreightTank {
     /**
      * Maximum force that can be between the wheels and the rails before it slips
      */
-    protected final double getStaticTractiveEffort(final Speed speed) {
-        return this.getDefinition().getStartingTractionNewtons(gauge) * slipCoefficient(speed)
+    protected final double getStaticTractiveEffort() {
+        return this.getDefinition().getStartingTractionNewtons(gauge) * slipCoefficient()
                 * (4 / getDefinition().factorOfAdhesion())
                 * Config.ConfigBalance.tractionMultiplier;
-
-        /*
-         * return (Config.ConfigBalance.FuelRequired ? this.getWeight() :
-         * this.getMaxWeight()) // KG 9.8 // M/S/S (slipping ?
-         * STEEL.kineticFriction(STEEL) / 2 : STEEL.staticFriction(STEEL))
-         * slipCoefficient(speed) * (4 / getDefinition().factorOfAdhesion()) // Physics
-         * are // tuned to an // adhesion // factor of 4
-         * Config.ConfigBalance.tractionMultiplier;
-         */
     }
 
     protected double simulateWheelSlip() {
-        slipping = Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) > getStaticTractiveEffort(
-                getCurrentSpeed());
+        slipping =
+                Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) > getStaticTractiveEffort();
 
         if (cogging || !slipping)
             return 0;
 
-        double adhesionFactor = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()))
-                / getStaticTractiveEffort(getCurrentSpeed());
-        System.out.println("Wheel slip");
+        double adhesionFactor =
+                Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) / getStaticTractiveEffort();
         getPassengers().forEach(p -> {
             p.internal.sendMessage(new TextComponentString("Schlupf"));
         });
-        return Math.copySign((adhesionFactor - 1) / 5, getReverser());
+        return Math.copySign((adhesionFactor - 1) / 10, getReverser());
     }
 
     public double getFrictionForce(final Speed speed) {
-        double rollFriction = 0.002f * this.getDefinition().getWeight(gauge) * 9.81f;
+        double[] trainWeight = {
+                0
+        };
+        getTrain().forEach(st -> {
+            if (Config.isFuelRequired(gauge)) {
+                trainWeight[0] += st.getWeight();
+            } else {
+                trainWeight[0] += st.getMaxWeight();
+            }
+        });
+        double rollFriction = 0.002f * trainWeight[0] * 9.81f;
+        // density = 1.25, c_w = 0.7, area = 10 m^2
         double airFriction = 4.38f * Math.pow(Math.abs(speed.metersPerSecond()), 2);
 
-        return rollFriction + airFriction;
+        return (rollFriction + airFriction) * Config.ConfigBalance.frictionMultiplier;
     }
 
     public double getTractiveEffortNewtons(final Speed speed) {
         if (!this.isBuilt()
-                // || Math.abs(speed.minecraft()) >
-                // this.getDefinition().getMaxSpeed(gauge).minecraft()
-                || slipping)
+        // || Math.abs(speed.minecraft()) >
+        // this.getDefinition().getMaxSpeed(gauge).minecraft()
+        )
             return 0;
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
@@ -464,7 +465,7 @@ public abstract class Locomotive extends FreightTank {
             return 0;
 
         System.out.println("Applied Force: " + appliedTractiveEffort);
-        System.out.println("Static Force: " + getStaticTractiveEffort(speed));
+        System.out.println("Static Force: " + getStaticTractiveEffort());
 
         return appliedTractiveEffort - Math.copySign(frictionForce, appliedTractiveEffort);
     }
@@ -631,7 +632,7 @@ public abstract class Locomotive extends FreightTank {
         this.bellTime = newBell;
     }
 
-    public double slipCoefficient(final Speed speed) {
+    public double slipCoefficient() {
         double slipMult = 1;
         World world = getWorld();
         if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
