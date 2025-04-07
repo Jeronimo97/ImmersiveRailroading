@@ -119,12 +119,12 @@ public enum Stat {
             case CHEST_PRESSURE:
                 return stock instanceof LocomotiveSteam
                         ? String.format("%.1f", ConfigGraphics.pressureUnit
-                                .convertFromPSI(((LocomotiveSteam) stock).getChestPressure()))
+                                .convertFromPSI(((LocomotiveSteam) stock).getChestPressurePsi()))
                         : "";
             case MAX_CHEST_PRESSURE:
                 return stock instanceof LocomotiveSteam
                         ? String.format("%.1f", ConfigGraphics.pressureUnit
-                                .convertFromPSI(((LocomotiveSteam) stock).getMaxChestPressure()))
+                                .convertFromPSI(((LocomotiveSteam) stock).getMaxChestPressurePsi()))
                         : "";
         }
         return "";

@@ -97,26 +97,26 @@ public class LocomotiveSteam extends Locomotive {
         return chestPressure;
     }
 
-    public float getChestPressureBar() {
-        return chestPressure * 0.06894757f;
-    }
-
-    public void setChestPressureBar(final double chestPressureBar) {
-        chestPressure = (float) (chestPressureBar / 0.06894757f);
+    public float getChestPressurePsi() {
+        return chestPressure / 0.06894757f;
     }
 
     public float getMaxChestPressure() {
         if (Config.isFuelRequired(gauge)) {
-            if (getBoilerPressure() > 7.25f)
-                return getBoilerPressure() - 7.25f;
+            if (getBoilerPressure() * 0.06894757f > 0.5f)
+                return getBoilerPressure() * 0.06894757f - 0.5f;
             else
                 return 0;
         } else
-            return this.getDefinition().getMaxPSI(gauge) - 7.25f;
+            return this.getDefinition().getMaxPSI(gauge) * 0.06894757f - 0.5f;
+    }
+
+    public float getMaxChestPressurePsi() {
+        return getMaxChestPressure() / 0.06894757f;
     }
 
     public float getChestPressurePercent() {
-        return chestPressure / (getDefinition().getMaxPSI(gauge));
+        return chestPressure / (getDefinition().getMaxPSI(gauge) * 0.06894757f);
     }
 
     public Map<Integer, Integer> getBurnTime() {
@@ -158,39 +158,37 @@ public class LocomotiveSteam extends Locomotive {
 
     private void chestPressureCalc() {
         // Anstieg Schieberkastendruck
-        double chestPressureBar = getChestPressureBar();
         if (getChestPressure() < getMaxChestPressure()) {
-            chestPressureBar +=
+            chestPressure +=
                     0.06f * Math.pow(
                             (Config.isFuelRequired(gauge) ? getBoilerPressure()
                                     : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f - 0.5f,
                             0.5f) * getThrottle();
         }
 
-        // TODO Verbrauch Schieberkastendruck
-        chestPressureBar -= (float) (0.015f * chestPressureBar * Math.abs(getReverser())
-                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
-        setChestPressureBar(chestPressureBar);
-
         // Abfall Schieberkastendruck
         if (getChestPressure() > 0) {
             if (getChestPressure() < 2 && getThrottle() < 0.05f) {
-                chestPressureBar -= 0.25f; // unter 2 Bar schlagartig raus
+                chestPressure -= 0.25f; // unter 2 Bar schlagartig raus
             }
             if (cylinderDrainsEnabled()) {
-                chestPressureBar -= 0.07f; // Zylinderentwässerung
+                chestPressure -= 0.07f; // Zylinderentwässerung
             }
             if (slipping) {
-                chestPressureBar -= 0.1f; // wenn Schleudert
+                chestPressure -= 0.1f; // wenn Schleudert
             }
             if (isSliding()) {
                 System.out.println("Sliding!");
-                chestPressureBar -= 0.1f; // wieder entfernen?
+                chestPressure -= 0.1f; // wieder entfernen?
             }
             if (getChestPressure() < 0) {
-                chestPressureBar = 0; // falls negativer Druck, dann auf 0 setzen
+                chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
             }
         }
+
+        // TODO Verbrauch Schieberkastendruck
+        chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
+                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
     }
 
     public double getHorsePower(final Speed speed) {
