@@ -430,7 +430,7 @@ public abstract class Locomotive extends FreightTank {
         getPassengers().forEach(p -> {
             p.internal.sendMessage(new TextComponentString("Schlupf"));
         });
-        return Math.copySign((adhesionFactor - 1) / 10, getReverser());
+        return Math.copySign((adhesionFactor - 1) / 2, getReverser());
     }
 
     public double getFrictionForce(final Speed speed) {
@@ -444,6 +444,8 @@ public abstract class Locomotive extends FreightTank {
                 trainWeight[0] += st.getMaxWeight();
             }
         });
+
+        System.out.println(this.getDefinition().getName() + ": Zuggewicht: " + trainWeight[0]);
         double rollFriction = 0.002f * trainWeight[0] * 9.81f;
         // density = 1.25, c_w = 0.7, area = 10 m^2
         double airFriction = 4.38f * Math.pow(Math.abs(speed.metersPerSecond()), 2);
@@ -463,9 +465,15 @@ public abstract class Locomotive extends FreightTank {
         if (frictionForce > Math.abs(appliedTractiveEffort))
             return 0;
 
-        System.out.println("Applied Force: " + appliedTractiveEffort);
-        System.out.println("Static Force: " + getStaticTractiveEffort());
-        System.out.println("Friction Force: " + frictionForce);
+        if (slipping) {
+            appliedTractiveEffort *= 0.5;
+        }
+
+        System.out.println(
+                this.getDefinition().getName() + ": Applied Force: " + appliedTractiveEffort);
+        System.out.println(
+                this.getDefinition().getName() + ": Static Force: " + getStaticTractiveEffort());
+        System.out.println(this.getDefinition().getName() + ": Friction Force: " + frictionForce);
 
         return appliedTractiveEffort - Math.copySign(frictionForce, appliedTractiveEffort);
     }

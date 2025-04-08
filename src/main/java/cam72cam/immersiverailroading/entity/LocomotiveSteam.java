@@ -134,8 +134,9 @@ public class LocomotiveSteam extends Locomotive {
 
         // System.out.println("Leistung: " + getHorsePower(speed));
         double traction = Math.copySign(getHorsePower(speed) * 0.7457f
-                / Math.max(Math.abs(speed.metric()), this.getDefinition().slipSpeed) * 7200
-                * this.getDefinition().powerMultiplier, getReverser());
+                / Math.max(Math.abs(speed.metric()),
+                        this.getDefinition().getMaxSpeed(gauge).metric() * 0.38f)
+                * 7200 * this.getDefinition().powerMultiplier, getReverser());
 
         // System.out.println("Zugkraft: " + traction);
         return traction;
@@ -192,10 +193,11 @@ public class LocomotiveSteam extends Locomotive {
     }
 
     public double getHorsePower(final Speed speed) {
-        return this.getDefinition().getHorsePower(gauge)
-                * (getChestPressurePercent() * Math.abs(getReverser())
-                        + getChestPressurePercent() * Math.abs(getReverser())
-                                * (Math.log10(1) - Math.log10(Math.abs(getReverser()))));
+        return getReverser() == 0 ? 0
+                : this.getDefinition().getHorsePower(gauge)
+                        * (getChestPressurePercent() * Math.abs(getReverser())
+                                + getChestPressurePercent() * Math.abs(getReverser())
+                                        * (Math.log10(1) - Math.log10(Math.abs(getReverser()))));
     }
 
     @Override
