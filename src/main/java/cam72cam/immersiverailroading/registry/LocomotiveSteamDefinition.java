@@ -27,6 +27,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     private double width;
     public boolean tender_auto_feed;
     public boolean cab_forward;
+    public double powerMultiplier;
 
     public LocomotiveSteamDefinition(String defID, DataBlock data) throws Exception {
         super(LocomotiveSteam.class, defID, data);
@@ -65,6 +66,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
         pressure = sounds.getValue("pressure").asIdentifier();
         bell = SoundDefinition.getOrDefault(sounds, "bell");
         cylinder_drain = sounds.getValue("cylinder_drain").asIdentifier();
+        powerMultiplier = Math.ceil(properties.getValue("power_multiplier").asDouble(1));
 
         List<DataBlock> quilling = sounds.getBlocks("quilling");
         if (quilling != null) {

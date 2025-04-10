@@ -26,7 +26,8 @@ public enum Stat {
     CARGO_FILL,
     MAX_CARGO_FILL,
     UNITS_CARGO_FILL,
-    ;
+    CHEST_PRESSURE,
+    MAX_CHEST_PRESSURE;
 
     public String getValue(EntityRollingStock stock) {
         Float temp = null;
@@ -119,6 +120,16 @@ public enum Stat {
                 return "100";
             case UNITS_CARGO_FILL:
                 return "%";
+            case CHEST_PRESSURE:
+                return stock instanceof LocomotiveSteam
+                        ? String.format("%.1f", ConfigGraphics.pressureUnit
+                                .convertFromPSI(((LocomotiveSteam) stock).getChestPressurePsi()))
+                        : "";
+            case MAX_CHEST_PRESSURE:
+                return stock instanceof LocomotiveSteam
+                        ? String.format("%.1f", ConfigGraphics.pressureUnit
+                                .convertFromPSI(((LocomotiveSteam) stock).getMaxChestPressurePsi()))
+                        : "";
         }
         return "";
     }

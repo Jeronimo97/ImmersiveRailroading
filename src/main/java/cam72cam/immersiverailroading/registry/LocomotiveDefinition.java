@@ -18,6 +18,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private String works;
     private double power;
     private double traction;
+    private double tractionN;
     private Speed maxSpeed;
     private boolean hasRadioEquipment;
     public boolean muliUnitCapable;
@@ -25,6 +26,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private boolean isLinkedBrakeThrottle;
     private boolean isCog;
     private double factorOfAdhesion;
+    private boolean speedLimiter;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -49,12 +51,14 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         if (isCabCar) {
             power = 0;
             traction = 0;
+            tractionN = 0;
             maxSpeed = Speed.ZERO;
             muliUnitCapable = true;
             factorOfAdhesion = 0;
         } else {
             power = properties.getValue("horsepower").asInteger() * internal_inv_scale;
             traction = properties.getValue("tractive_effort_lbf").asInteger() * internal_inv_scale;
+            tractionN = properties.getValue("tractive_effort_n").asInteger(0) * internal_inv_scale;
             factorOfAdhesion = properties.getValue("factor_of_adhesion").asDouble(4);
             maxSpeed = Speed.fromMetric(properties.getValue("max_speed_kmh").asDouble() * internal_inv_scale);
             muliUnitCapable = properties.getValue("multi_unit_capable").asBoolean();
@@ -62,6 +66,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         isLinkedBrakeThrottle = properties.getValue("isLinkedBrakeThrottle").asBoolean();
         toggleBell = properties.getValue("toggle_bell").asBoolean();
         isCog = properties.getValue("cog").asBoolean();
+        speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
     }
 
     protected boolean readCabCarFlag(DataBlock data) {
@@ -93,7 +98,10 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
      * @return tractive effort in newtons
      */
     public int getStartingTractionNewtons(Gauge gauge) {
-        return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
+        if (this.tractionN != 0)
+            return (int) Math.ceil(gauge.scale() * this.tractionN);
+        else
+            return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
     }
 
     public Speed getMaxSpeed(Gauge gauge) {
@@ -152,5 +160,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     @Override
     public double getHorsepower() {
         return this.power;
+    }
+    
+    public boolean isSpeedLimiter() {
+        return this.speedLimiter;
     }
 }
