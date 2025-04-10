@@ -280,6 +280,9 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 
 	@Override
 	public Vec3d getMountOffset(Entity passenger, Vec3d off) {
+	    if (walkableSpaceDefinition == null) {
+	        walkableSpaceDefinition = getDefinition().walkableSpaceDefinition;
+	    }
 		if (passenger.isVillager() && !payingPassengerPositions.containsKey(passenger.getUUID())) {
 			payingPassengerPositions.put(passenger.getUUID(), passenger.getPosition());
 		}
