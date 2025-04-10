@@ -413,9 +413,6 @@ public abstract class Locomotive extends FreightTank{
 
         double adhesionFactor =
                 Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) / getStaticTractiveEffort();
-        getPassengers().forEach(p -> {
-            p.internal.sendMessage(new TextComponentString("Schlupf"));
-        });
         return Math.copySign((adhesionFactor - 1) / 2, getReverser());
     }
     
