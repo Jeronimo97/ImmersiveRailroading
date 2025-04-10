@@ -57,7 +57,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
             factorOfAdhesion = 0;
         } else {
             power = properties.getValue("horsepower").asInteger() * internal_inv_scale;
-            traction = properties.getValue("tractive_effort_lbf").asInteger() * internal_inv_scale;
+            traction = properties.getValue("tractive_effort_lbf").asInteger(0) * internal_inv_scale;
             tractionN = properties.getValue("tractive_effort_n").asInteger(0) * internal_inv_scale;
             factorOfAdhesion = properties.getValue("factor_of_adhesion").asDouble(4);
             maxSpeed = Speed.fromMetric(properties.getValue("max_speed_kmh").asDouble() * internal_inv_scale);
