@@ -24,7 +24,6 @@ import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
-import net.minecraft.util.text.TextComponentString;
 
 public abstract class Locomotive extends FreightTank {
     private static final float throttleDelta = 0.04f;
@@ -427,9 +426,10 @@ public abstract class Locomotive extends FreightTank {
 
         double adhesionFactor =
                 Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) / getStaticTractiveEffort();
-        getPassengers().forEach(p -> {
-            p.internal.sendMessage(new TextComponentString("Schlupf"));
-        });
+        /*
+         * getPassengers().forEach(p -> { p.internal.sendMessage(new
+         * TextComponentString("Schlupf")); });
+         */
         return Math.copySign((adhesionFactor - 1) / 2, getReverser());
     }
 
@@ -445,7 +445,8 @@ public abstract class Locomotive extends FreightTank {
             }
         });
 
-        System.out.println(this.getDefinition().getName() + ": Zuggewicht: " + trainWeight[0]);
+        // System.out.println(this.getDefinition().getName() + ": Zuggewicht: " +
+        // trainWeight[0]);
         double rollFriction = 0.002f * trainWeight[0] * 9.81f;
         // density = 1.25, c_w = 0.7, area = 10 m^2
         double airFriction = 4.38f * Math.pow(Math.abs(speed.metersPerSecond()), 2);
@@ -460,7 +461,7 @@ public abstract class Locomotive extends FreightTank {
             return 0;
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
-        double frictionForce = getFrictionForce(speed);
+        double frictionForce = 0; // getFrictionForce(speed);
 
         if (frictionForce > Math.abs(appliedTractiveEffort))
             return 0;
@@ -469,11 +470,13 @@ public abstract class Locomotive extends FreightTank {
             appliedTractiveEffort *= 0.5;
         }
 
-        System.out.println(
-                this.getDefinition().getName() + ": Applied Force: " + appliedTractiveEffort);
-        System.out.println(
-                this.getDefinition().getName() + ": Static Force: " + getStaticTractiveEffort());
-        System.out.println(this.getDefinition().getName() + ": Friction Force: " + frictionForce);
+        /*
+         * System.out.println( this.getDefinition().getName() + ": Applied Force: " +
+         * appliedTractiveEffort); System.out.println( this.getDefinition().getName() +
+         * ": Static Force: " + getStaticTractiveEffort());
+         * System.out.println(this.getDefinition().getName() + ": Friction Force: " +
+         * frictionForce);
+         */
 
         return appliedTractiveEffort - Math.copySign(frictionForce, appliedTractiveEffort);
     }
