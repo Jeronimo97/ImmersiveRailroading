@@ -1225,4 +1225,8 @@ public abstract class EntityRollingStockDefinition {
         walkableSpaceDefinition.mapFacesToVertices();
         allVertices.clear();
     }
+    
+    public String getName() {
+        return name;
+    }
 }

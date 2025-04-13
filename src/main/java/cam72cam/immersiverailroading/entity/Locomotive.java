@@ -442,7 +442,7 @@ public abstract class Locomotive extends FreightTank{
             return 0;
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
-        double frictionForce = getFrictionForce(speed);
+        double frictionForce = 0; //getFrictionForce(speed);
 
         if (frictionForce > Math.abs(appliedTractiveEffort))
             return 0;
