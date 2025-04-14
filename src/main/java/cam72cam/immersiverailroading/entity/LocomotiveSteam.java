@@ -132,14 +132,18 @@ public class LocomotiveSteam extends Locomotive {
         if (getDefinition().isCabCar())
             return 0;
 
-        // System.out.println("Leistung: " + getHorsePower(speed));
-        double traction = Math.copySign(getHorsePower(speed) * 0.7457f
-                / Math.max(Math.abs(speed.metric()),
-                        this.getDefinition().getMaxSpeed(gauge).metric() * 0.38f)
-                * 7200 * this.getDefinition().powerMultiplier, getReverser());
+        double tractionN = Math.pow(this.getDefinition().getPistonDiameter(gauge), 2)
+                * this.getDefinition().getPistonStroke(gauge) * 106868 * getMaxChestPressure()
+                * Math.pow(getChestPressurePercent(), 3 - 2 * Math.abs(getReverser()))
+                / (this.getDefinition().getWheelDiameter(gauge) * 2) * 0.85
+                * this.getDefinition().getCylinderCount() * Math.pow(getReverser(), 0.5);
 
-        // System.out.println("Zugkraft: " + traction);
-        return traction;
+        // System.out.println("Speed: " + speed.metric());
+        // System.out.println("Zugkraft alt: " + traction);
+        // System.out.println("Zugkraft lbf: " + tractionlbf);
+        // System.out.println("Zugkraft kN: " + tractionN);
+        // System.out.println(getMaxWeight());
+        return tractionN;
     }
 
     @Override
@@ -160,11 +164,10 @@ public class LocomotiveSteam extends Locomotive {
     private void chestPressureCalc() {
         // Anstieg Schieberkastendruck
         if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure +=
-                    0.06f * Math.pow(
-                            (Config.isFuelRequired(gauge) ? getBoilerPressure()
-                                    : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f - 0.5f,
-                            0.5f) * getThrottle();
+            chestPressure += 0.06f
+                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
+                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
+                    * getThrottle() * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
         }
 
         // Abfall Schieberkastendruck
@@ -177,10 +180,6 @@ public class LocomotiveSteam extends Locomotive {
             }
             if (slipping) {
                 chestPressure -= 0.1f; // wenn Schleudert
-            }
-            if (isSliding()) {
-                System.out.println("Sliding!");
-                chestPressure -= 0.1f; // wieder entfernen?
             }
             if (getChestPressure() < 0) {
                 chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
