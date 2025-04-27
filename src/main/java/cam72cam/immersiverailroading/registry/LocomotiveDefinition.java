@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.registry;
 
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
+import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.library.GuiText;
@@ -83,15 +84,21 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         List<String> tips = super.getTooltip(gauge);
         tips.add(GuiText.LOCO_WORKS.toString(this.works));
         if (!isCabCar) {
-            tips.add(GuiText.LOCO_HORSE_POWER.toString(this.getHorsePower(gauge)));
-            tips.add(GuiText.LOCO_TRACTION.toString(this.getStartingTractionNewtons(gauge)));
-            tips.add(GuiText.LOCO_MAX_SPEED.toString(this.getMaxSpeed(gauge).metricString()));
+            tips.add(GuiText.LOCO_HORSE_POWER.toString(getHorsePower(gauge)));
+            tips.add(GuiText.LOCO_TRACTION.toString(getStartingTractionNewtons(gauge)));
+            tips.add(GuiText.LOCO_MAX_SPEED.toString(getMaxSpeed(gauge).metric()));
         }
         return tips;
     }
 
-    public int getHorsePower(Gauge gauge) {
+    public int getHorsePower(Gauge gauge){
         return (int) Math.ceil(gauge.scale() * this.power);
+    }
+
+    public int getScriptedHorsePower(Gauge gauge, Locomotive stock) {
+        return stock.localHorsepower != -1
+                ? (int) Math.ceil(gauge.scale() * stock.localHorsepower)
+                : (int) Math.ceil(gauge.scale() * this.power);
     }
 
     /**
@@ -104,8 +111,20 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
             return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
     }
 
-    public Speed getMaxSpeed(Gauge gauge) {
+    public int getScriptedStartingTractionNewtons(Gauge gauge, Locomotive stock) {
+        return stock.localTraction != -1
+                ? (int) Math.ceil(gauge.scale() * stock.localTraction * 4.44822)
+                : (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
+    }
+
+    public Speed getMaxSpeed(Gauge gauge){
         return Speed.fromMinecraft(gauge.scale() * this.maxSpeed.minecraft());
+    }
+
+    public Speed getScriptedMaxSpeed(Gauge gauge, Locomotive stock) {
+        return stock.localMaxSpeed != -1
+                ? Speed.fromMinecraft(gauge.scale() * (stock.localMaxSpeed / (20 * 3.6)))
+                : Speed.fromMinecraft(gauge.scale() * this.maxSpeed.minecraft());
     }
 
     public boolean getRadioCapability() {

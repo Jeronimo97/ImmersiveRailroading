@@ -44,7 +44,7 @@ public enum Readouts {
             case LIQUID:
                 return stock instanceof FreightTank ? ((FreightTank) stock).getPercentLiquidFull() / 100f : 0;
             case SPEED:
-                double maxSpeed = (stock instanceof Locomotive ? ((Locomotive) stock).getDefinition().getMaxSpeed(stock.gauge).metric() : 0);
+                double maxSpeed = (stock instanceof Locomotive ? ((Locomotive) stock).getDefinition().getScriptedMaxSpeed(stock.gauge, (Locomotive) stock).metric() : 0);
                 if (maxSpeed == 0) {
                     maxSpeed = 200;
                 }

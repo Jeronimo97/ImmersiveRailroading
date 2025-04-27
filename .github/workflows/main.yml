@@ -1,9 +1,10 @@
 name: Immersive Railroading Build Pipeline
 
-on: 
+on:
   push:
     branches:
       - 'master'
+      - 'fixedNullPointer'
 
 jobs:
   build:
@@ -11,33 +12,60 @@ jobs:
     strategy:
       matrix:
         branch: [1.7.10-forge, 1.10.2-forge, 1.11.2-forge, 1.12.2-forge, 1.14.4-forge, 1.15.2-forge, 1.16.5-forge, 1.17.1-forge, 1.18.2-forge, 1.19.4-forge, 1.20.1-forge]
+      fail-fast: false
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: keyscan
-      run: mkdir -p ~/.ssh/ && ssh-keyscan -t rsa teamopenindustry.cc >> ~/.ssh/known_hosts
-    - name: Install deps
-      run: sudo apt install -y pngquant findutils xvfb
-    - name: Setup Universal Mod Core (and helpers)
-      env:
-        BRANCH: ${{ matrix.branch }}
-      run: java -jar UMCSetup.jar ${BRANCH} https
-    - name: Gradle compile
-      run: ./gradlew classes
-    - name: Process images
-      run: find src/main/resources/assets/immersiverailroading/ | grep png | xargs -I foo pngquant -s1 -f --ext .png foo
-    - name: Run Data (optionalish)
-      run: xvfb-run --auto-servernum ./gradlew runData || xvfb-run --auto-servernum ./gradlew runData || true
-    - name: Gradle build
-      run: ./gradlew build
-    - name: Gradle publish
-      env:
-        MAVENCI_PASS: ${{ secrets.MAVENCI_PASS }}
-      run: ./gradlew publish
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Immersive Railroading ${{matrix.branch}}
-        path: build/libs/ImmersiveRailroading-${{matrix.branch}}-*
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y pngquant findutils xvfb
+
+      - name: Download LuaJ 3.0.2 JAR
+        run: |
+          mkdir -p libs
+          curl -L -o libs/luaj-jse-3.0.2.jar https://github.com/luaj/luaj/releases/download/v3.0.2/luaj-jse-3.0.2.jar
+
+      - name: Setup Universal Mod Core (and helpers)
+        env:
+          BRANCH: ${{ matrix.branch }}
+        run: java -jar UMCSetup.jar ${BRANCH} https
+
+      - name: Modify build.gradle to Include LuaJ and Merge JARs
+        run: |
+          echo "" >> build.gradle
+          echo "repositories {" >> build.gradle
+          echo "    flatDir { dirs 'libs' }" >> build.gradle
+          echo "}" >> build.gradle
+          echo "" >> build.gradle
+          echo "dependencies {" >> build.gradle
+          echo "    implementation fileTree(dir: 'libs', include: ['*.jar'])" >> build.gradle
+          echo "}" >> build.gradle
+          echo "" >> build.gradle
+          echo "jar {" >> build.gradle
+          echo "    duplicatesStrategy = DuplicatesStrategy.EXCLUDE" >> build.gradle
+          echo "    from {" >> build.gradle
+          echo "        fileTree(dir: 'libs', include: ['*.jar']).collect { zipTree(it) }" >> build.gradle
+          echo "    }" >> build.gradle
+          echo "}" >> build.gradle
+
+
+      - name: Compile with Gradle
+        run: ./gradlew classes
+
+      - name: Process images
+        run: find src/main/resources/assets/immersiverailroading/ | grep png | xargs -I foo pngquant -s1 -f --ext .png foo
+
+      - name: Build with Gradle (Including LuaJ)
+        run: |
+          ./gradlew build
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Immersive Railroading ${{matrix.branch}}
+          path: build/libs/ImmersiveRailroading-${{matrix.branch}}-*

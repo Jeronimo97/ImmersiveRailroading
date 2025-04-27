@@ -123,6 +123,8 @@ public abstract class EntityRollingStockDefinition {
     // used for unique text fields to check if text field input is already assigned
     public Map<UUID, String> inputs = new HashMap<>();
 
+    private List<DataBlock> textFieldData;
+
     public static class SoundDefinition {
         public final Identifier start;
         public final Identifier main;
@@ -413,6 +415,12 @@ public abstract class EntityRollingStockDefinition {
         heightBounds = model.heightOfGroups(heightGroups);
 
         this.heightmap = initHeightmap();
+
+        // initialize text fields
+        if (textFieldData != null) {
+            List<TextRenderOptions> options = textFieldData.stream().map(this::loadTextField).collect(Collectors.toList());
+            options.forEach(o -> textFieldDef.put(o.componentId, o));
+        }
     }
 
     public final EntityRollingStock spawn(World world, Vec3d pos, float yaw, Gauge gauge, String texture) {
@@ -545,11 +553,7 @@ public abstract class EntityRollingStockDefinition {
             fontDef = fonts.stream().map(this::loadFontData).collect(Collectors.toCollection(LinkedList::new));;
         }
 
-        List<DataBlock> textField = data.getBlocks("textfield");
-        if (textField != null) {
-            List<TextRenderOptions> options = textField.stream().map(this::loadTextField).collect(Collectors.toList());
-            options.forEach(o -> textFieldDef.put(o.componentId, o));
-        }
+        textFieldData = data.getBlocks("textfield");
 
         brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.CAST_IRON);
         try {
@@ -1106,7 +1110,7 @@ public abstract class EntityRollingStockDefinition {
         }
 
         TextRenderOptions options = new TextRenderOptions(
-                font, text, resX, resY, align, flipped, textFieldId, fontSize, fontLength, fontGap, fontId, hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, offset, allStock
+                font, text, resX, resY, align, flipped, textFieldId, fontSize, fontLength, fontGap, fontId, hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, offset, allStock, this
         );
 
         options.setLinked(linked);

@@ -23,7 +23,6 @@ import cam72cam.mod.sound.SoundCategory;
 import cam72cam.mod.text.PlayerMessage;
 import cam72cam.mod.util.SingleCache;
 import org.apache.commons.lang3.tuple.Pair;
-import scala.Int;
 import util.Matrix4;
 
 import java.util.Arrays;

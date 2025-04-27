@@ -287,6 +287,10 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 			payingPassengerPositions.put(passenger.getUUID(), passenger.getPosition());
 		}
 
+		if (walkableSpaceDefinition == null) {
+			walkableSpaceDefinition = getDefinition().walkableSpaceDefinition;
+		}
+
 		if (passenger.isVillager() && !seatedPassengers.containsValue(passenger.getUUID())) {
 			for (Seat<?> seat : getDefinition().getModel().getSeats()) {
 				if (!seatedPassengers.containsKey(seat.part.key)) {

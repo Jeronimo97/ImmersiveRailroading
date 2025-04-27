@@ -135,7 +135,6 @@ public class LocomotiveSteam extends Locomotive {
         return traction;
     }
 	
-	
 	@Override
 	public void onDissassemble() {
 		super.onDissassemble();

@@ -1,9 +1,18 @@
 package cam72cam.immersiverailroading.entity;
 
+import cam72cam.immersiverailroading.items.ItemTypewriter;
+import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
+import cam72cam.mod.math.Vec3d;
+import cam72cam.mod.model.obj.OBJGroup;
 import cam72cam.mod.resource.Identifier;
+import cam72cam.mod.serialization.SerializationException;
 import cam72cam.mod.serialization.TagCompound;
+import cam72cam.mod.serialization.TagField;
+import cam72cam.mod.serialization.TagMapper;
 
+import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,25 +39,22 @@ public class TextRenderOptions {
     public int lineSpacingPixels;
     public int offset;
     public boolean global;
-
     public List<String> linked = new ArrayList<>();
-
     public boolean selectable = true;
-
     // Used for number plates etc...
     public boolean unique = false;
-
     public boolean isNumberPlate = false;
-
     public String lastText = "";
-
     public List<String> filter = new ArrayList<>();
-
     public boolean assigned = false;
+    public Vec3d min;
+    public Vec3d max;
+    public Vec3d normal;
+    public String groupName;
 
     public TextRenderOptions(Identifier id, String newText, int resX, int resY, Font.TextAlign align, boolean flipped,
                              String componentId, int fontSize, int fontX, int fontGap, List<Integer> fontId, String hexCode,
-                             boolean fullbright, int textureHeight, boolean useAlternative, int lineSpacingPixels, int offset, boolean global) {
+                             boolean fullbright, int textureHeight, boolean useAlternative, int lineSpacingPixels, int offset, boolean global, EntityRollingStockDefinition def) {
         this.id = id;
         this.newText = newText;
         this.resX = resX;
@@ -67,6 +73,17 @@ public class TextRenderOptions {
         this.lineSpacingPixels = lineSpacingPixels;
         this.offset = offset;
         this.global = global;
+
+        LinkedHashMap<String, OBJGroup> group = def.getModel().groups;
+        for (Map.Entry<String, OBJGroup> entry : group.entrySet()) {
+            if (entry.getKey().contains(String.format("TEXTFIELD_%s", this.componentId))) {
+                EntityRollingStockDefinition.Position getPosition = def.normals.get(entry.getKey());
+                this.min = getPosition.vertices.stream().min(Comparator.comparingDouble(Vec3d::length)).orElse(null);
+                this.max = getPosition.vertices.stream().max(Comparator.comparingDouble(Vec3d::length)).orElse(null);
+                this.normal = getPosition.normal;
+                this.groupName = entry.getKey();
+            }
+        }
     }
 
     private TextRenderOptions(TextRenderOptions options) {
@@ -94,10 +111,42 @@ public class TextRenderOptions {
         this.isNumberPlate = options.isNumberPlate;
         this.filter = options.filter;
         this.assigned = options.assigned;
+        this.min = options.min;
+        this.max = options.max;
+        this.normal = options.normal;
+        this.groupName = options.groupName;
     }
 
-    public TextRenderOptions() {
-
+    public TextRenderOptions(TagCompound compound) {
+        this.id = new Identifier(compound.getString("id"));
+        this.newText = compound.getString("newText");
+        this.resX = compound.getInteger("resX");
+        this.resY = compound.getInteger("resY");
+        this.align = compound.getEnum("align", Font.TextAlign.class);
+        this.flipped = compound.getBoolean("flipped");
+        this.componentId = compound.getString("componentId");
+        this.fontSize = compound.getInteger("fontSize");
+        this.fontX = compound.getInteger("fontX");
+        this.fontGap = compound.getInteger("fontGap");
+        this.fontId = compound.getList("fontId", i -> i.getInteger("id"));
+        this.hexCode = compound.getString("hexCode");
+        this.fullbright = compound.getBoolean("fullbright");
+        this.textureHeight = compound.getInteger("textureHeight");
+        this.useAlternative = compound.getBoolean("useAlternative");
+        this.lineSpacingPixels = compound.getInteger("lineSpacingPixels");
+        this.offset = compound.getInteger("offset");
+        this.global = compound.getBoolean("global");
+        this.linked = compound.getList("linked", i -> i.getString("l"));
+        this.selectable = compound.getBoolean("selectable");
+        this.unique = compound.getBoolean("unique");
+        this.isNumberPlate = compound.getBoolean("isNumberPlate");
+        this.lastText = compound.getString("lastText");
+        this.filter = compound.getList("filter", i -> i.getString("f"));
+        this.assigned = compound.getBoolean("assigned");
+        this.min = compound.getVec3d("min");
+        this.max = compound.getVec3d("max");
+        this.normal = compound.getVec3d("normal");
+        this.groupName = compound.getString("groupName");
     }
 
     public void setLinked(List<String> linked) {
@@ -125,74 +174,59 @@ public class TextRenderOptions {
         return new TextRenderOptions(this);
     }
 
-    public TextRenderOptions(TagCompound compound) throws IOException {
-        this.id = new Identifier(decompressString(compound.getString("id")));
-        this.newText = decompressString(compound.getString("nT"));
-        this.resX = compound.getInteger("rX");
-        this.resY = compound.getInteger("rY");
-        this.align = Font.TextAlign.valueOf(decompressString(compound.getString("a")));
-        this.flipped = compound.getBoolean("f");
-        this.componentId = decompressString(compound.getString("cId"));
-        this.fontSize = compound.getInteger("fS");
-        this.fontX = compound.getInteger("fX");
-        this.fontGap = compound.getInteger("fG");
-        this.fontId = null;
-        this.hexCode = decompressString(compound.getString("hC"));
-        this.fullbright = compound.getBoolean("fb");
-        this.textureHeight = compound.getInteger("tH");
-        this.useAlternative = compound.getBoolean("uA");
-        this.lineSpacingPixels = compound.getInteger("lSP");
-        this.offset = compound.getInteger("o");
-        this.global = compound.getBoolean("g");
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        TextRenderOptions options = (TextRenderOptions) object;
+        return flipped == options.flipped && fontSize == options.fontSize && fontX == options.fontX && fontGap == options.fontGap && fullbright == options.fullbright && textureHeight == options.textureHeight && useAlternative == options.useAlternative && lineSpacingPixels == options.lineSpacingPixels && Objects.equals(id, options.id) && Objects.equals(newText, options.newText) && align == options.align && Objects.equals(componentId, options.componentId) && Objects.equals(hexCode, options.hexCode) && Objects.equals(groupName, options.groupName);
     }
 
-    public void serializeTextRenderOptions(TagCompound compound) throws IOException {
-        compound.setString("id", compressString(this.id.toString()));
-        compound.setString("nT", compressString(this.newText));
-        compound.setInteger("rX", this.resX);
-        compound.setInteger("rY", this.resY);
-        compound.setString("a", compressString(this.align.name()));
-        compound.setBoolean("f", this.flipped);
-        compound.setString("cId", compressString(this.componentId));
-        compound.setInteger("fS", this.fontSize);
-        compound.setInteger("fX", this.fontX);
-        compound.setInteger("fG", this.fontGap);
-        if (this.fontId != null) {
-            compound.setString("overlay", this.fontId.toString());
-        }
-        compound.setString("hC", compressString(this.hexCode));
-        compound.setBoolean("fb", this.fullbright);
-        compound.setInteger("tH", this.textureHeight);
-        compound.setBoolean("uA", this.useAlternative);
-        compound.setInteger("lSP", this.lineSpacingPixels);
-        compound.setInteger("o", this.offset);
-        compound.setBoolean("g", this.global);
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, newText, align, flipped, componentId, fontSize, fontX, fontGap, hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, groupName);
     }
 
-    public static String compressString(String str) throws IOException {
-        if (str == null || str.isEmpty()) {
-            return str;
-        }
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
-        gzipOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
-        gzipOutputStream.close();
-        return byteArrayOutputStream.toString("ISO-8859-1");
-    }
+    public static class TextRenderOptionsMapper implements TagMapper<TextRenderOptions> {
 
-    public static String decompressString(String compressedStr) throws IOException {
-        if (compressedStr == null || compressedStr.isEmpty()) {
-            return compressedStr;
+        @Override
+        public TagAccessor<TextRenderOptions> apply(Class<TextRenderOptions> type, String fieldName, TagField tagField) throws SerializationException {
+            return new TagAccessor<>(
+                    (d, o) -> {
+                        d.set(fieldName, new TagCompound()
+                                .setString("id", o.id.toString())
+                                .setString("newText", o.newText)
+                                .setInteger("resX", o.resX)
+                                .setInteger("resY", o.resY)
+                                .setEnum("align", o.align)
+                                .setBoolean("flipped", o.flipped)
+                                .setString("componentId", o.componentId)
+                                .setInteger("fontSize", o.fontSize)
+                                .setInteger("fontX", o.fontX)
+                                .setInteger("fontGap", o.fontGap)
+                                .setList("fontId", o.fontId, i -> new TagCompound().setInteger("id", i))
+                                .setString("hexCode", o.hexCode)
+                                .setBoolean("fullbright", o.fullbright)
+                                .setInteger("textureHeight", o.textureHeight)
+                                .setBoolean("useAlternative", o.useAlternative)
+                                .setInteger("lineSpacingPixels", o.lineSpacingPixels)
+                                .setInteger("offset", o.offset)
+                                .setBoolean("global", o.global)
+                                .setList("linked", o.linked, l -> new TagCompound().setString("l", l))
+                                .setBoolean("selectable", o.selectable)
+                                .setBoolean("unique", o.unique)
+                                .setBoolean("isNumberPlate", o.isNumberPlate)
+                                .setString("lastText", o.lastText)
+                                .setList("filter", o.filter, f -> new TagCompound().setString("f", f))
+                                .setBoolean("assigned", o.assigned)
+                                .setVec3d("min", o.min)
+                                .setVec3d("max", o.max)
+                                .setVec3d("normal", o.normal)
+                                .setString("groupName", o.groupName));
+                    },
+                    d -> new TextRenderOptions(d.get(fieldName))
+            );
         }
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(compressedStr.getBytes("ISO-8859-1"));
-        GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        byte[] buffer = new byte[256];
-        int bytesRead;
-        while ((bytesRead = gzipInputStream.read(buffer)) > 0) {
-            byteArrayOutputStream.write(buffer, 0, bytesRead);
-        }
-        return byteArrayOutputStream.toString();
     }
 
     @Override

@@ -15,6 +15,7 @@ import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.fluid.Fluid;
 import cam72cam.mod.fluid.FluidStack;
 import cam72cam.mod.serialization.TagField;
+import org.luaj.vm2.LuaValue;
 
 import java.util.List;
 import java.util.OptionalDouble;
@@ -159,7 +160,7 @@ public class LocomotiveDiesel extends Locomotive {
 	@Override
 	public double getAppliedTractiveEffort(Speed speed) {
 		if (isRunning() && (getEngineTemperature() > 75 || !Config.isFuelRequired(gauge))) {
-			double maxPower_W = this.getDefinition().getHorsePower(gauge) * 745.7d;
+			double maxPower_W = this.getDefinition().getScriptedHorsePower(gauge, this) * 745.7d;
 			double efficiency = 0.82; // Similar to a *lot* of imperial references
 			double maxPowerAtSpeed = maxPower_W * efficiency / Math.max(1, Math.abs(speed.metersPerSecond()));
 			double applied = maxPowerAtSpeed * relativeRPM * getReverser();
@@ -287,8 +288,8 @@ public class LocomotiveDiesel extends Locomotive {
 		}
 	}
 	@Override
-	public void setTurnedOnLua(boolean b) {
-		setTurnedOn(b);
+	public void setTurnedOnLua(LuaValue b) {
+		setTurnedOn(b.toboolean());
 	}
 
 	@Override

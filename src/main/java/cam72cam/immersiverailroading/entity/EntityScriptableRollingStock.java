@@ -2,23 +2,24 @@ package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
-import cam72cam.immersiverailroading.Mod;
-import cam72cam.immersiverailroading.gui.overlay.ReadoutsEventHandler;
+import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.Config.ConfigPerformance;
-import cam72cam.immersiverailroading.library.GuiTypes;
+import cam72cam.immersiverailroading.items.ItemTypewriter;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.Permissions;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.CustomParticleConfig;
-import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
+import cam72cam.immersiverailroading.script.LuaLibrary;
+import cam72cam.immersiverailroading.script.ScriptVectorUtil;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.mod.ModCore;
+import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.math.Vec3d;
-import cam72cam.mod.model.obj.OBJGroup;
 import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.*;
+import cam72cam.mod.text.PlayerMessage;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.luaj.vm2.*;
@@ -30,81 +31,29 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.luaj.vm2.LuaFunction;
-public abstract class EntityScriptableRollingStock extends EntityCoupleableRollingStock implements ReadoutsEventHandler {
+public abstract class EntityScriptableRollingStock extends EntityCoupleableRollingStock {
 
     private LuaValue tickEvent;
     public boolean isLuaLoaded = false;
     private boolean isSleeping;
     private long lastExecutionTime;
     private boolean wakeLuaScriptCalled = false;
-    LuaTable luaFunction = new LuaTable();
     private final Map<String, InputStream> moduleMap = new HashMap<>();
     private final Map<String, String> componentTextMap = new HashMap<>();
     private final Map<Integer, ParticleState> particleStates = new HashMap<>();
     private final Map<Integer, ParticleState> oldParticleState = new HashMap<>();
 
-    private final List<TextRenderOptions> textFields = new ArrayList<>();
-
+    @TagField(value = "textRenderOptions", mapper = MapTextRenderOptionsMapper.class)
     public Map<String, TextRenderOptions> textRenderOptions = new HashMap<>();
 
-    /**
-     *
-     * Sad to say that this doesn't work, the data required for the text fields needs to much memory to save to NBT data,
-     * maybe I will come back to it later.
-     * TODO find another way of saving data from the text fields.
-     *
-     */
+    public Globals globals;
 
-//    @Override
-//    public void load(TagCompound data) {
-//        super.load(data);
-//        int index = 0;
-//        while (data.hasKey("textField_" + index)) {
-//            TagCompound optionNBT = data.get("textField_" + index);
-//            TextRenderOptions textRenderOptions = null;
-//            try {
-//                textRenderOptions = new TextRenderOptions(optionNBT);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            textFields.add(textRenderOptions);
-//            index++;
-//        }
-//        textFields.forEach(o -> {
-//            if (o.global) {
-//                setAllText(o);
-//            } else {
-//                try {
-//                    setText(o);
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        });
-//    }
-//
-//    @Override
-//    public void save(TagCompound data) {
-//        super.save(data);
-//
-//        for (int i = 0; i < textFields.size(); i++) {
-//            TagCompound optionNBT = new TagCompound();
-//            try {
-//                textFields.get(i).serializeTextRenderOptions(optionNBT);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            data.set("textField_" + i, optionNBT);
-//        }
-//    }
-
-
+    private Set<ScheduleEvent> schedule = new HashSet<>();
 
     @Override
     public void onTick() {
         super.onTick();
-        if (!getWorld().isServer) {
+        if (getWorld().isClient) {
             return;
         }
         if (getDefinition().script != null && !ConfigPerformance.disableLuaScript) {
@@ -137,17 +86,25 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             try {
                 if (LoadLuaFile()) return;
                 callFuction();
-                getReadout();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
+        schedule.removeIf(t -> {
+            t.ticks--;
+            if (t.ticks <= 0) {
+                t.runnable.run();
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
     public ClickResult onClick(Player player, Player.Hand hand) {
-        if (player.getHeldItem(hand).is(IRItems.ITEM_GOLDEN_SPIKE) && !textRenderOptions.isEmpty() && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
-            GuiTypes.TEXT_FIELD.open(player);
+        if (player.getHeldItem(hand).is(IRItems.ITEM_TYPEWRITER) && !textRenderOptions.isEmpty() && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+            ItemTypewriter.onStockInteract(this, player, hand);
             return ClickResult.ACCEPTED;
         }
         return super.onClick(player, hand);
@@ -162,105 +119,20 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
     @Override
     public void load(TagCompound data) {
         super.load(data);
-        Map<String, TextRenderOptions> settings = getDefinition().textFieldDef;
-        settings.forEach((s, t) -> textRenderOptions.put(s, t.clone()));
-
-        List<TextRenderOptions> textFields = new ArrayList<>(settings.values()).stream().filter(t -> t.linked.stream().anyMatch(m -> m.equals(t.componentId))).collect(Collectors.toList());
-
-        textRenderOptions.forEach((s, t) -> {
-            assert t.fontId != null;
-            t.id = getDefinition().fontDef.get(t.fontId.get(0)).font;
-            t.fontSize = getDefinition().fontDef.get(t.fontId.get(0)).size;
-            t.textureHeight = getDefinition().fontDef.get(t.fontId.get(0)).resY;
-            t.fontX = getDefinition().fontDef.get(t.fontId.get(0)).resX;
-
-            boolean assigned = data.getBoolean(String.format("TextField_%s_assigned", t.componentId)) != null;
-
-            if (assigned) {
-                t.assigned = data.getBoolean(String.format("TextField_%s_assigned", t.componentId));
-            }
-
-            if (t.assigned) {
-                t.newText = data.getString("TextField_" + t.componentId);
-                getDefinition().inputs.put(getUUID(), t.newText);
-            }
-
-            if (!t.filter.isEmpty() && t.unique && !t.assigned) {
-                List<String> text = t.filter.stream().filter(f -> !getDefinition().inputs.containsValue(f)).collect(Collectors.toList());
-
-                if (!text.isEmpty()) {
-                    t.newText = text.get((int) (Math.random() * (text.size() - 1)));
-
-                    getDefinition().inputs.put(getUUID(), t.newText);
-                    t.assigned = true;
-                }
-            }
-
-            if (!t.linked.isEmpty()) {
-                t.linked.forEach(l -> {
-                    TextRenderOptions options = settings.get(l);
-                    options.newText = t.newText;
-
-                    options.lastText = options.newText;
-
-                    assert options.fontId != null;
-                    options.fontId.forEach(id -> {
-                        Identifier font = getDefinition().fontDef.get(id).font;
-                        if (font.equals(t.id)) {
-                            options.id = t.id;
-                            options.fontSize = t.fontSize;
-                            options.textureHeight = t.textureHeight;
-                            options.fontX = t.fontX;
-                        }
-                    });
-
-                    if (options.id == null) {
-                        options.id = getDefinition().fontDef.get(options.fontId.get(0)).font;
-                        options.fontSize = getDefinition().fontDef.get(options.fontId.get(0)).size;
-                        options.textureHeight = getDefinition().fontDef.get(options.fontId.get(0)).resY;
-                        options.fontX = getDefinition().fontDef.get(options.fontId.get(0)).resX;
-                    }
-                    if (options.global) {
-                        setAllText(options);
-                    } else {
-                        setTextTrain(options);
-                    }
-                });
-            }
-            t.lastText = t.newText;
-
-            if (t.global) {
-                setAllText(t);
-            } else {
-                setTextTrain(t);
-            }
-        });
-    }
-
-    @Override
-    public void save(TagCompound data) {
-        super.save(data);
-        textRenderOptions.forEach((s, t) -> {
-            if (t.assigned) {
-                data.setString("TextField_" + t.componentId, getDefinition().inputs.get(getUUID()));
-                data.setBoolean(String.format("TextField_%s_assigned", t.componentId), true);
-            } else {
-                data.setBoolean(String.format("TextField_%s_assigned", t.componentId), false);
-            }
-        });
+        if (!textRenderOptions.isEmpty()) {
+            textRenderOptions.forEach((s, options) -> new ItemTypewriter.TypewriterPacket(this, options));
+        }
     }
 
     public boolean LoadLuaFile() throws IOException {
         if (!isLuaLoaded) {
-            Globals globals = JsePlatform.standardGlobals();
+            globals = JsePlatform.standardGlobals();
 
             LuaValue safeOs = LuaValue.tableOf();
             safeOs.set("time", globals.get("os").get("time"));
             safeOs.set("date", globals.get("os").get("date"));
             safeOs.set("clock", globals.get("os").get("clock"));
             safeOs.set("difftime", globals.get("os").get("difftime"));
-
-
             globals.set("os", safeOs);
 
             globals.set("io", LuaValue.NIL);
@@ -268,20 +140,22 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             globals.set("coroutine", LuaValue.NIL);
             globals.set("debug", LuaValue.NIL);
 
-
             // Get Lua file from Json
             Identifier script = getDefinition().script;
             Identifier identifier = new Identifier(script.getDomain(), script.getPath());
             InputStream inputStream = identifier.getResourceStream();
 
             if (inputStream == null) {
-                ModCore.error(String.format("File %s does not exist", script.getDomain() + ":" + script.getPath()));
+                ModCore.error(String.format("Script file %s does not exist", identifier));
                 return true;
             }
 
             String luaScript = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            if (luaScript == null || luaScript.isEmpty()) {
-                ModCore.error("Lua script content is empty | file not found");
+            if (luaScript == null) {
+                ModCore.error(String.format("Lua script file %s not found", identifier));
+                return true;
+            }else if (luaScript.isEmpty()) {
+                ModCore.error(String.format("Lua script %s 's content is empty", identifier));
                 return true;
             }
 
@@ -293,20 +167,76 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
                 preloadModules(globals, moduleMap);
             }
 
-            setLuaFunctions();
+            LuaLibrary.create("IR")
+                    .addFunction("setCG", (control, val) -> this.setControlGroup(control.tojstring(), val.tofloat()))
+                    .addFunctionWithReturn("getCG", control -> LuaValue.valueOf(this.getControlGroup(control.tojstring())))
+                    .addFunction("setPaint", newTexture -> this.setNewTexture(newTexture.tojstring()))
+                    .addFunctionWithReturn("getPaint", () -> LuaValue.valueOf(this.getCurrentTexture()))
+                    .addFunctionWithReturn("getReadout", readout -> LuaValue.valueOf(this.getReadout(readout.tojstring())))
+                    .addFunction("setPerformance", this::setPerformance)
+                    .addFunctionWithReturn("getPerformance", this::getPerformance)
+                    .addFunction("couplerEngaged", this::setCouplerEngagedLua)
+                    .addFunction("setThrottle", this::setThrottleLua)
+                    .addFunctionWithReturn("getThrottle", this::getThrottleLua)
+                    .addFunction("setReverser", this::setReverserLua)
+                    .addFunctionWithReturn("getReverser", this::getReverserLua)
+                    .addFunction("setTrainBrake", this::setTrainBrakeLua)
+                    .addFunctionWithReturn("getTrainBrake", this::getTrainBrakeLua)
+                    .addFunction("setIndependentBrake", this::setIndependentBrakeLua)
+                    .addFunction("setSound", val -> {/*this.setNewSound(val)*/})
+                    .addFunction("setGlobal", (control, val) -> this.setGlobalControlGroup(control.tojstring(), val.tofloat()))
+                    .addFunction("setUnit", (control, val) -> this.setUnitControlGroup(control.tojstring(), val.tofloat()))
+                    .addFunction("setText", this::textFieldDef)
+                    .addFunction("setTag", val -> this.setEntityTag(val.tojstring()))
+                    .addFunctionWithReturn("getTag", () -> LuaValue.valueOf(this.getTag()))
+                    .addFunctionWithReturn("getTrain", this::getTrainConsist)
+                    .addFunction("setIndividualCG", this::setIndividualCG)
+                    .addFunctionWithReturn("getIndividualCG", this::getIndividualCG)
+                    .addFunctionWithReturn("isTurnedOn", () -> LuaValue.valueOf(this.getEngineState()))
+                    .addFunction("engineStartStop", this::setTurnedOnLua)
+                    .addFunction("newParticle", this::particleDefinition)
+                    .addFunction("setNBTTag", (k, v) -> this.setNBTTag(k.tojstring(), v))
+                    .addFunctionWithReturn("getNBTTag", (k) -> this.getNBTTag(k.tojstring()))
+                    .addFunctionWithReturn("getStockPosition", () -> ScriptVectorUtil.constructVec3Table(this.getPosition()))
+                    .addFunctionWithReturn("getStockMatrix", () -> ScriptVectorUtil.constructMatrix4Table(this.getModelMatrix()))
+                    .addFunctionWithReturn("newVector", (x, y, z) -> ScriptVectorUtil.constructVec3Table(x, y, z))
+                    .addFunctionWithReturn("getCoupled", this::getCoupled)
+                    .setInGlobals(globals);
 
-            globals.set("IR", luaFunction);
+            LuaLibrary.create("World")
+                    .addFunctionWithReturn("isRainingAt", pos -> LuaValue.valueOf(this.getWorld().isRaining(ScriptVectorUtil.convertToVec3i(pos))))
+                    .addFunctionWithReturn("getTemperatureAt", pos -> LuaValue.valueOf(this.getWorld().getTemperature(ScriptVectorUtil.convertToVec3i(pos))))
+                    .addFunctionWithReturn("getSnowLevelAt", pos -> LuaValue.valueOf(this.getWorld().getSnowLevel(ScriptVectorUtil.convertToVec3i(pos))))
+                    .addFunctionWithReturn("getBlockLightLevelAt", pos -> LuaValue.valueOf(this.getWorld().getBlockLightLevel(ScriptVectorUtil.convertToVec3i(pos))))
+                    .addFunctionWithReturn("getSkyLightLevelAt", pos -> LuaValue.valueOf(this.getWorld().getSkyLightLevel(ScriptVectorUtil.convertToVec3i(pos))))
+                    .addFunctionWithReturn("getTicks", () -> LuaValue.valueOf(this.getWorld().getTicks()))
+                    .setInGlobals(globals);
 
+            LuaLibrary.create("Debug")
+                    .addFunction("printToInfoLog", arg -> ModCore.info(arg.tojstring()))
+                    .addFunction("printToWarnLog", arg -> ModCore.warn(arg.tojstring()))
+                    .addFunction("printToErrorLog", arg -> ModCore.error(arg.tojstring()))
+                    .addFunction("printToPassengerDialog", arg -> this.getPassengers().stream()
+                            .filter(Entity::isPlayer)
+                            .map(Entity::asPlayer)
+                            .forEach(player -> player.sendMessage(PlayerMessage.direct(arg.tojstring()))))
+                    .setInGlobals(globals);
+
+            LuaLibrary.create("Utils")
+                    .addFunction("wait", this::luaWait)
+                    .setInGlobals(globals);
+
+            ScriptVectorUtil.VecUtil.setInGlobals(globals);
             LuaValue chunk = globals.load(luaScript);
             chunk.call();
 
             tickEvent = globals.get("tickEvent");
             if (tickEvent.isnil()) {
-                ModCore.error("Function 'tickEvent' is not Defined!");
+                ModCore.error(String.format("Function \"tickEvent\" in lua script %s is not defined!", identifier));
             }
 
             isLuaLoaded = true;
-            ModCore.info("Lua environment initialized and script loaded successfully");
+            ModCore.info(String.format("Lua environment from %s initialized and script loaded successfully", this.defID));
         }
         return false;
     }
@@ -329,203 +259,6 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
                 ModCore.error("An error occurred while preloading lua modules", e);
             }
         }
-    }
-
-    public void setLuaFunctions() {
-        luaFunction.set("getCG", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue control) {
-                float result = getControlGroup(control.tojstring());
-                return LuaValue.valueOf(result);
-            }
-        });
-        luaFunction.set("setCG", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue control, LuaValue val) {
-                setControlGroup(control.tojstring(), val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getPaint", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                String result = getCurrentTexture();
-                return LuaValue.valueOf(result);
-            }
-        });
-        luaFunction.set("setPaint", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue newTexture) {
-                setNewTexture(newTexture.tojstring());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getReadout", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue readout) {
-                float result = getReadout(readout.tojstring());
-                return LuaValue.valueOf(result);
-            }
-        });
-        luaFunction.set("setPerformance", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue performanceType, LuaValue newVal) {
-                setPerformance(performanceType.tojstring(), newVal.todouble());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("couplerEngaged", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue position, LuaValue newState) {
-                setCouplerEngaged(position.tojstring(), newState.toboolean());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setThrottle", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue val) {
-                setThrottleLua(val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setReverser", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue val) {
-                setReverserLua(val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setTrainBrake", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue val) {
-                setBrakeLua(val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setIndependentBrake", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue val) {
-                setIndependentBrakeLua(val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getThrottle", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                return LuaValue.valueOf(getThrottleLua());
-            }
-        });
-        luaFunction.set("getReverser", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                return LuaValue.valueOf(getReverserLua());
-            }
-        });
-        luaFunction.set("getTrainBrake", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                return LuaValue.valueOf(getTrainBrakeLua());
-            }
-        });
-        luaFunction.set("setSound", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue val) {
-//                setNewSound(val);
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setGlobal", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue control, LuaValue val) {
-                setGlobalControlGroup(control.tojstring(), val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setUnit", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue control, LuaValue val) {
-                setUnitControlGroup(control.tojstring(), val.tofloat());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("setText", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue table) {
-                textFieldDef(table);
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getTag", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                return LuaValue.valueOf(getTag());
-            }
-        });
-        luaFunction.set("getTrain", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                return getTrainConsist();
-            }
-        });
-        luaFunction.set("setIndividualCG", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue luaValue) {
-                setIndividualCG(luaValue);
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getIndividualCG", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue luaValue) {
-                return getIndividualCG(luaValue);
-            }
-        });
-        luaFunction.set("engineStartStop", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue luaValue) {
-                setTurnedOnLua(luaValue.toboolean());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("isTurnedOn", new LuaFunction() {
-            @Override
-            public LuaValue call() {
-                return LuaValue.valueOf(getEngineState());
-            }
-        });
-        luaFunction.set("setTag", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue tag) {
-                setEntityTag(tag.tojstring());
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("newParticle", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue luaValue) {
-                particleDefinition(luaValue);
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getPerformance", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue luaValue) {
-                return getPerformance(luaValue.tojstring());
-            }
-        });
-        luaFunction.set("setNBTTag", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue key, LuaValue value) {
-                setNBTTag(key.tojstring(), value);
-                return LuaValue.NIL;
-            }
-        });
-        luaFunction.set("getNBTTag", new LuaFunction() {
-            @Override
-            public LuaValue call(LuaValue key) {
-                return getNBTTag(key.tojstring());
-            }
-        });
     }
 
     public float getControlGroup(String control) {
@@ -567,25 +300,44 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
     }
 
     public float getReadout(String readout) {
-        getReadout();
-        return readoutState.get(readout);
+        Readouts readouts = Readouts.valueOf(readout.toUpperCase());
+        return readouts.getValue(this);
     }
 
-    public void setPerformance(String performanceType, double val) {
-        switch (performanceType) {
-            case "max_speed_kmh":
-                getDefinition().setMaxSpeed(val);
-                break;
-            case "tractive_effort_lbf":
-                getDefinition().setTraction(val);
-                break;
-            case "horsepower":
-                getDefinition().setHorsepower(val);
-                break;
-        }
+    public void luaWait(LuaValue sec, LuaValue func) {
+        float seconds = sec.tofloat();
+        Runnable runnable = () -> {
+            try {
+                func.call();
+            } catch (Exception e) {
+                ModCore.error("[Lua] Error while executing scheduled wait function: " + e.getMessage());
+            }
+        };
+
+        int ticks = Math.round(seconds * 20);
+        ScheduleEvent event = new ScheduleEvent(runnable, ticks, func);
+        schedule.add(event);
     }
 
-    public void setCouplerEngaged(String position, Boolean engaged) {
+    protected void setPerformance(LuaValue performanceType, LuaValue val) {
+        String type = performanceType.tojstring();
+        double newValue = val.todouble();
+//        switch (type) {
+//            case "max_speed_kmh":
+//                getDefinition().setMaxSpeed(newValue);
+//                break;
+//            case "tractive_effort_lbf":
+//                getDefinition().setTraction(newValue);
+//                break;
+//            case "horsepower":
+//                getDefinition().setHorsepower(newValue);
+//                break;
+//        }
+    }
+
+    public void setCouplerEngagedLua(LuaValue positionLua, LuaValue engagedLua) {
+        String position = positionLua.tojstring();
+        boolean engaged = engagedLua.toboolean();
         switch (position) {
             case "FRONT":
                 setCouplerEngaged(CouplerType.FRONT, engaged);
@@ -674,7 +426,7 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             String text = textField.get("text") != null ? textField.get("text").asString() : "";
 
             allOptions = new TextRenderOptions(
-                    font, text, resX, resY, align, flipped, textFieldId, fontSize, fontLength, fontGap, new ArrayList<>(), hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, offset, allStock
+                    font, text, resX, resY, align, flipped, textFieldId, fontSize, fontLength, fontGap, new ArrayList<>(), hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, offset, allStock, this.getDefinition()
             );
         }
 
@@ -682,29 +434,10 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             return;
         }
 
-        try {
-            textFields.add(allOptions);
-            textRenderOptions.put(allOptions.componentId, allOptions);
-
-            if (allOptions.global) {
-                setAllText(allOptions);
-            } else {
-                setText(allOptions);
-            }
-        } catch (IOException e) {
-            ModCore.error("An error occurred while creating text field %s | An error occurred while loading font %s | error: %s", allOptions.componentId, allOptions.id, e);
-        }
+        new ItemTypewriter.TypewriterPacket(this, allOptions).sendToServer();
     }
 
-    private Vec3d getVec3dmin (List<Vec3d> vectors) {
-        return vectors.stream().min(Comparator.comparingDouble(Vec3d::length)).orElse(null);
-    }
-
-    private Vec3d getVec3dmax (List<Vec3d> vectors) {
-        return vectors.stream().max(Comparator.comparingDouble(Vec3d::length)).orElse(null);
-    }
-
-    public void setAllText(TextRenderOptions options) {
+    public void setTextGlobal(TextRenderOptions options) {
         this.mapTrain(this, false, stock -> {
             if (stock == null) {
                 ModCore.error("Stock is null when setting text.");
@@ -714,36 +447,21 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
                 ModCore.error("Options is null when setting text.");
                 return;
             }
-            stock.setTextTrain(options);
+            if (stock.getDefinition().getModel().groups.keySet().stream().anyMatch(s -> s.contains(String.format("TEXTFIELD_%s", options.componentId)))) {
+                ((EntityScriptableRollingStock)stock).setText(options);
+            }
         });
     }
 
-    public void setText(TextRenderOptions options) throws IOException {
+    public void setText(TextRenderOptions options) {
+        RenderText renderText = RenderText.getInstance(String.valueOf(this.getUUID()));
         String currentText = componentTextMap.get(options.componentId);
-        if (!options.newText.equals(currentText)) {
-            LinkedHashMap<String, OBJGroup> group = this.getDefinition().getModel().groups;
-            for (Map.Entry<String, OBJGroup> entry : group.entrySet()) {
-                if (entry.getKey().contains(String.format("TEXTFIELD_%s", options.componentId))) {
-                    EntityRollingStockDefinition.Position getPosition = getDefinition().normals.get(entry.getKey());
-                    Vec3d vec3dmin = getVec3dmin(getPosition.vertices);
-                    Vec3d vec3dmax = getVec3dmax(getPosition.vertices);
-                    Vec3d vec3dNormal = getPosition.normal;
-                    RenderText renderText = RenderText.getInstance(String.valueOf(getUUID()));
-                    File file = new File(options.id.getPath());
-                    String jsonPath = file.getName();
-                    Identifier jsonId = options.id.getRelative(jsonPath.replaceAll(".png", ".json"));
-                    InputStream json = jsonId.getResourceStream();
-
-                    renderText.setText(
-                            options.componentId, options.newText, options.id, vec3dmin, vec3dmax, json,
-                            options.resX, options.resY, options.align, options.flipped, options.fontSize, options.fontX,
-                            options.fontGap, new Identifier(ImmersiveRailroading.MODID, "not_needed"), vec3dNormal, options.hexCode, options.fullbright, options.textureHeight, options.useAlternative, options.lineSpacingPixels, options.offset, entry.getKey()
-                    );
-
-                    componentTextMap.put(options.componentId, options.newText);
-                }
-            }
+        if (options.newText.equals(currentText)) {
+            return;
         }
+        renderText.setText(options, this.getDefinition());
+        componentTextMap.put(options.componentId, options.newText);
+        textRenderOptions.put(options.componentId, options);
     }
 
     public LuaValue getTrainConsist() {
@@ -785,6 +503,23 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             }
             table.set(i + 1, luaUnit);
         }
+        return table;
+    }
+
+    private LuaTable getCoupled(LuaValue type) {
+        LuaTable table = new LuaTable();
+        String sType = type.tojstring();
+
+        EntityCoupleableRollingStock stock = getCoupled(sType.equalsIgnoreCase("front") ? CouplerType.FRONT : CouplerType.BACK);
+        CouplerType coupler = this.getCouplerFor(stock);
+        UUID uuid = stock.getUUID();
+        String defID = stock.defID;
+        String tag = stock.tag;
+
+        table.set("coupler", coupler.toString());
+        table.set("uuid", uuid.toString());
+        table.set("defID", defID);
+        table.set("tag", tag);
         return table;
     }
 
@@ -835,6 +570,20 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             return LuaValue.valueOf(0);
         }
     }
+    /**
+     * Good Idea, awful Implementation
+     */
+
+//    private LuaValue keyPressed(Varargs args) {
+//        int numberOfArgs = args.narg();
+//        List<Integer> keys = new ArrayList<>();
+//        for (int i = 1; i <= numberOfArgs; i++) {
+//            int key = Keyboard.getKeyIndex(args.subargs(i).tojstring());
+//            keys.add(key);
+//        }
+//        boolean pressed = keys.stream().allMatch(Keyboard::isKeyDown);
+//        return LuaValue.valueOf(pressed);
+//    }
 
 
     public void setNewSound(LuaValue result) {
@@ -858,8 +607,9 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
         }
     }
 
-    private LuaValue getPerformance(String type) {
-        switch (type) {
+    protected LuaValue getPerformance(LuaValue type) {
+        String strType = type.tojstring();
+        switch (strType) {
             case "max_speed_kmh":
                 return LuaValue.valueOf(getDefinition().getMaxSpeed());
             case "horsepower":
@@ -868,20 +618,6 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
                 return LuaValue.valueOf(getDefinition().getTraction());
             default:
                 return LuaValue.valueOf(0);
-        }
-    }
-
-    private void accept(Boolean key, List<TextRenderOptions> options) {
-        if (key.equals(true)) {
-            options.forEach(this::setAllText);
-        } else {
-            try {
-                for (TextRenderOptions option : options) {
-                    setText(option);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 
@@ -1092,32 +828,32 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
         }
     }
 
-    public void setThrottleLua(float val) {
+    public void setThrottleLua(LuaValue val) {
 
     }
 
-    public void setReverserLua(float val) {
+    public void setReverserLua(LuaValue val) {
 
     }
 
-    public void setBrakeLua(float val) {
+    public void setTrainBrakeLua(LuaValue val) {
 
     }
 
-    public void setIndependentBrakeLua(float val) {
+    public void setIndependentBrakeLua(LuaValue val) {
 
     }
 
-    public float getThrottleLua() {
-        return 0;
+    public LuaValue getThrottleLua() {
+        return LuaValue.valueOf(0);
     }
 
-    public float getReverserLua() {
-        return 0;
+    public LuaValue getReverserLua() {
+        return LuaValue.valueOf(0);
     }
 
-    public float getTrainBrakeLua() {
-        return 0;
+    public LuaValue getTrainBrakeLua() {
+        return LuaValue.valueOf(0);
     }
 
     @Override
@@ -1126,17 +862,7 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
         wakeLuaScriptCalled = true;
     }
 
-    public void setTurnedOnLua(boolean b) {
-    }
-
-
-    @Override
-    public void setTextTrain(TextRenderOptions options) {
-        try {
-            setText(options);
-        } catch (IOException e) {
-            ModCore.error("An error occurred while creating textfields", e);
-        }
+    public void setTurnedOnLua(LuaValue b) {
     }
 
     public static class Data {
@@ -1299,6 +1025,48 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
         return LuaValue.NIL;  // If the type doesn't match, return Lua NIL
     }
 
+    private static class MapTextRenderOptionsMapper implements TagMapper<Map<String, TextRenderOptions>> {
+
+        @Override
+        public TagAccessor<Map<String, TextRenderOptions>> apply(Class<Map<String, TextRenderOptions>> type, String fieldName, TagField tag) throws SerializationException {
+            return new TagAccessor<>(
+                    (d, o) -> {
+                        d.setMap(fieldName, o, k -> k, v -> new TagCompound()
+                                .setString("id", v.id.toString())
+                                .setString("newText", v.newText)
+                                .setInteger("resX", v.resX)
+                                .setInteger("resY", v.resY)
+                                .setEnum("align", v.align)
+                                .setBoolean("flipped", v.flipped)
+                                .setString("componentId", v.componentId)
+                                .setInteger("fontSize", v.fontSize)
+                                .setInteger("fontX", v.fontX)
+                                .setInteger("fontGap", v.fontGap)
+                                .setList("fontId", v.fontId, i -> new TagCompound().setInteger("id", i))
+                                .setString("hexCode", v.hexCode)
+                                .setBoolean("fullbright", v.fullbright)
+                                .setInteger("textureHeight", v.textureHeight)
+                                .setBoolean("useAlternative", v.useAlternative)
+                                .setInteger("lineSpacingPixels", v.lineSpacingPixels)
+                                .setInteger("offset", v.offset)
+                                .setBoolean("global", v.global)
+                                .setList("linked", v.linked, l -> new TagCompound().setString("l", l))
+                                .setBoolean("selectable", v.selectable)
+                                .setBoolean("unique", v.unique)
+                                .setBoolean("isNumberPlate", v.isNumberPlate)
+                                .setString("lastText", v.lastText)
+                                .setList("filter", v.filter, f -> new TagCompound().setString("f", f))
+                                .setBoolean("assigned", v.assigned)
+                                .setVec3d("min", v.min)
+                                .setVec3d("max", v.max)
+                                .setVec3d("normal", v.normal)
+                                .setString("groupName", v.groupName));
+                    },
+                    (d) -> d.getMap(fieldName, k -> k, TextRenderOptions::new)
+            );
+        }
+    }
+
     private static class LuaDataMapper implements TagMapper<Map<String, Object>> {
         @Override
         public TagAccessor<Map<String, Object>> apply(Class<Map<String, Object>> type, String fieldName, TagField tag) {
@@ -1350,4 +1118,30 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             return null;
         }
     }
+
+    private static class ScheduleEvent {
+        public Runnable runnable;
+        public Integer ticks;
+        public LuaValue func;
+
+        public ScheduleEvent(Runnable runnable, Integer ticks, LuaValue func) {
+            this.runnable = runnable;
+            this.ticks = ticks;
+            this.func = func;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            ScheduleEvent that = (ScheduleEvent) object;
+            return func.equals(that.func);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(func);
+        }
+    }
+
 }

@@ -514,7 +514,4 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 						((getTickCount() - gotElectricalPowerTick)/(int)((Math.random()+2) * 4)) % 2 == 0
 		);
 	}
-
-	public void setTextTrain(TextRenderOptions options) {
-	}
 }

@@ -1,13 +1,16 @@
 package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.model.animation.StockAnimation;
+import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
+import cam72cam.mod.ModCore;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.VertexBuffer;
 import cam72cam.mod.render.opengl.*;
 import cam72cam.mod.resource.Identifier;
-import org.lwjgl.opengl.GLContext;
 import util.Matrix4;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +45,6 @@ public class RenderText {
         int fontSize;
         int fontLength;
         int fontGap;
-        Identifier overlayId;
         String hexCode;
         Font myFont;
         boolean fontInitialized = false;
@@ -69,7 +71,7 @@ public class RenderText {
         TextField(String text, Identifier id, Vec3d vec3dmin, Vec3d vec3dmax,
                   InputStream json, int resX, int resY, Font.TextAlign align,
                   boolean flipDir, int fontSize, int fontLength, int fontGap,
-                  Identifier overlayId, Vec3d normal, String hexCode, boolean fullbright, int texY, boolean useAlternative, int lineSpacingPixels, int offset) {
+                  Vec3d normal, String hexCode, boolean fullbright, int texY, boolean useAlternative, int lineSpacingPixels, int offset) {
             this.text = text;
             this.id = id;
             this.vec3dmin = vec3dmin;
@@ -82,7 +84,6 @@ public class RenderText {
             this.fontSize = fontSize;
             this.fontLength = fontLength;
             this.fontGap = fontGap;
-            this.overlayId = overlayId;
             this.normal = normal;
             this.hexCode = hexCode;
             this.fullbright = fullbright;
@@ -101,20 +102,33 @@ public class RenderText {
         }
     }
 
-    public void setText(String componentId, String text, Identifier id, Vec3d vec3dmin, Vec3d vec3dmax,
-                        InputStream json, int resX, int resY, Font.TextAlign align,
-                        boolean flipDir, int fontSize, int fontLength, int fontGap,
-                        Identifier overlayId, Vec3d normal, String hexCode, boolean fullbright, int texY, boolean useAlternative, int lineSpacingPixels, int offset, String entry) {
-        TextField textData = new TextField(text, id, vec3dmin, vec3dmax, json, resX, resY, align, flipDir, fontSize, fontLength, fontGap, overlayId, normal, hexCode, fullbright, texY, useAlternative, lineSpacingPixels, offset);
-        textFields.put(componentId, textData);
+    public void setText(TextRenderOptions options, EntityRollingStockDefinition def) {
+        InputStream json;
+        try {
+            if (options.id != null) {
+                File file = new File(options.id.getPath());
+                String jsonPath = file.getName();
+                json = options.id.getRelative(jsonPath.replaceAll(".png", ".json")).getResourceStream();
+            }
+            else {
+                EntityRollingStockDefinition.Fonts fonts = def.fontDef.get(options.fontId.get(0));
+                File file = new File(fonts.font.getPath());
+                String jsonPath = file.getName();
+                json = fonts.font.getRelative(jsonPath.replaceAll(".png", ".json")).getResourceStream();
+            }
+        } catch (IOException e) {
+            ModCore.error("Couldn't load json data for font %s. Error: %s", options.id, e);
+            return;
+        }
+
+        TextField textData;
+        textData = new TextField(options.newText, options.id, options.min, options.max, json, options.resX, options.resY, options.align, options.flipped, options.fontSize, options.fontX, options.fontGap, options.normal, options.hexCode, options.fullbright, options.textureHeight, options.useAlternative, options.lineSpacingPixels, options.offset);
+        textFields.put(options.componentId, textData);
         textData.markDirty();
-        precomputedGroupNames.put(componentId, entry);
+        precomputedGroupNames.put(options.componentId, options.groupName);
     }
 
     public void textRender(RenderState state, List<StockAnimation> animations, EntityRollingStock stock, float partialTicks) {
-        if (!GLContext.getCapabilities().OpenGL11) {
-            return;
-        }
 
         for (Map.Entry<String, TextField> entry : textFields.entrySet()) {
             TextField field = entry.getValue();

@@ -4,6 +4,7 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.items.ItemPaintBrush;
+import cam72cam.immersiverailroading.items.ItemTypewriter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.Particles;
@@ -13,6 +14,7 @@ import cam72cam.immersiverailroading.multiblock.*;
 import cam72cam.immersiverailroading.net.*;
 import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
+import cam72cam.immersiverailroading.registry.LuaAugmentDefinition;
 import cam72cam.immersiverailroading.render.CustomParticle;
 import cam72cam.immersiverailroading.render.SmokeParticle;
 import cam72cam.immersiverailroading.render.block.RailBaseModel;
@@ -21,10 +23,7 @@ import cam72cam.immersiverailroading.render.multiblock.MBBlueprintRender;
 import cam72cam.immersiverailroading.render.multiblock.TileMultiblockRender;
 import cam72cam.immersiverailroading.render.rail.RailPreviewRender;
 import cam72cam.immersiverailroading.thirdparty.CompatLoader;
-import cam72cam.immersiverailroading.tile.TileMultiblock;
-import cam72cam.immersiverailroading.tile.TileRail;
-import cam72cam.immersiverailroading.tile.TileRailGag;
-import cam72cam.immersiverailroading.tile.TileRailPreview;
+import cam72cam.immersiverailroading.tile.*;
 import cam72cam.immersiverailroading.util.IRFuzzy;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.ModCore;
@@ -45,6 +44,9 @@ import cam72cam.mod.sound.Audio;
 import cam72cam.mod.text.Command;
 
 import java.util.function.Function;
+
+import static cam72cam.immersiverailroading.gui.helpers.MouseHelper.mouseClicked;
+import static cam72cam.immersiverailroading.gui.helpers.MouseHelper.updateMousePosition;
 
 public class ImmersiveRailroading extends ModCore.Mod {
     public static final String MODID = "immersiverailroading";
@@ -87,6 +89,9 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(ClientPartDragging.SeatPacket::new, PacketDirection.ClientToServer);
 				Packet.register(GuiBuilder.ControlChangePacket::new, PacketDirection.ClientToServer);
 				Packet.register(ItemPaintBrush.PaintBrushPacket::new, PacketDirection.ClientToServer);
+				Packet.register(TileRailBase.AugmentPacket::new, PacketDirection.ClientToServer);
+				Packet.register(ItemTypewriter.TypewriterPacket::new, PacketDirection.ClientToServer);
+				Packet.register(ItemTypewriter.TypewriterSyncPacket::new, PacketDirection.ServerToClient);
 
 				ServerChronoState.register();
 
@@ -105,6 +110,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				ConfigFile.sync(ConfigPermissions.class);
 
 				DefinitionManager.initDefinitions();
+				LuaAugmentDefinition.loadJsonData();
 				break;
 			case FINALIZE:
 				Permissions.register();
@@ -145,6 +151,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				ItemRender.register(IRItems.ITEM_RADIO_CONTROL_CARD, new Identifier(MODID, "items/radio_card"));
 				ItemRender.register(IRItems.ITEM_MANUAL, new Identifier(MODID, "items/engineerslexicon"));
 				ItemRender.register(IRItems.ITEM_TRACK_EXCHANGER, new TrackExchangerModel());
+				ItemRender.register(IRItems.ITEM_TYPEWRITER, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/typewriter.obj"), new Vec3d(0.5, 0.5, 0.5), 1 ));
 
 				IEntityRender<EntityMoveableRollingStock> stockRender = new IEntityRender<EntityMoveableRollingStock>() {
 					@Override
@@ -212,6 +219,10 @@ public class ImmersiveRailroading extends ModCore.Mod {
 					if (!MinecraftClient.isReady()) {
 						return true;
 					}
+
+					updateMousePosition(evt);
+					mouseClicked(evt.x, evt.y, evt.button);
+
 					Entity riding = MinecraftClient.getPlayer().getRiding();
 					if (!(riding instanceof EntityRollingStock)) {
 						return true;

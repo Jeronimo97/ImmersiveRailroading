@@ -2,10 +2,7 @@ package cam72cam.immersiverailroading.registry;
 
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
-import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
-import cam72cam.immersiverailroading.entity.ObjectValue;
-import cam72cam.immersiverailroading.model.SetSound;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.library.Gauge;
@@ -16,8 +13,6 @@ import cam72cam.immersiverailroading.util.FluidQuantity;
 import cam72cam.mod.resource.Identifier;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     public SoundDefinition idle;
@@ -29,10 +24,6 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     private int notches;
     private float enginePitchRange;
     public boolean hasDynamicTractionControl;
-    private SoundDefinition oldValue;
-    private String soundsIdle = "idle";
-    private String soundsRunning = "running";
-    private SoundDefinition oldRunning;
 
     public LocomotiveDieselDefinition(String defID, DataBlock data) throws Exception {
         super(LocomotiveDiesel.class, defID, data);
@@ -109,15 +100,5 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
 
     public float getEnginePitchRange() {
         return enginePitchRange;
-    }
-
-    @Override
-    public void setSounds(List<Map<String, DataBlock.Value>> newSound, EntityMoveableRollingStock stock) {
-        for (Map<String, DataBlock.Value> soundDef : newSound) {
-            ObjectValue objectValue = new ObjectValue(soundsIdle);
-            ObjectValue objectValueRunning = new ObjectValue(soundsRunning);
-            SetSound setSound = SetSound.getInstance(String.valueOf(stock.getUUID()), defID);
-            setSound.newSound(soundDef, objectValue, setSound, objectValueRunning, this);
-        }
     }
 }

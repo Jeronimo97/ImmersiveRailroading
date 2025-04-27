@@ -234,7 +234,7 @@ public abstract class ValveGear {
                     pitchStroke = !pitchStroke;
 
                     double speed = Math.abs(stock.getCurrentSpeed().minecraft());
-                    double maxSpeed = Math.abs(stock.getDefinition().getMaxSpeed(stock.gauge).minecraft());
+                    double maxSpeed = Math.abs(stock.getDefinition().getScriptedMaxSpeed(stock.gauge, stock).minecraft());
                     if (maxSpeed == 0) {
                         maxSpeed = 200;
                     }
