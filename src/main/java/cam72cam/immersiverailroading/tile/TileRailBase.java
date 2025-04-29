@@ -40,6 +40,8 @@ import cam72cam.mod.text.PlayerMessage;
 import cam72cam.mod.util.Facing;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.mod.util.SingleCache;
+import cam72cam.mod.world.World;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.luaj.vm2.Globals;
@@ -659,20 +661,22 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
 	@Override
 	public void update() {
+	    World world = this.getWorld();
 		if (this.getWorld().isClient) {
 			return;
 		}
 		
 		ticksExisted += 1;
-
+		Vec3i pos = getPos();
+		
 		if (ConfigDebug.snowAccumulateRate > 0 && ((int) (Math.random() * ConfigDebug.snowAccumulateRate * 10) == 0)) {
-			if (getWorld().isSnowing(getPos()) && getWorld().canSeeSky(getPos().up())) {
+			if (world.isSnowing(pos) && world.canSeeSky(pos.up())) {
 				this.handleSnowTick();
 			}
 		}
 		if (ConfigDebug.snowMeltRate != 0 && this.snowLayers != 0) {
 			if ((int) (Math.random() * ConfigDebug.snowMeltRate * 10) == 0) {
-				if (!getWorld().isSnowing(getPos())) {
+				if (!world.isSnowing(pos)) {
 					this.setSnowLayers(this.snowLayers -= 1);
 				}
 			}
@@ -683,25 +687,25 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			// Wont fire on first due to incr above
 			blockUpdate = false;
 
-			if (this.getParent() == null || !getWorld().isBlockLoaded(this.getParent())) {
+			if (this.getParent() == null || !world.isBlockLoaded(this.getParent())) {
 				return;
 			}
 
 			if (this.getParentTile() == null) {
 				// Fire update event
-				if (IRBlocks.BLOCK_RAIL_GAG.tryBreak(getWorld(), getPos(), null)) {
-					getWorld().breakBlock(getPos());
+				if (IRBlocks.BLOCK_RAIL_GAG.tryBreak(world, pos, null)) {
+					world.breakBlock(pos);
 				}
 				return;
 			} else {
 				augmentGauge = getParentTile().info.settings.gauge;
 			}
 			
-			if (Config.ConfigDamage.requireSolidBlocks && this instanceof TileRail && getWorld().isBlock(getPos(), IRBlocks.BLOCK_RAIL)) {
+			if (Config.ConfigDamage.requireSolidBlocks && this instanceof TileRail && world.isBlock(pos, IRBlocks.BLOCK_RAIL)) {
 				double floating = ((TileRail)this).percentFloating();
 				if (floating > ConfigBalance.trackFloatingPercent) {
 					if (this.tryBreak(null)) {
-						getWorld().breakBlock(getPos());
+						world.breakBlock(pos);
 					}
 					return;
 				}
@@ -714,7 +718,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
 		if (overhead != null && ticksExisted % 5 == 0) {
 			SimulationState state = overhead.getCurrentState();
-			if (state == null || !state.trackToUpdate.contains(getPos())) {
+			if (state == null || !state.trackToUpdate.contains(pos)) {
 				overhead = null;
 			}
 		}
@@ -743,7 +747,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
 				for (Facing side : Facing.values()) {
-					IInventory inventory = getWorld().getInventory(getPos().offset(side));
+					IInventory inventory = world.getInventory(pos.offset(side));
 					if (inventory != null) {
 						inventory.transferAllTo(freight.cargoItems);
 					}
@@ -757,7 +761,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
 				for (Facing side : Facing.values()) {
-					IInventory inventory = getWorld().getInventory(getPos().offset(side));
+					IInventory inventory = world.getInventory(pos.offset(side));
 					if (inventory != null) {
 						inventory.transferAllFrom(freight.cargoItems);
 					}
@@ -771,7 +775,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
                 for (Facing side : Facing.values()) {
-                	List<ITank> tanks = getWorld().getTank(getPos().offset(side));
+                	List<ITank> tanks = world.getTank(pos.offset(side));
                 	if (tanks != null) {
                 		tanks.forEach(tank -> stock.theTank.drain(tank, 100, false));
 					}
@@ -785,7 +789,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
                 for (Facing side : Facing.values()) {
-                    List<ITank> tanks = getWorld().getTank(getPos().offset(side));
+                    List<ITank> tanks = world.getTank(pos.offset(side));
                     if (tanks != null) {
 						tanks.forEach(tank -> stock.theTank.fill(tank, 100, false));
 					}
@@ -808,7 +812,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			case LOCO_CONTROL: {
 				Locomotive loco = this.getStockNearBy(Locomotive.class);
 				if (loco != null) {
-					int power = getWorld().getRedstone(getPos());
+					int power = world.getRedstone(pos);
 
 					switch (controlMode) {
 						case THROTTLE:
@@ -891,7 +895,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			case ACTUATOR: {
 				EntityRollingStock stock = this.getStockNearBy(EntityRollingStock.class);
 				if (stock != null) {
-					float value = getWorld().getRedstone(getPos())/15f;
+					float value = world.getRedstone(pos)/15f;
 					for (Door d : stock.getDefinition().getModel().getDoors()) {
 						if (d.type == Door.Types.EXTERNAL) {
 							stock.setControlPosition(d, value);
