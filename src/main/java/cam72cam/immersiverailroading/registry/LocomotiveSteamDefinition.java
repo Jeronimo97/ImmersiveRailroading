@@ -68,9 +68,9 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
         pressure = sounds.getValue("pressure").asIdentifier();
         bell = SoundDefinition.getOrDefault(sounds, "bell");
         cylinder_drain = sounds.getValue("cylinder_drain").asIdentifier();
-        pistonDiameter = Math.ceil(properties.getValue("piston_diameter").asDouble(0.6));
-        pistonStroke = Math.ceil(properties.getValue("piston_stroke").asDouble(0.66));
-        wheelDiameter = Math.ceil(properties.getValue("wheel_diameter").asDouble(1.4));
+        pistonDiameter = Math.ceil(properties.getValue("piston_diameter").asDouble());
+        pistonStroke = Math.ceil(properties.getValue("piston_stroke").asDouble());
+        wheelDiameter = properties.getValue("wheel_diameter").asDouble();
         cylinderCount = properties.getValue("cylinder_count").asInteger(2);
 
         List<DataBlock> quilling = sounds.getBlocks("quilling");

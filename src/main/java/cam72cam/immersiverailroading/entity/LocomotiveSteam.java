@@ -132,18 +132,47 @@ public class LocomotiveSteam extends Locomotive {
         if (getDefinition().isCabCar())
             return 0;
 
+        double pistonStroke = getDefinition().getPistonStroke(gauge);
+        double pistonDiameter = getDefinition().getPistonDiameter(gauge);
+        double wheelDiameter = getDefinition().getWheelDiameter(gauge);
+        double pistonDiameterM = pistonDiameter * 0.01;
+        double wheelDiameterM = wheelDiameter * 0.01;
+
+        double pistonSpeed = 125.33f * Math.abs(getCurrentSpeed().metersPerSecond()) * pistonStroke
+                / wheelDiameter * 0.005f;
+
+        double backPressure = (Math.pow(pistonDiameterM, 2) * pistonSpeed * getChestPressure())
+                / ((1 + 1) * wheelDiameterM);
+
+        double pistonDisplacement = 0.5 * Math.PI * pistonStroke * Math.pow(pistonDiameter, 2);
+
+        double expansion = (pistonDisplacement + 0.05 * pistonDisplacement)
+                / (Math.abs(getReverser()) * pistonDisplacement + 0.05 * pistonDisplacement);
+
+        double effectivePressure =
+                getChestPressure() / expansion * (1 + Math.log(expansion)) - backPressure;
+
+        double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
+                * Math.pow(pistonDiameter * 0.01, 2) * pistonStroke * 0.01 * 1.02
+                * effectivePressure / (2 * wheelDiameter * 0.01) * 1000;
+
         double tractionN = Math.pow(this.getDefinition().getPistonDiameter(gauge), 2)
                 * this.getDefinition().getPistonStroke(gauge) * 106868 * getMaxChestPressure()
                 * Math.pow(getChestPressurePercent(), 3 - 2 * Math.abs(getReverser()))
                 / (this.getDefinition().getWheelDiameter(gauge) * 2) * 0.85
                 * this.getDefinition().getCylinderCount() * Math.pow(getReverser(), 0.5);
 
-        // System.out.println("Speed: " + speed.metric());
-        // System.out.println("Zugkraft alt: " + traction);
-        // System.out.println("Zugkraft lbf: " + tractionlbf);
-        // System.out.println("Zugkraft kN: " + tractionN);
-        // System.out.println(getMaxWeight());
-        return tractionN;
+        System.out.println("Piston Stroke: " + pistonStroke);
+        System.out.println("Piston Diameter: " + pistonDiameter);
+        System.out.println("Wheel Diameter: " + wheelDiameter);
+        System.out.println("Piston Speed: " + pistonSpeed);
+        System.out.println("Backpressure: " + backPressure);
+        System.out.println("Piston displacement: " + pistonDisplacement);
+        System.out.println("Expansionrate: " + expansion);
+        System.out.println("Effective pressure: " + effectivePressure);
+        System.out.println("Applied Tractive Effort: " + appliedTraction);
+
+        return Math.copySign(appliedTraction, getReverser());
     }
 
     @Override
@@ -188,7 +217,8 @@ public class LocomotiveSteam extends Locomotive {
 
         // TODO Verbrauch Schieberkastendruck
         chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
-                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
+                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
+                * getDefinition().getWheelDiameter(gauge) / 100);
     }
 
     public double getHorsePower(final Speed speed) {
