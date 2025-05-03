@@ -432,7 +432,7 @@ public abstract class Locomotive extends FreightTank {
             return 0;
 
         double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
-        return 0; // Math.copySign((adhesionFactor - 1) / 2, getReverser());
+        return Math.copySign((adhesionFactor - 1) / 2, getReverser());
     }
 
     public double getTractiveEffortNewtons(final Speed speed) {
@@ -448,8 +448,8 @@ public abstract class Locomotive extends FreightTank {
         }
 
         // System.out.println("Weight: " + getMaxWeight());
-        System.out.println("Static: " + getStaticTractiveEffort());
-        System.out.println("Applied: " + appliedTractiveEffort);
+        // System.out.println("Static: " + getStaticTractiveEffort());
+        // System.out.println("Applied: " + appliedTractiveEffort);
         // System.out.println("Slipping: " + slipping);
         return appliedTractiveEffort;
     }

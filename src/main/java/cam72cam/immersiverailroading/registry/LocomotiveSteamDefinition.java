@@ -68,9 +68,9 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
         pressure = sounds.getValue("pressure").asIdentifier();
         bell = SoundDefinition.getOrDefault(sounds, "bell");
         cylinder_drain = sounds.getValue("cylinder_drain").asIdentifier();
-        pistonDiameter = Math.ceil(properties.getValue("piston_diameter").asDouble());
-        pistonStroke = Math.ceil(properties.getValue("piston_stroke").asDouble());
-        wheelDiameter = properties.getValue("wheel_diameter").asDouble();
+        pistonDiameter = properties.getValue("piston_diameter").asDouble(0.6);
+        pistonStroke = properties.getValue("piston_stroke").asDouble(0.66);
+        wheelDiameter = properties.getValue("wheel_diameter").asDouble(1.4);
         cylinderCount = properties.getValue("cylinder_count").asInteger(2);
 
         List<DataBlock> quilling = sounds.getBlocks("quilling");
@@ -122,15 +122,15 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     }
 
     public double getPistonDiameter(final Gauge gauge) {
-        return Math.ceil(pistonDiameter * gauge.scale());
+        return pistonDiameter * gauge.scale();
     }
 
     public double getPistonStroke(final Gauge gauge) {
-        return Math.ceil(pistonStroke * gauge.scale());
+        return pistonStroke * gauge.scale();
     }
 
     public double getWheelDiameter(final Gauge gauge) {
-        return Math.ceil(wheelDiameter * gauge.scale());
+        return wheelDiameter * gauge.scale();
     }
 
     public int getCylinderCount() {
