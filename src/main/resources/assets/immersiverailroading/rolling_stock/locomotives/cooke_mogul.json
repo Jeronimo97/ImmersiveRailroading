@@ -12,7 +12,11 @@
 		"tractive_effort_lbf": 13770,
 		"max_speed_kmh": 48,
 		"valve_gear": "stephenson",
-		"weight_kg": 28690
+		"weight_kg": 28690,
+		"piston_diameter": 0.483,
+		"piston_stroke": 0.61,
+		"wheel_diameter": 1.37,
+		"cylinder_count": 2
 	},
 	"firebox": {
 		"slots": 6,

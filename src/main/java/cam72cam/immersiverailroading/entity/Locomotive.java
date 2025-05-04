@@ -1,5 +1,7 @@
 package cam72cam.immersiverailroading.entity;
 
+import static cam72cam.immersiverailroading.library.PhysicalMaterials.STEEL;
+
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
@@ -411,40 +413,25 @@ public abstract class Locomotive extends FreightTank{
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
     protected final double getStaticTractiveEffort() {
-        return this.getDefinition().getStartingTractionNewtons(gauge) * slipCoefficient()
-                * (4 / getDefinition().factorOfAdhesion())
+        if (this.getDefinition().getStartingTractionNewtons(gauge) != 0)
+            return this.getDefinition().getStartingTractionNewtons(gauge)
+                    * Config.ConfigBalance.tractionMultiplier * (slipping ? 0.5 : 1);
+        return (Config.ConfigBalance.FuelRequired ? this.getWeight() : this.getMaxWeight()) * 9.81f
+                * (slipping ? STEEL.kineticFriction(STEEL) / 2 : STEEL.staticFriction(STEEL))
+                * slipCoefficient() * (4 / getDefinition().factorOfAdhesion())
                 * Config.ConfigBalance.tractionMultiplier;
     }
 	
     protected double simulateWheelSlip() {
-        slipping =
-                Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) > getStaticTractiveEffort();
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
+        double staticTractiveEffort = getStaticTractiveEffort();
+        slipping = appliedTractiveEffort > staticTractiveEffort;
 
         if (cogging || !slipping)
             return 0;
 
-        double adhesionFactor =
-                Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) / getStaticTractiveEffort();
+        double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
         return Math.copySign((adhesionFactor - 1) / 2, getReverser());
-    }
-    
-    public double getFrictionForce(final Speed speed) {
-        double[] trainWeight = {
-                0
-        };
-        getTrain().forEach(st -> {
-            if (Config.isFuelRequired(gauge)) {
-                trainWeight[0] += st.getWeight();
-            } else {
-                trainWeight[0] += st.getMaxWeight();
-            }
-        });
-
-        double rollFriction = 0.002f * trainWeight[0] * 9.81f;
-        // density = 1.25, c_w = 0.7, area = 10 m^2
-        double airFriction = 4.38f * Math.pow(Math.abs(speed.metersPerSecond()), 2);
-
-        return (rollFriction + airFriction) * Config.ConfigBalance.frictionMultiplier;
     }
 	
     public double getTractiveEffortNewtons(final Speed speed) {
@@ -454,15 +441,11 @@ public abstract class Locomotive extends FreightTank{
             return 0;
 
         double appliedTractiveEffort = getAppliedTractiveEffort(speed);
-        double frictionForce = 0; //getFrictionForce(speed);
-
-        if (frictionForce > Math.abs(appliedTractiveEffort))
-            return 0;
 
         if (slipping) {
             appliedTractiveEffort *= 0.5;
         }
-        return appliedTractiveEffort - Math.copySign(frictionForce, appliedTractiveEffort);
+        return appliedTractiveEffort;
     }
 
 	@Override

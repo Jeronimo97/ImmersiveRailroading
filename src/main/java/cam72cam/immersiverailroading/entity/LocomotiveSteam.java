@@ -120,19 +120,23 @@ public class LocomotiveSteam extends Locomotive {
 		return burnMax;
 	}
 
-	@Override
-	public double getAppliedTractiveEffort(final Speed speed) {
+    @Override
+    public double getAppliedTractiveEffort(Speed speed) {
         if (getDefinition().isCabCar())
             return 0;
+        double expansion = 1.05 / (Math.abs(getReverser()) * (Math.abs(getReverser()) + 0.05));
 
-        // System.out.println("Leistung: " + getHorsePower(speed));
-        double traction = Math.copySign(getHorsePower(speed) * 0.7457f
-                / Math.max(Math.abs(speed.metric()),
-                        this.getDefinition().getMaxSpeed(gauge).metric() * 0.38f)
-                * 7200 * this.getDefinition().powerMultiplier, getReverser());
+        double effectivePressure = getChestPressure() / expansion * (1 + Math.log(expansion));
 
-        // System.out.println("Zugkraft: " + traction);
-        return traction;
+        double backPressure = effectivePressure
+                * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(getReverser()));
+
+        double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
+                * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
+                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
+                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000 * 1.5;
+
+        return appliedTraction * Math.copySign(1, getReverser());
     }
 	
 	@Override
@@ -153,11 +157,10 @@ public class LocomotiveSteam extends Locomotive {
     private void chestPressureCalc() {
         // Anstieg Schieberkastendruck
         if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure +=
-                    0.06f * Math.pow(
-                            (Config.isFuelRequired(gauge) ? getBoilerPressure()
-                                    : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f - 0.5f,
-                            0.5f) * getThrottle();
+            chestPressure += 0.06f
+                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
+                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
+                    * getThrottle() * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
         }
 
         // Abfall Schieberkastendruck
@@ -171,10 +174,6 @@ public class LocomotiveSteam extends Locomotive {
             if (slipping) {
                 chestPressure -= 0.1f; // wenn Schleudert
             }
-            if (isSliding()) {
-                System.out.println("Sliding!");
-                chestPressure -= 0.1f; // wieder entfernen?
-            }
             if (getChestPressure() < 0) {
                 chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
             }
@@ -182,7 +181,8 @@ public class LocomotiveSteam extends Locomotive {
 
         // TODO Verbrauch Schieberkastendruck
         chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
-                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI * 1.4f);
+                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
+                * getDefinition().getWheelDiameter(gauge));
     }
     
     public double getHorsePower(final Speed speed) {
