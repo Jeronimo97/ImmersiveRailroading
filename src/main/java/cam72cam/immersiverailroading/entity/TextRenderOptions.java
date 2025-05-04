@@ -1,9 +1,7 @@
 package cam72cam.immersiverailroading.entity;
 
-import cam72cam.immersiverailroading.floor.Mesh;
 import cam72cam.immersiverailroading.items.ItemTypewriter;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
-import cam72cam.mod.ModCore;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
 import cam72cam.mod.resource.Identifier;
@@ -76,16 +74,16 @@ public class TextRenderOptions {
         this.offset = offset;
         this.global = global;
 
-        List<Mesh.Group> groups = def.getMesh().getGroupContains(String.format("TEXTFIELD_%s", this.componentId));
-        if (groups.size() > 1) {
-            ModCore.info("There are more than one text fields defined under name TEXTFIELD_&s. Using first.", this.componentId);
+        LinkedHashMap<String, OBJGroup> group = def.getModel().groups;
+        for (Map.Entry<String, OBJGroup> entry : group.entrySet()) {
+            if (entry.getKey().contains(String.format("TEXTFIELD_%s", this.componentId))) {
+                EntityRollingStockDefinition.Position getPosition = def.normals.get(entry.getKey());
+                this.min = getPosition.vertices.stream().min(Comparator.comparingDouble(Vec3d::length)).orElse(null);
+                this.max = getPosition.vertices.stream().max(Comparator.comparingDouble(Vec3d::length)).orElse(null);
+                this.normal = getPosition.normal;
+                this.groupName = entry.getKey();
+            }
         }
-
-        Mesh.Group group = groups.get(0);
-        this.min = group.min;
-        this.max = group.max;
-        this.normal = group.normal;
-        this.groupName = group.name;
     }
 
     private TextRenderOptions(TextRenderOptions options) {

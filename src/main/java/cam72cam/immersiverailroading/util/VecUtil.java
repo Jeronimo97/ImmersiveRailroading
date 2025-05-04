@@ -1,6 +1,5 @@
 package cam72cam.immersiverailroading.util;
 
-import cam72cam.mod.ModCore;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.util.FastMath;
 import util.Matrix4;
@@ -61,25 +60,5 @@ public class VecUtil {
 	
 	public static Vec3d between(Vec3d front, Vec3d rear) {
 		return new Vec3d((front.x + rear.x) / 2, (front.y + rear.y) / 2, (front.z + rear.z) / 2);
-	}
-
-	public static double dotProduct(Vec3d a, Vec3d b) {
-		return a.x * b.x + a.y * b.y + a.z * b.z;
-	}
-
-	public static Vec3d crossProduct(Vec3d a, Vec3d b) {
-		double cx = a.y * b.z - a.z * b.y;
-		double cy = a.z * b.x - a.x * b.z;
-		double cz = a.x * b.y - a.y * b.x;
-		return new Vec3d(cx, cy, cz);
-	}
-
-	public static double getAxis(Vec3d vec, int axis) {
-		switch (axis) {
-			case 0: return vec.x;
-			case 1: return vec.y;
-			case 2: return vec.z;
-			default: throw new IllegalArgumentException("Axis must be 0 (x), 1 (y), or 2 (z)");
-		}
 	}
 }
