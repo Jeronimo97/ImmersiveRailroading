@@ -11,7 +11,11 @@
 		"tractive_effort_lbf": 135375,
 		"max_speed_kmh": 130,
 		"valve_gear": "mallet_walschaerts",
-		"weight_kg": 345600
+		"weight_kg": 345600,
+		"piston_diameter": 0.603,
+		"piston_stroke": 0.813,
+		"wheel_diameter": 1.727,
+		"cylinder_count": 4
 	},
 	"firebox": {
 		"slots": 36,

@@ -12,7 +12,11 @@
 		"tractive_effort_lbf": 5000,
 		"max_speed_kmh": 100,
 		"valve_gear": "hidden",
-		"weight_kg": 21772
+		"weight_kg": 21772,
+		"piston_diameter": 0.406,
+		"piston_stroke": 0.508,
+		"wheel_diameter": 2.134,
+		"cylinder_count": 2
 	},
 	"firebox": {
 		"slots": 6,

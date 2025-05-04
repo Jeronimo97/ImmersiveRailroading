@@ -10,7 +10,11 @@
 		"tractive_effort_lbf": 44460,
 		"max_speed_kmh": 152,
 		"valve_gear": "walschaerts",
-		"weight_kg": 140110
+		"weight_kg": 140110,
+		"piston_diameter": 0.686,
+		"piston_stroke": 0.711,
+		"wheel_diameter": 2.032,
+		"cylinder_count": 2
 	},
 	"firebox": {
 		"slots": 12,
