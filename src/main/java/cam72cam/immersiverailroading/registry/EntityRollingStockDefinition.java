@@ -5,6 +5,8 @@ import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
+import cam72cam.immersiverailroading.floor.Mesh;
+import cam72cam.immersiverailroading.floor.NavMesh;
 import cam72cam.immersiverailroading.util.*;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
@@ -15,6 +17,7 @@ import cam72cam.mod.ModCore;
 import cam72cam.mod.entity.EntityRegistry;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
+import cam72cam.mod.model.obj.OBJParser;
 import cam72cam.mod.model.obj.VertexBuffer;
 import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.*;
@@ -25,14 +28,12 @@ import cam72cam.mod.serialization.TagMapped;
 import cam72cam.mod.sound.ISound;
 import cam72cam.mod.text.TextUtil;
 import cam72cam.mod.world.World;
+import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -113,12 +114,8 @@ public abstract class EntityRollingStockDefinition {
     public Map<String, Float> cgDefaults;
     public Map<String, DataBlock> widgetConfig;
 
-    public WalkableSpaceDefinition walkableSpaceDefinition;
-
-    public final Map<String, Position> normals = new HashMap<>();
-    private final Map<String, List<Vec3d>> floorHeight = new HashMap<>();
-    private final Map<String, List<int[]>> faces = new HashMap<>();
-    private final LinkedList<Vec3d> allVertices = new LinkedList<>();
+    public Mesh mesh;
+    public NavMesh customFloor;
 
     // used for unique text fields to check if text field input is already assigned
     public Map<UUID, String> inputs = new HashMap<>();
@@ -371,6 +368,9 @@ public abstract class EntityRollingStockDefinition {
 
         loadData(transformData(data));
 
+        this.mesh = Mesh.loadMesh(this.modelLoc);
+        this.customFloor = new NavMesh(this.mesh);
+
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
 
@@ -506,7 +506,7 @@ public abstract class EntityRollingStockDefinition {
             for (DataBlock alternate : alternates) {
                 alternate.getValueMap().forEach((key, value) -> textureNames.put(value.asString(), key));
             }
-        } catch (java.io.FileNotFoundException ex) {
+        } catch (FileNotFoundException ex) {
             ImmersiveRailroading.catching(ex);
         }
 
@@ -642,7 +642,6 @@ public abstract class EntityRollingStockDefinition {
         if (widgets != null) {
             widgetConfig = widgets.getBlockMap();
         }
-        LoadVertecies();
     }
 
     public List<ModelComponent> getComponents(ModelComponentType name) {
@@ -1136,98 +1135,8 @@ public abstract class EntityRollingStockDefinition {
         return maxLength;
     }
 
-
-    // This is bad. But I don't want to change UMC
-    public void LoadVertecies() throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(this.modelLoc.getResourceStream()));
-        String line;
-        String object = null;
-        boolean withingTextFieldObject = false;
-        boolean isFloorObject = false;
-        float index = 0;
-
-        List<Vec3d> currentVertices = new ArrayList<>();
-        List<Vec3d> height = new ArrayList<>();
-        List<int[]> currentFace = new ArrayList<>();
-        Map<String, List<Vec3d>> objectVertices = new HashMap<>();
-
-        try {
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("o ")) {
-
-                    if (object != null) {
-                        objectVertices.put(object, new ArrayList<>(currentVertices));
-                    }
-
-                    withingTextFieldObject = line.contains("TEXTFIELD_");
-                    isFloorObject = line.contains("FLOOR");
-
-                    if (withingTextFieldObject || isFloorObject) {
-                        object = line.replace("o ", "");
-                        currentVertices.clear();
-                        height.clear();
-                        currentFace.clear();
-                    }
-                }
-
-                if ((withingTextFieldObject || isFloorObject) && line.startsWith("v ")) {
-                    String[] tokens = line.split("\\s");
-                    float x = Float.parseFloat(tokens[1]);
-                    float y = Float.parseFloat(tokens[2]);
-                    float z = Float.parseFloat(tokens[3]);
-
-                    Vec3d point = new Vec3d(x, y, z);
-                    height.add(point);
-
-                    if (!isFloorObject) {
-                        currentVertices.add(point);
-                    }
-                }
-
-                if (line.startsWith("v ")) {
-                    String[] tokens = line.split("\\s");
-                    float x = Float.parseFloat(tokens[1]);
-                    float y = Float.parseFloat(tokens[2]);
-                    float z = Float.parseFloat(tokens[3]);
-
-                    Vec3d point = new Vec3d(x, y, z);
-                    allVertices.add(point);
-                }
-
-                if (withingTextFieldObject && line.startsWith("vn ")) {
-                    String[] tokens = line.split("\\s");
-                    float x = Float.parseFloat(tokens[1]);
-                    float y = Float.parseFloat(tokens[2]);
-                    float z = Float.parseFloat(tokens[3]);
-
-                    Vec3d normalVector = new Vec3d(x, y, z);
-                    normals.put(object, new Position(normalVector, new ArrayList<>(currentVertices)));
-                }
-
-                if (isFloorObject && line.startsWith("f ")) {
-                    String[] faceComponents = line.split("\\s");
-                    int [] face = new int[faceComponents.length -1];
-                    for (int i = 1; i < faceComponents.length; i++) {
-                        String[] vertexInfo = faceComponents[i].split("/");
-                        int vertexIndex = Integer.parseInt(vertexInfo[0]) -1;
-                        face[i-1] = vertexIndex;
-                    }
-                    currentFace.add(face);
-                }
-
-                if (object != null && !isFloorObject) {
-                    objectVertices.put(object, new ArrayList<>(currentVertices));
-                } else if (object != null) {
-                    floorHeight.put(object, new ArrayList<>(height));
-                    faces.put(object, new ArrayList<>(currentFace));
-                }
-            }
-        } catch (IOException e) {
-            ModCore.info("An error occurred while loading Normals: ", e);
-        }
-        walkableSpaceDefinition = new WalkableSpaceDefinition(faces, allVertices, floorHeight,this);
-        walkableSpaceDefinition.mapFacesToVertices();
-        allVertices.clear();
+    public Mesh getMesh() {
+        return this.mesh;
     }
     
     public String getName() {
