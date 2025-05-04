@@ -122,15 +122,15 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     }
 
     public double getPistonDiameter(final Gauge gauge) {
-        return pistonDiameter * gauge.scale();
+        return pistonDiameter * gauge.scale() * internal_inv_scale;
     }
 
     public double getPistonStroke(final Gauge gauge) {
-        return pistonStroke * gauge.scale();
+        return pistonStroke * gauge.scale() * internal_inv_scale;
     }
 
     public double getWheelDiameter(final Gauge gauge) {
-        return wheelDiameter * gauge.scale();
+        return wheelDiameter * gauge.scale() * internal_inv_scale;
     }
 
     public int getCylinderCount() {
