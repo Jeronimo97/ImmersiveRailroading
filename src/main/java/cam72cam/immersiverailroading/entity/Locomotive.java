@@ -17,6 +17,7 @@ import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.item.ClickResult;
+import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
@@ -416,7 +417,7 @@ public abstract class Locomotive extends FreightTank{
         if (this.getDefinition().getStartingTractionNewtons(gauge) != 0)
             return this.getDefinition().getStartingTractionNewtons(gauge)
                     * Config.ConfigBalance.tractionMultiplier * (slipping ? 0.5 : 1);
-        return (Config.ConfigBalance.FuelRequired ? this.getWeight() : this.getMaxWeight()) * 9.81f
+        return getDefinition().getWeight(gauge) * 9.81f
                 * (slipping ? STEEL.kineticFriction(STEEL) / 2 : STEEL.staticFriction(STEEL))
                 * slipCoefficient() * (4 / getDefinition().factorOfAdhesion())
                 * Config.ConfigBalance.tractionMultiplier;
@@ -426,6 +427,12 @@ public abstract class Locomotive extends FreightTank{
         double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
+        
+        if (getPassengerCount() != 0) {
+            System.out.println("Weight: " + getDefinition().getWeight(gauge));
+            System.out.println("Starting: " + staticTractiveEffort);
+            System.out.println("Applied: " + appliedTractiveEffort);
+        }
 
         if (cogging || !slipping)
             return 0;
@@ -648,18 +655,16 @@ public abstract class Locomotive extends FreightTank{
 	}
 
     public double slipCoefficient() {
-        double slipMult = 1;
+        double slipMult = 0.5;
         World world = getWorld();
-        if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
-            if (world.isRaining(getBlockPosition())) {
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos)) {
                 slipMult *= 0.6;
             }
-            if (world.isSnowing(getBlockPosition())) {
+            if (world.isSnowing(blockPos)) {
                 slipMult *= 0.4;
             }
-        }
-        if (slipping) {
-            slipMult *= 0.5f;
         }
         return slipMult;
     }
