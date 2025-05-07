@@ -18,7 +18,6 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private String works;
     private double power;
     private double traction;
-    private double tractionN;
     private Speed maxSpeed;
     private boolean hasRadioEquipment;
     public boolean muliUnitCapable;
@@ -52,14 +51,12 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         if (isCabCar) {
             power = 0;
             traction = 0;
-            tractionN = 0;
             maxSpeed = Speed.ZERO;
             muliUnitCapable = true;
             factorOfAdhesion = 0;
         } else {
             power = properties.getValue("horsepower").asInteger() * internal_inv_scale;
-            traction = properties.getValue("tractive_effort_lbf").asInteger(0) * internal_inv_scale;
-            tractionN = properties.getValue("tractive_effort_n").asInteger(0) * internal_inv_scale;
+            traction = properties.getValue("tractive_effort_lbf").asInteger() * internal_inv_scale;
             factorOfAdhesion = properties.getValue("factor_of_adhesion").asDouble(4);
             maxSpeed = Speed.fromMetric(
                     properties.getValue("max_speed_kmh").asDouble() * internal_inv_scale);
@@ -100,9 +97,6 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
      * @return tractive effort in newtons
      */
     public int getStartingTractionNewtons(final Gauge gauge) {
-        if (this.tractionN != 0)
-            return (int) Math.ceil(gauge.scale() * this.tractionN);
-        else
             return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
     }
 
