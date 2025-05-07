@@ -82,9 +82,23 @@ public class TextRenderOptions {
         }
 
         Mesh.Group group = groups.get(0);
-        this.min = group.min;
-        this.max = group.max;
-        this.normal = group.normal;
+
+        List<Vec3d> allVerts = group.faces.stream().flatMap(f -> f.vertices.stream()).collect(Collectors.toList());
+        this.min = allVerts.stream().min(Comparator.comparingDouble(Vec3d::length)).orElse(null);
+        this.max = allVerts.stream().max(Comparator.comparingDouble(Vec3d::length)).orElse(null);
+
+        Vec3d averageNormal = group.faces.stream()
+                .map(f -> f.normal)
+                .filter(Objects::nonNull)
+                .reduce(new Vec3d(0, 0, 0), (a, b) -> new Vec3d(a.x + b.x, a.y + b.y, a.z + b.z));
+        int count = (int) group.faces.stream().map(f -> f.normal).filter(Objects::nonNull).count();
+        if (count > 0) {
+            averageNormal = averageNormal.scale((double) 1 / count).normalize();
+        } else {
+            averageNormal = new Vec3d(0, 1, 0);
+        }
+
+        this.normal = averageNormal;
         this.groupName = group.name;
     }
 

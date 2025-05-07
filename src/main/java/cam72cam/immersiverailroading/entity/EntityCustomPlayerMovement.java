@@ -21,7 +21,12 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
     public Vec3d getMountOffset(Entity passenger, Vec3d off) {
         NavMesh navMesh = getDefinition().navMesh;
         if (navMesh.hasNavMesh()) {
-            Vec3d realOffset = new Vec3d(off.z, off.y, -off.x);
+            Vec3d seat = getSeatPosition(passenger.getUUID());
+            if (seat != null) {
+                return seat;
+            }
+
+            Vec3d realOffset = off.rotateYaw(-90);
             CollisionBox queryBox = new CollisionBox(
                     realOffset.subtract(4f, 4f, 4f),
                     realOffset.add(4f, 4f, 4f)
@@ -48,7 +53,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
             }
 
             if (closestPoint != null) {
-                return new Vec3d(-closestPoint.z, closestPoint.y, closestPoint.x);
+                return closestPoint.rotateYaw(90);
             }
         }
         return super.getMountOffset(passenger, off);
@@ -57,16 +62,16 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
     @Override
     public Vec3d onPassengerUpdate(Entity passenger, Vec3d offset) {
         if (getDefinition().navMesh.hasNavMesh()) {
-            Vec3d movement = offset;
+            Vec3d movement = new Vec3d(0, 0, 0);
             if (passenger.isPlayer()) {
                 movement = movement(passenger.asPlayer(), offset);
             }
             Vec3d targetXZ = removePitch(movement, this.getRotationPitch());
 
-            Vec3d rayStart = new Vec3d(targetXZ.z, offset.y + 1.0, -targetXZ.x);
+            Vec3d rayStart = targetXZ.rotateYaw(-90).add(0, 1, 0);
             Vec3d rayDir = new Vec3d(0, -1, 0);
 
-            Vec3d localTarget = new Vec3d(targetXZ.z, targetXZ.y, -targetXZ.x);
+            Vec3d localTarget = targetXZ.rotateYaw(-90);
 
             CollisionBox rayBox = new CollisionBox(
                     localTarget.subtract(0.5f, 0.5f, 0.5f),
@@ -94,6 +99,11 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
             if (hit) {
                 offset = reapplyPitch(new Vec3d(targetXZ.x, closestY, targetXZ.z), this.getRotationPitch());
             }
+
+            Vec3d seat = getSeatPosition(passenger.getUUID());
+            if (seat != null) {
+                offset = seat;
+            }
             return offset;
         } else {
             return super.onPassengerUpdate(passenger, offset);
@@ -107,7 +117,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
         }
 
         movement = new Vec3d(movement.x, 0, movement.z).rotateYaw(this.getRotationYaw() - source.getRotationYawHead());
-        Vec3d localOffset = new Vec3d(offset.z, offset.y, -offset.x).add(movement.z, movement.y, -movement.x);
+        Vec3d localOffset = offset.rotateYaw(-90).add(movement.rotateYaw(-90));
 
         CollisionBox rayBox = new CollisionBox(
                 localOffset.subtract(0.2f, 0.2f, 0.2f),
@@ -118,7 +128,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
         navMesh.queryBVH(navMesh.collisionRoot, rayBox, nearby);
 
         Vec3d rayStart = localOffset.add(0, 1, 0);
-        Vec3d rayDir = new Vec3d(movement.z, movement.y, -movement.x).normalize();
+        Vec3d rayDir = movement.rotateYaw(-90).normalize();
 
         for (Mesh.Face tri : nearby) {
             Double t = intersectRayTriangle(rayStart, rayDir, tri);
@@ -213,8 +223,8 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
         start = removePitch(start, this.getRotationPitch());
         end  = removePitch(end, this.getRotationPitch());
 
-        start = new Vec3d(-start.z, start.y, start.x);
-        end = start.add(new Vec3d(-end.z, end.y, end.x));
+        start = start.rotateYaw(-90);
+        end = start.add(end.rotateYaw(-90));
 
         List<Door<?>> doors = getDefinition().getModel().getDoors().stream()
                 .filter(d -> d.type == Door.Types.INTERNAL || d.type == Door.Types.CONNECTING)
@@ -234,7 +244,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
     }
 
     private boolean isAtCoupler(Vec3d offset, Vec3d movement, EntityCoupleableRollingStock.CouplerType type) {
-        offset = new Vec3d(offset.z, offset.y, -offset.x);
+        offset = offset.rotateYaw(-90);
         double coupler = getDefinition().getCouplerPosition(type, this.gauge);
         Vec3d couplerPos = new Vec3d(type == EntityCoupleableRollingStock.CouplerType.FRONT ? coupler : -coupler, offset.y, offset.z);
 
@@ -256,7 +266,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
             double distance = offset.subtract(closestPoint).length();
             if (distance < 0.5) {
                 Vec3d toCoupler = couplerPos.subtract(offset).normalize();
-                double dot = VecUtil.dotProduct(toCoupler, new Vec3d(movement.z, movement.y, -movement.x).normalize());
+                double dot = VecUtil.dotProduct(toCoupler, movement.rotateYaw(90).normalize());
                 if (dot > 0.5) return true;
             }
         }

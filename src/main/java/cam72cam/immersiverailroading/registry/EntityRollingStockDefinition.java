@@ -31,6 +31,8 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -363,11 +365,11 @@ public abstract class EntityRollingStockDefinition {
 
         loadData(transformData(data));
 
-        this.mesh = Mesh.loadMesh(this.modelLoc);
-        this.navMesh = new NavMesh(this.mesh);
-
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
+
+        this.mesh = Executors.newCachedThreadPool().submit(() -> Mesh.loadMesh(this.model)).get();
+        this.navMesh = new NavMesh(this.mesh);
 
         this.renderComponents = new HashMap<>();
         for (ModelComponent component : model.allComponents) {

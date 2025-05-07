@@ -1,6 +1,10 @@
 package cam72cam.immersiverailroading.floor;
 
+import cam72cam.immersiverailroading.model.StockModel;
+import cam72cam.immersiverailroading.util.VecUtil;
 import cam72cam.mod.math.Vec3d;
+import cam72cam.mod.model.obj.OBJGroup;
+import cam72cam.mod.model.obj.VertexBuffer;
 import cam72cam.mod.resource.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -40,77 +44,81 @@ public class Mesh {
 
     public final Map<String, Group> groups = new HashMap<>();
 
-    public static Mesh loadMesh(Identifier modelLoc) throws IOException {
-        List<Vec3d> vertices = new ArrayList<>();
-        List<Vec3d> normals = new ArrayList<>();
-        List<Pair<Float, Float>> uvs = new ArrayList<>();
-        List<Obj> objects = new ArrayList<>();
+    private static final Set<String> groupsToBeLoaded;
 
-        Obj currentObj = new Obj("default");
+    private enum Groups {
+        FLOOR,
+        COLLISION,
+        TEXTFIELD
+    }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(modelLoc.getResourceStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("#")) continue;
+    static {
+        groupsToBeLoaded = Arrays.stream(Groups.values()).map(Enum::name).collect(Collectors.toSet());
+    }
 
-                String[] tokens = line.split("\\s+");
-                String cmd = tokens[0];
-
-                switch (cmd) {
-                    case "o":
-                    case "g":
-                        if (!currentObj.faces.isEmpty()) {
-                            objects.add(currentObj);
-                            currentObj = new Obj(tokens[1]);
-                        } else {
-                            currentObj.name = tokens[1];
-                        }
-                        break;
-                    case "v":
-                        vertices.add(new Vec3d(
-                                Float.parseFloat(tokens[1]),
-                                Float.parseFloat(tokens[2]),
-                                Float.parseFloat(tokens[3])
-                        ));
-                        break;
-                    case "vn":
-                        normals.add(new Vec3d(
-                                Float.parseFloat(tokens[1]),
-                                Float.parseFloat(tokens[2]),
-                                Float.parseFloat(tokens[3])
-                        ));
-                        break;
-                    case "vt":
-                        uvs.add(Pair.of(
-                                Float.parseFloat(tokens[1]),
-                                Float.parseFloat(tokens[2])
-                        ));
-                        break;
-                    case "f":
-                        List<VertexRef> face = new ArrayList<>();
-                        for (int i = 1; i < tokens.length; i++) {
-                            String[] parts = tokens[i].split("/");
-                            int vi = Integer.parseInt(parts[0]) - 1;
-                            int ti = (parts.length > 1 && !parts[1].isEmpty()) ? Integer.parseInt(parts[1]) - 1 : -1;
-                            int ni = (parts.length > 2) ? Integer.parseInt(parts[2]) - 1 : -1;
-                            face.add(new VertexRef(vi, ti, ni));
-                        }
-                        currentObj.faces.add(face);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        if (!currentObj.faces.isEmpty()) {
-            objects.add(currentObj);
-        }
+    public static Mesh loadMesh(StockModel<?, ?> model) {
+        List<OBJGroup> groupList = model.groups.entrySet().stream()
+                .filter(e -> groupsToBeLoaded.stream().anyMatch(name -> e.getKey().contains(name)))
+                .map(Map.Entry::getValue).collect(Collectors.toList());
 
         Mesh mesh = new Mesh();
-        for (Obj obj : objects) {
-            mesh.addGroup(obj.name, vertices, normals, uvs, obj.faces);
+
+        for (OBJGroup group : groupList) {
+            VertexBuffer vbo = model.vbo.buffer.get();
+            int stride = vbo.stride;
+            int vertsPerFace = vbo.vertsPerFace;
+            float[] data = vbo.data;
+
+            int vertexStart = group.faceStart * vertsPerFace;
+            int vertexEnd = (group.faceStop + 1) * vertsPerFace;
+
+            List<Face> faces = new ArrayList<>();
+
+            for (int vIdx = vertexStart; vIdx < vertexEnd; vIdx += vertsPerFace) {
+                Face face = new Face();
+
+                for (int i = 0; i < vertsPerFace; i++) {
+                    int baseIndex = (vIdx + i) * stride;
+
+                    float vx = data[baseIndex + vbo.vertexOffset + 0];
+                    float vy = data[baseIndex + vbo.vertexOffset + 1];
+                    float vz = data[baseIndex + vbo.vertexOffset + 2];
+
+                    float u = data[baseIndex + vbo.textureOffset + 0];
+                    float v = data[baseIndex + vbo.textureOffset + 1];
+
+                    Vec3d vertex = new Vec3d(vx, vy, vz);
+                    face.vertices.add(vertex);
+
+                    if (i == 0) {
+                        face.uv = Pair.of(u, v);
+                    }
+                }
+
+                if (vbo.hasNormals) {
+                    int baseIndex = vIdx * stride;
+                    float nx = data[baseIndex + vbo.normalOffset + 0];
+                    float ny = data[baseIndex + vbo.normalOffset + 1];
+                    float nz = data[baseIndex + vbo.normalOffset + 2];
+
+                    face.normal = new Vec3d(nx, ny, nz);
+                } else {
+                    Vec3d v0 = face.vertices.get(0);
+                    Vec3d v1 = face.vertices.get(1);
+                    Vec3d v2 = face.vertices.get(2);
+                    Vec3d normal = VecUtil.crossProduct(v1.subtract(v0), v2.subtract(v0)).normalize();
+                    face.normal = normal;
+                }
+                faces.add(face);
+            }
+            Group group1 = new Group(
+                    group.name,
+                    faces,
+                    group.min,
+                    group.max,
+                    group.normal
+            );
+            mesh.groups.put(group.name, group1);
         }
         return mesh;
     }
@@ -124,70 +132,5 @@ public class Mesh {
 
     public List<Group> getGroupContains(String name) {
         return groups.entrySet().stream().filter(e -> e.getKey().contains(name)).map(Map.Entry::getValue).collect(Collectors.toList());
-    }
-
-    private void addGroup(String name, List<Vec3d> vertices, List<Vec3d> normals, List<Pair<Float, Float>> uvs, List<List<VertexRef>> faceData) {
-        List<Face> tempFaces = new ArrayList<>();
-
-        for (List<VertexRef> faceRefs : faceData) {
-            Face face = new Face();
-
-            for (VertexRef ref : faceRefs) {
-                if (ref.vertexIndex >= 0 && ref.vertexIndex < vertices.size()) {
-                    face.vertices.add(vertices.get(ref.vertexIndex));
-                }
-
-                if (face.normal == null && ref.normalIndex >= 0 && ref.normalIndex < normals.size()) {
-                    face.normal = normals.get(ref.normalIndex);
-                }
-
-                if (face.uv == null && ref.uvIndex >= 0 && ref.uvIndex < uvs.size()) {
-                    face.uv = uvs.get(ref.uvIndex);
-                }
-            }
-
-            tempFaces.add(face);
-        }
-
-        List<Vec3d> allVerts = tempFaces.stream()
-                .flatMap(f -> f.vertices.stream()).collect(Collectors.toList());
-
-        Vec3d min = allVerts.stream().min(Comparator.comparingDouble(Vec3d::length)).orElse(null);
-        Vec3d max = allVerts.stream().max(Comparator.comparingDouble(Vec3d::length)).orElse(null);
-
-        Vec3d averageNormal = tempFaces.stream()
-                .map(f -> f.normal)
-                .filter(Objects::nonNull)
-                .reduce(new Vec3d(0, 0, 0), (a, b) -> new Vec3d(a.x + b.x, a.y + b.y, a.z + b.z));
-
-        int count = (int) tempFaces.stream().map(f -> f.normal).filter(Objects::nonNull).count();
-        if (count > 0) {
-            averageNormal = averageNormal.scale(1.0 / count).normalize();
-        } else {
-            averageNormal = new Vec3d(0, 1, 0);
-        }
-
-        groups.put(name, new Group(name, tempFaces, min, max, averageNormal));
-    }
-
-    private static class Obj {
-        String name;
-        List<List<VertexRef>> faces = new ArrayList<>();
-
-        Obj(String name) {
-            this.name = name;
-        }
-    }
-
-    private static class VertexRef {
-        int vertexIndex;
-        int uvIndex;
-        int normalIndex;
-
-        VertexRef(int v, int uv, int n) {
-            this.vertexIndex = v;
-            this.uvIndex = uv;
-            this.normalIndex = n;
-        }
     }
 }
