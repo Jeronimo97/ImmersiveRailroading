@@ -126,7 +126,7 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 		return offset;
 	}
 
-	private boolean isNearestDoorOpen(Player source) {
+	public boolean isNearestDoorOpen(Player source) {
 		// Find any doors that are close enough that are closed (and then negate)
 		return !this.getDefinition().getModel().getDoors().stream()
 				.filter(d -> d.type == Door.Types.CONNECTING)

@@ -13,11 +13,9 @@ import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.StockModel;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
-import cam72cam.mod.ModCore;
 import cam72cam.mod.entity.EntityRegistry;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
-import cam72cam.mod.model.obj.OBJParser;
 import cam72cam.mod.model.obj.VertexBuffer;
 import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.*;
@@ -28,8 +26,6 @@ import cam72cam.mod.serialization.TagMapped;
 import cam72cam.mod.sound.ISound;
 import cam72cam.mod.text.TextUtil;
 import cam72cam.mod.world.World;
-import net.minecraftforge.fml.common.Loader;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
@@ -37,7 +33,6 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -115,7 +110,7 @@ public abstract class EntityRollingStockDefinition {
     public Map<String, DataBlock> widgetConfig;
 
     public Mesh mesh;
-    public NavMesh customFloor;
+    public NavMesh navMesh;
 
     // used for unique text fields to check if text field input is already assigned
     public Map<UUID, String> inputs = new HashMap<>();
@@ -369,7 +364,7 @@ public abstract class EntityRollingStockDefinition {
         loadData(transformData(data));
 
         this.mesh = Mesh.loadMesh(this.modelLoc);
-        this.customFloor = new NavMesh(this.mesh);
+        this.navMesh = new NavMesh(this.mesh);
 
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());

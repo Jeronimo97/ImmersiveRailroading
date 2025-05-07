@@ -8,9 +8,17 @@ import java.util.stream.Collectors;
 
 public class NavMesh {
     public BVHNode root;
+    public BVHNode collisionRoot;
+    private boolean hasNavMesh = false;
 
     public NavMesh(Mesh mesh) {
-        this.root = buildBVH(mesh.getGroupContains("FLOOR").stream().flatMap(m -> m.faces.stream()).collect(Collectors.toList()), 20);
+        hasNavMesh = !mesh.getGroupContains("FLOOR").isEmpty();
+        this.root = buildBVH(mesh.getGroupContains("FLOOR").stream().flatMap(m -> m.faces.stream()).collect(Collectors.toList()), 18);
+        this.collisionRoot = buildBVH(mesh.getGroupContains("COLLISION").stream().flatMap(m -> m.faces.stream()).collect(Collectors.toList()), 20);
+    }
+
+    public boolean hasNavMesh() {
+        return hasNavMesh;
     }
 
     public static class BVHNode {
