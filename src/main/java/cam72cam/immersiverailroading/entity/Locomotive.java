@@ -416,7 +416,7 @@ public abstract class Locomotive extends FreightTank{
     protected final double getStaticTractiveEffort() {
         return getDefinition().getScriptedStartingTractionNewtons(gauge, this)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()), getCurrentSpeed().metric())))
-                * Config.ConfigBalance.slopeMultiplier
+                / Config.ConfigBalance.slopeMultiplier
                 * Config.ConfigBalance.tractionMultiplier
                 * (slipping ? 0.5 : 1);
     }
