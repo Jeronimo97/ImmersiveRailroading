@@ -425,12 +425,6 @@ public abstract class Locomotive extends FreightTank{
         double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
-        
-        if (getPassengerCount() != 0) {
-            System.out.println("Weight: " + getDefinition().getWeight(gauge));
-            System.out.println("Starting: " + staticTractiveEffort);
-            System.out.println("Applied: " + appliedTractiveEffort);
-        }
 
         if (cogging || !slipping)
             return 0;
