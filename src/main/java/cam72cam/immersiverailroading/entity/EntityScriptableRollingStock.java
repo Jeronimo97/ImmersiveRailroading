@@ -434,7 +434,7 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             return;
         }
 
-        new ItemTypewriter.TypewriterPacket(this, allOptions).sendToServer();
+        new ItemTypewriter.TypewriterPacket(this, allOptions).sendToObserving(this);
     }
 
     public void setTextGlobal(TextRenderOptions options) {
