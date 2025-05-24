@@ -513,7 +513,7 @@ public class LocomotiveSteam extends Locomotive {
             return csm < 20;
         }
 
-        return drains.stream().anyMatch(c -> getControlPosition(c) == 1);
+        return drains.stream().anyMatch(c -> getControlPosition(c) > 0.9);
     }
 
     public void setCylinderDrains(final boolean enabled) {
