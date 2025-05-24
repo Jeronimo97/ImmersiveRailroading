@@ -10,10 +10,12 @@ import java.util.Map;
 public class SteamLocomotiveContainer extends BaseContainer {
     public final LocomotiveSteam stock;
     private final ItemStack template;
+    private final ItemStack templateSand;
 
     public SteamLocomotiveContainer(LocomotiveSteam stock) {
         this.stock = stock;
         this.template = Fuzzy.BUCKET.example();
+        this.templateSand = Fuzzy.SAND.example();
     }
 
     public void draw(IContainerBuilder container){
@@ -37,7 +39,7 @@ public class SteamLocomotiveContainer extends BaseContainer {
         currY = container.drawBottomBar(0, currY, horizSlots*2);
 
         int containerY = currY;
-        currY = container.drawSlotBlock(stock.cargoItems, 2, stock.getInventoryWidth(), 0, currY);
+        currY = container.drawSlotBlock(stock.cargoItems, 3, stock.getInventoryWidth(), 0, currY);
         Map<Integer, Integer> burnTime = stock.getBurnTime();
         Map<Integer, Integer> burnMax = stock.getBurnMax();
         for (int slot : burnTime.keySet()) {
@@ -63,6 +65,15 @@ public class SteamLocomotiveContainer extends BaseContainer {
         currY = container.drawPlayerInventoryConnector(0, currY, horizSlots);
         currY = container.drawPlayerInventory(currY, horizSlots*2);
         drawName(container, stock);
+        
+        // TODO: Overlay verschieben
+        int Ysand = 0;
+        Ysand = container.drawTopBar(horizSlots * 20, Ysand, 1);
+        container.drawCenteredString("Sand", horizSlots * 12, Ysand - 12);
+        Ysand = container.drawSlotRow(stock.cargoItems, 2, 1, horizSlots * 20, Ysand);
+        container.drawSlot(stock.cargoItems, 2, horizSlots * 20, Ysand - 18);
+        container.drawSlotOverlay(templateSand, horizSlots * 20, Ysand - 18);
+        Ysand = container.drawBottomBar(horizSlots * 20, Ysand, 1);
     }
 
     @Override

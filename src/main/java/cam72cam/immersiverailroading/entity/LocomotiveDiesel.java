@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.inventory.SlotFilter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
@@ -45,8 +46,22 @@ public class LocomotiveDiesel extends Locomotive {
     }
 
     @Override
+    public int getInventorySize() {
+        return 3;
+    }
+
+    @Override
     public int getInventoryWidth() {
-        return getDefinition().isCabCar() ? 0 : 2;
+        return getDefinition().isCabCar() ? 0 : 3;
+    }
+
+    @Override
+    protected void initContainerFilter() {
+        cargoItems.filter.clear();
+        cargoItems.filter.put(0, SlotFilter.FLUID_CONTAINER);
+        cargoItems.filter.put(1, SlotFilter.FLUID_CONTAINER);
+        cargoItems.filter.put(2, SlotFilter.SAND);
+        cargoItems.defaultFilter = SlotFilter.NONE;
     }
 
     public float getEngineTemperature() {
