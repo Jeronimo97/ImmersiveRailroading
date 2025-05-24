@@ -415,7 +415,6 @@ public abstract class Locomotive extends FreightTank {
      * Maximum force that can be between the wheels and the rails before it slips
      */
     protected final double getStaticTractiveEffort() {
-        System.out.println("Sanding?: " + isSanding());
         return getDefinition().getStartingTractionNewtons(gauge)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
@@ -423,8 +422,7 @@ public abstract class Locomotive extends FreightTank {
     }
 
     protected double simulateWheelSlip() {
-        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) * 1.3f
-                / (getDefinition().getPowerMultiplier() * 0.75f);
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
 
