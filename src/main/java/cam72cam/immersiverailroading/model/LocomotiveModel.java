@@ -94,6 +94,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         if (def.hasIndependentBrake()) {
             addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
         }
+        addControl(provider, ModelComponentType.SANDING_CONTROL_X);
     }
 
     @Override

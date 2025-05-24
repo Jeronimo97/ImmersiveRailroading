@@ -1,7 +1,9 @@
 package cam72cam.immersiverailroading.entity;
 
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.IRItems;
@@ -287,6 +289,7 @@ public abstract class Locomotive extends FreightTank {
             case WHISTLE_CONTROL_X:
             case HORN_CONTROL_X:
             case ENGINE_START_X:
+            case SANDING_CONTROL_X:
                 return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
             default:
                 return true;
@@ -412,10 +415,11 @@ public abstract class Locomotive extends FreightTank {
      * Maximum force that can be between the wheels and the rails before it slips
      */
     protected final double getStaticTractiveEffort() {
+        System.out.println("Sanding?: " + isSanding());
         return getDefinition().getStartingTractionNewtons(gauge)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
-                * Config.ConfigBalance.tractionMultiplier * (slipping ? 0.5 : 1);
+                * Config.ConfigBalance.tractionMultiplier * (slipping ? 0.5 : 1) * (isSanding() ? 1.5 : 1);
     }
 
     protected double simulateWheelSlip() {
@@ -636,5 +640,12 @@ public abstract class Locomotive extends FreightTank {
     public float ambientTemperature() {
         // null during registration
         return internal != null ? getWorld().getTemperature(getBlockPosition()) : 0f;
+    }
+
+    public boolean isSanding() {
+        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                .collect(Collectors.toList());
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
     }
 }
