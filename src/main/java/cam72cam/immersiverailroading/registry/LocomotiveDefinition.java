@@ -27,6 +27,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private boolean isCog;
     private double factorOfAdhesion;
     private boolean speedLimiter;
+    protected double powerMultiplier;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -177,5 +178,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     
     public boolean isSpeedLimiter() {
         return this.speedLimiter;
+    }
+    
+    public double getPowerMultiplier() {
+        return powerMultiplier;
     }
 }

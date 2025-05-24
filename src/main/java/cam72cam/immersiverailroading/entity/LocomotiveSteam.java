@@ -120,23 +120,26 @@ public class LocomotiveSteam extends Locomotive {
 		return burnMax;
 	}
 
-    @Override
-    public double getAppliedTractiveEffort(Speed speed) {
+    public double getAppliedTractiveEffort(final Speed speed) {
         if (getDefinition().isCabCar())
             return 0;
-        double expansion = 1.05 / (Math.abs(getReverser()) * (Math.abs(getReverser()) + 0.05));
+        double reverser = getReverser();
+        if (reverser == 0)
+            return 0;
+        double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
 
         double effectivePressure = getChestPressure() / expansion * (1 + Math.log(expansion));
 
-        double backPressure = effectivePressure
-                * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(getReverser()));
+        double backPressure =
+                effectivePressure * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(reverser));
 
         double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
                 * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
-                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000 * 1.5;
+                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
-        return appliedTraction * Math.copySign(1, getReverser());
+        return appliedTraction * Math.copySign(1, reverser);
     }
 	
 	@Override
@@ -486,7 +489,7 @@ public class LocomotiveSteam extends Locomotive {
 			return csm < 20;
 		}
 
-		return drains.stream().anyMatch(c -> getControlPosition(c) == 1);
+		return drains.stream().anyMatch(c -> getControlPosition(c) > 0.9);
 	}
 
 	public void setCylinderDrains(boolean enabled) {

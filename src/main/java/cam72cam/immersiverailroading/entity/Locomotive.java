@@ -23,8 +23,10 @@ import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
 import org.luaj.vm2.LuaValue;
 
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public abstract class Locomotive extends FreightTank{
 	private static final float throttleDelta = 0.04f;
@@ -298,6 +300,7 @@ public abstract class Locomotive extends FreightTank{
 			case WHISTLE_CONTROL_X:
 			case HORN_CONTROL_X:
 			case ENGINE_START_X:
+			case SANDING_CONTROL_X:
 				return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
 			default:
 				return true;
@@ -418,7 +421,7 @@ public abstract class Locomotive extends FreightTank{
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1);
+                * (slipping ? 0.5 : 1) * (isSanding() ? 1.5 : 0);
     }
 	
     protected double simulateWheelSlip() {
@@ -704,4 +707,11 @@ public abstract class Locomotive extends FreightTank{
 				break;
 		}
 	}
+	
+    public boolean isSanding() {
+        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                .collect(Collectors.toList());
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+    }
 }
