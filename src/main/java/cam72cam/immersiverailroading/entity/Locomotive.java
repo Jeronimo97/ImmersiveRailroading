@@ -1,7 +1,5 @@
 package cam72cam.immersiverailroading.entity;
 
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.STEEL;
-
 import java.util.OptionalDouble;
 import java.util.UUID;
 
@@ -410,17 +408,19 @@ public abstract class Locomotive extends FreightTank {
     /** Force applied between the wheels and the rails */
     public abstract double getAppliedTractiveEffort(Speed speed);
 
-    /** Maximum force that can be between the wheels and the rails before it slips */
+    /**
+     * Maximum force that can be between the wheels and the rails before it slips
+     */
     protected final double getStaticTractiveEffort() {
         return getDefinition().getStartingTractionNewtons(gauge)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
-                * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1);
+                * Config.ConfigBalance.tractionMultiplier * (slipping ? 0.5 : 1);
     }
 
     protected double simulateWheelSlip() {
-        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) * 1.3f
+                / (getDefinition().getPowerMultiplier() * 0.75f);
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
 

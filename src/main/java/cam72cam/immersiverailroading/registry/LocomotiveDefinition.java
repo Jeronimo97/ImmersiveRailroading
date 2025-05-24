@@ -26,6 +26,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private boolean isCog;
     private double factorOfAdhesion;
     private boolean speedLimiter;
+    protected double powerMultiplier;
 
     LocomotiveDefinition(final Class<? extends EntityRollingStock> type, final String defID,
             final DataBlock data) throws Exception {
@@ -97,7 +98,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
      * @return tractive effort in newtons
      */
     public int getStartingTractionNewtons(final Gauge gauge) {
-            return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
+        return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
     }
 
     public Speed getMaxSpeed(final Gauge gauge) {
@@ -132,4 +133,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     public boolean isSpeedLimiter() {
         return this.speedLimiter;
     }
+
+    public double getPowerMultiplier() {
+        return powerMultiplier;
+    }
+
 }
