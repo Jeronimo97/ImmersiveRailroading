@@ -66,14 +66,13 @@ public class SteamLocomotiveContainer extends BaseContainer {
         currY = container.drawPlayerInventory(currY, horizSlots*2);
         drawName(container, stock);
         
-        // TODO: Overlay verschieben
         int Ysand = 0;
-        Ysand = container.drawTopBar(horizSlots * 20, Ysand, 1);
-        container.drawCenteredString("Sand", horizSlots * 12, Ysand - 12);
-        Ysand = container.drawSlotRow(stock.cargoItems, 2, 1, horizSlots * 20, Ysand);
-        container.drawSlot(stock.cargoItems, 2, horizSlots * 20, Ysand - 18);
-        container.drawSlotOverlay(templateSand, horizSlots * 20, Ysand - 18);
-        Ysand = container.drawBottomBar(horizSlots * 20, Ysand, 1);
+        Ysand = container.drawTopBar(horizSlots * 45, Ysand, 1);
+        container.drawCenteredString("Sand", horizSlots * 30, Ysand - 12);
+        Ysand = container.drawSlotRow(stock.cargoItems, 2, 1, horizSlots * 45, Ysand);
+        container.drawSlot(stock.cargoItems, 2, horizSlots * 45, Ysand - 18);
+        container.drawSlotOverlay(templateSand, horizSlots * 45, Ysand - 18);
+        Ysand = container.drawBottomBar(horizSlots * 45, Ysand, 1);
     }
 
     @Override

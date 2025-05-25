@@ -73,6 +73,8 @@ public abstract class Locomotive extends FreightTank {
     protected boolean slipping = false;
 
     protected int sandTime = 0;
+    protected boolean isSanding = false;
+    protected boolean isSandingKey = false;
 
     /*
      * 
@@ -217,7 +219,12 @@ public abstract class Locomotive extends FreightTank {
                 }
                 break;
             case SANDING:
-                setSanding(!isSanding());
+                if (isSandingKey) {
+                    isSandingKey = false;
+                } else {
+                    isSandingKey = true;
+                }
+                setSanding(isSandingKey);
                 break;
             default:
                 super.handleKeyPress(source, key, disableIndependentThrottle);
@@ -413,22 +420,18 @@ public abstract class Locomotive extends FreightTank {
             }
         }
 
-        // TODO: fuel required
+        isSanding = false;
         if (this.isSanding()) {
             System.out.println("Time: " + sandTime);
 
             ItemStack stack = this.cargoItems.get(2);
             if (sandTime == 0) {
                 stack.setCount(stack.getCount() - 1);
-                if (stack.getCount() <= 0) {
-                    this.setSanding(false);
-                }
-                sandTime = 60;
+                sandTime = 60 * Config.ConfigBalance.SandEfficiency;
             }
-            if (stack.getCount() <= 0) {
-                this.setSanding(false);
-            } else {
+            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
                 sandTime--;
+                isSanding = true;
             }
         }
     }
@@ -440,14 +443,14 @@ public abstract class Locomotive extends FreightTank {
      * Maximum force that can be between the wheels and the rails before it slips
      */
     protected final double getStaticTractiveEffort() {
-        if (isSanding()) {
+        if (isSanding) {
             System.out.println("Sanding");
         }
         return getDefinition().getStartingTractionNewtons(gauge)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier * (slipping ? 0.5 : 1)
-                * (isSanding() ? 1.5 : 1);
+                * (isSanding ? 1.5 : 1);
     }
 
     protected double simulateWheelSlip() {
@@ -669,12 +672,11 @@ public abstract class Locomotive extends FreightTank {
         return internal != null ? getWorld().getTemperature(getBlockPosition()) : 0f;
     }
 
-    // TODO: Sanden auch, wenn kein Hebel verbaut
     public boolean isSanding() {
         List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
-        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5 || isSandingKey);
     }
 
     public void setSanding(final boolean enabled) {
@@ -685,4 +687,5 @@ public abstract class Locomotive extends FreightTank {
             setControlPosition(sand, enabled ? 1 : 0);
         }
     }
+
 }
