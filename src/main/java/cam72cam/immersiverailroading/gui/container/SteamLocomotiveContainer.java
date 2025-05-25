@@ -41,7 +41,7 @@ public class SteamLocomotiveContainer extends BaseContainer {
         currY = container.drawBottomBar(0, currY, horizSlots*2);
 
         int containerY = currY;
-        currY = container.drawSlotBlock(stock.cargoItems, 2, stock.getInventoryWidth(), 0, currY);
+        currY = container.drawSlotBlock(stock.cargoItems, 3, stock.getInventoryWidth(), 0, currY);
         Map<Integer, Integer> burnTime = stock.getBurnTime();
         Map<Integer, Integer> burnMax = stock.getBurnMax();
         for (int slot : burnTime.keySet()) {
