@@ -225,6 +225,10 @@ public class Config {
 
 		@Comment("Round to nearest bucket")
 		public static boolean RoundStockTankToNearestBucket = true;
+		
+        @Comment("Sand Efficiency")
+        @Range(min = 1, max = 10)
+        public static int SandEfficiency = 1;
 	}
 
 	@Name("performance")

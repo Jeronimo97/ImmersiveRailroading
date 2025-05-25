@@ -446,7 +446,6 @@ public class SimulationState {
         }
 
         brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
-        brakeAdhesionNewtons *= config.isSanding ? 1.5 : 1;
 
         return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons + directResistance + startingFriction;
     }

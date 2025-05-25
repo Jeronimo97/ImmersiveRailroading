@@ -17,6 +17,7 @@ import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.item.ClickResult;
+import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
@@ -71,6 +72,10 @@ public abstract class Locomotive extends FreightTank{
 	private boolean cogging = false;
 
 	protected boolean slipping = false;
+	
+    protected int sandTime = 0;
+    protected boolean isSanding = false;
+    protected boolean isSandingKey = false;
 
 	@TagSync
 	@TagField("localMaxSpeed")
@@ -225,6 +230,14 @@ public abstract class Locomotive extends FreightTank{
 				this.deadManChangeTimeout = 5;
 			}
 			break;
+        case SANDING:
+            if (isSandingKey) {
+                isSandingKey = false;
+            } else {
+                isSandingKey = true;
+            }
+            setSanding(isSandingKey);
+            break;
 			default:
 				super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
@@ -410,6 +423,26 @@ public abstract class Locomotive extends FreightTank{
 				}
 			}
 		}
+		
+		isSanding = false;
+        if (this.isSanding()) {
+            System.out.println("Time: " + sandTime);
+
+            ItemStack stack = this.cargoItems.get(2);
+            if (sandTime == 0) {
+                stack.setCount(stack.getCount() - 1);
+                sandTime = 60 * Config.ConfigBalance.SandEfficiency;
+
+
+
+            }
+            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
+
+
+                sandTime--;
+                isSanding = true;
+            }
+        }
 	}
 
 	/** Force applied between the wheels and the rails */
@@ -421,7 +454,7 @@ public abstract class Locomotive extends FreightTank{
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1) * (isSanding() ? 1.5 : 0);
+                * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 0);
     }
 	
     protected double simulateWheelSlip() {
@@ -708,10 +741,19 @@ public abstract class Locomotive extends FreightTank{
 		}
 	}
 	
-    public boolean isSanding() {
+	public boolean isSanding() {
         List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
-        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5 || isSandingKey);
+    }
+
+    public void setSanding(final boolean enabled) {
+        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                .collect(Collectors.toList());
+        for (Control<?> sand : sanding) {
+            setControlPosition(sand, enabled ? 1 : 0);
+        }
     }
 }

@@ -419,12 +419,13 @@ public class LocomotiveSteam extends Locomotive {
 		cargoItems.filter.clear();
 		this.cargoItems.filter.put(0, SlotFilter.FLUID_CONTAINER);
 		this.cargoItems.filter.put(1, SlotFilter.FLUID_CONTAINER);
+		this.cargoItems.filter.put(2, SlotFilter.SAND);
 		this.cargoItems.defaultFilter = SlotFilter.BURNABLE;
 	}
 
 	@Override
 	public int getInventorySize() {
-		return this.getDefinition().getInventorySize(gauge) + 2;
+		return this.getDefinition().getInventorySize(gauge) + 3;
 	}
 
 	@Override
