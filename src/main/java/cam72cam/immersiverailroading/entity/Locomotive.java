@@ -422,8 +422,6 @@ public abstract class Locomotive extends FreightTank {
 
         isSanding = false;
         if (this.isSanding()) {
-            System.out.println("Time: " + sandTime);
-
             ItemStack stack = this.cargoItems.get(2);
             if (sandTime == 0) {
                 stack.setCount(stack.getCount() - 1);
@@ -443,9 +441,6 @@ public abstract class Locomotive extends FreightTank {
      * Maximum force that can be between the wheels and the rails before it slips
      */
     protected final double getStaticTractiveEffort() {
-        if (isSanding) {
-            System.out.println("Sanding");
-        }
         return getDefinition().getStartingTractionNewtons(gauge)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
