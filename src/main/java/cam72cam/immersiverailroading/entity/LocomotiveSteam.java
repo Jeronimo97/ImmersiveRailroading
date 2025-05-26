@@ -165,10 +165,10 @@ public class LocomotiveSteam extends Locomotive {
                 / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
-        System.out.println("Druck: " + (pressurePercent * 100) + "%");
-        System.out.println("Neu: " + appliedTraction);
-        System.out.println("Neu-Neu: " + appliedTraction1);
-        System.out.println("Alt: " + appliedTraction2);
+        // System.out.println("Druck: " + (pressurePercent * 100) + "%");
+        // System.out.println("Neu: " + appliedTraction);
+        // System.out.println("Neu-Neu: " + appliedTraction1);
+        // System.out.println("Alt: " + appliedTraction2);
 
         return appliedTraction * Math.copySign(1, reverser);
     }

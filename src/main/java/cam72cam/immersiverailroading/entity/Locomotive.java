@@ -74,7 +74,8 @@ public abstract class Locomotive extends FreightTank {
 
     protected int sandTime = 0;
     protected boolean isSanding = false;
-    protected boolean isSandingKey = false;
+    protected boolean sandingKey = false;
+    protected int sandingKeyTimeout = 0;
 
     /*
      * 
@@ -219,12 +220,17 @@ public abstract class Locomotive extends FreightTank {
                 }
                 break;
             case SANDING:
-                if (isSandingKey) {
-                    isSandingKey = false;
-                } else {
-                    isSandingKey = true;
+                if (sandingKeyTimeout == 0) {
+                    sandingKey = !sandingKey;
+                    sandingKeyTimeout = 5;
+
+                    List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                            .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                            .collect(Collectors.toList());
+                    for (Control<?> sand : sanding) {
+                        setControlPosition(sand, sandingKey ? 1 : 0);
+                    }
                 }
-                setSanding(isSanding());
                 break;
             default:
                 super.handleKeyPress(source, key, disableIndependentThrottle);
@@ -420,8 +426,12 @@ public abstract class Locomotive extends FreightTank {
             }
         }
 
+        if (sandingKeyTimeout > 0) {
+            sandingKeyTimeout--;
+        }
         isSanding = false;
-        if (this.isSanding()) {
+        sandingKey = sandingKey || isSanding();
+        if (sandingKey) {
             ItemStack stack = this.cargoItems.get(2);
             if (sandTime == 0) {
                 stack.setCount(stack.getCount() - 1);
@@ -450,6 +460,10 @@ public abstract class Locomotive extends FreightTank {
 
     protected double simulateWheelSlip() {
         double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
+        if (this instanceof LocomotiveSteam) {
+            appliedTractiveEffort =
+                    appliedTractiveEffort / getDefinition().getPowerMultiplier() * 1.5;
+        }
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
 
@@ -671,16 +685,6 @@ public abstract class Locomotive extends FreightTank {
         List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
-        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5 || isSandingKey);
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
     }
-
-    public void setSanding(final boolean enabled) {
-        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
-                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
-                .collect(Collectors.toList());
-        for (Control<?> sand : sanding) {
-            setControlPosition(sand, enabled ? 1 : 0);
-        }
-    }
-
 }
