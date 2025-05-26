@@ -141,11 +141,34 @@ public class LocomotiveSteam extends Locomotive {
         double backPressure =
                 effectivePressure * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(reverser));
 
+        double pressurePercent = (effectivePressure - backPressure) / getMaxChestPressure();
+        if (pressurePercent <= 0)
+            return 0;
+
         double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
+                * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
+                * getDefinition().getPistonStroke(gauge) * 1.02
+                * Math.pow(pressurePercent, 1 / (0.2 * Math.abs(reverser) + 0.8))
+                * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
+
+        double appliedTraction1 = 0.97 * 101.97 * getDefinition().getCylinderCount()
+                * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
+                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
+                * Math.pow(getChestPressurePercent(), 1 / (0.2 * Math.abs(reverser) + 0.8))
+                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
+
+        double appliedTraction2 = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
                 * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
                 / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
+
+        System.out.println("Druck: " + (pressurePercent * 100) + "%");
+        System.out.println("Neu: " + appliedTraction);
+        System.out.println("Neu-Neu: " + appliedTraction1);
+        System.out.println("Alt: " + appliedTraction2);
 
         return appliedTraction * Math.copySign(1, reverser);
     }

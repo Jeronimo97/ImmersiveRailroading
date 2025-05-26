@@ -224,7 +224,7 @@ public abstract class Locomotive extends FreightTank {
                 } else {
                     isSandingKey = true;
                 }
-                setSanding(isSandingKey);
+                setSanding(isSanding());
                 break;
             default:
                 super.handleKeyPress(source, key, disableIndependentThrottle);
