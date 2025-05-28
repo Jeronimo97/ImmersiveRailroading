@@ -19,5 +19,8 @@ public enum KeyTypes {
 	START_STOP_ENGINE,
 	BELL,
 	SANDING,
+	HAND_BRAKE_UP,
+	HAND_BRAKE_ZERO,
+	HAND_BRAKE_DOWN,
 	;
 }

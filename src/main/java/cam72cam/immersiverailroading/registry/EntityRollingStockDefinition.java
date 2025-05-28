@@ -104,6 +104,7 @@ public abstract class EntityRollingStockDefinition {
     private int maxPassengers;
     private float interiorLightLevel;
     private boolean hasIndependentBrake;
+    private boolean hasHandBrake;
     private boolean hasPressureBrake;
     private final Map<ModelComponentType, List<ModelComponent>> renderComponents;
     private final List<ItemComponentType> itemComponents;
@@ -118,6 +119,7 @@ public abstract class EntityRollingStockDefinition {
     private double swayMultiplier;
     private double tiltMultiplier;
     private float brakeCoefficient;
+    private float handBrakeCoefficient;
     public double rollingResistanceCoefficient;
     public double directFrictionCoefficient;
 
@@ -496,6 +498,7 @@ public abstract class EntityRollingStockDefinition {
         weight = properties.getValue("weight_kg").asInteger() * internal_inv_scale;
         valveGear = ValveGearConfig.get(properties, "valve_gear");
         hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
+        hasHandBrake = properties.getValue("hand_brake").asBoolean(true);
         hasPressureBrake = properties.getValue("pressure_brake").asBoolean();
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
@@ -514,6 +517,7 @@ public abstract class EntityRollingStockDefinition {
         rollingResistanceCoefficient =
                 properties.getValue("rolling_resistance_coefficient").asDouble();
         directFrictionCoefficient = properties.getValue("direct_friction_coefficient").asDouble();
+        handBrakeCoefficient = properties.getValue("handbrake_coefficient").asFloat(1);
 
         swayMultiplier = properties.getValue("swayMultiplier").asDouble();
         tiltMultiplier = properties.getValue("tiltMultiplier").asDouble();
@@ -663,6 +667,10 @@ public abstract class EntityRollingStockDefinition {
 
     public boolean hasIndependentBrake() {
         return hasIndependentBrake;
+    }
+    
+    public boolean hasHandBrake() {
+        return hasHandBrake;
     }
 
     public boolean hasPressureBrake() {
@@ -935,6 +943,10 @@ public abstract class EntityRollingStockDefinition {
 
     public double getBrakeShoeFriction() {
         return brakeCoefficient;
+    }
+    
+    public float getHandBrakeCoefficient() {
+        return handBrakeCoefficient;
     }
 
     public String getName() {

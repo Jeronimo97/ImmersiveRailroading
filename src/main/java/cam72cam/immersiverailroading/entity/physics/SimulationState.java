@@ -104,6 +104,7 @@ public class SimulationState {
 
         public Double desiredBrakePressure;
         public double independentBrakePosition;
+        public double handBrakeNewtons;
         public boolean isSanding;
 
         public boolean hasPressureBrake;
@@ -136,7 +137,7 @@ public class SimulationState {
             this.massKg = stock.getWeight();
             // When FuelRequired is false, most of the time the locos are empty.  Work around that here
             double designMassKg = !Config.ConfigBalance.FuelRequired && (stock instanceof Locomotive || stock instanceof Tender) ? massKg : stock.getMaxWeight();
-
+            
             if (stock instanceof Locomotive) {
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
@@ -155,6 +156,7 @@ public class SimulationState {
             this.maximumAdhesionNewtons = massKg * staticFriction * 9.8 * stock.getBrakeAdhesionEfficiency();
             this.designAdhesionNewtons = designMassKg * staticFriction * 9.8 * stock.getBrakeSystemEfficiency();
             this.independentBrakePosition = stock.getIndependentBrake();
+            this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
             this.directResistanceNewtons = stock::getDirectFrictionNewtons;
             this.hasPressureBrake = stock.getDefinition().hasPressureBrake();
 
@@ -170,7 +172,8 @@ public class SimulationState {
                         Math.abs(tractiveEffortFactors - other.tractiveEffortFactors) < 0.01 &&
                         Math.abs(massKg - other.massKg)/massKg < 0.01 &&
                         (desiredBrakePressure == null || Math.abs(desiredBrakePressure - other.desiredBrakePressure) < 0.001) &&
-                        Math.abs(independentBrakePosition - other.independentBrakePosition) < 0.01;
+                        Math.abs(independentBrakePosition - other.independentBrakePosition) < 0.01 &&
+                        Math.abs(handBrakeNewtons - other.handBrakeNewtons) < 0.01;
             }
             return false;
         }
@@ -436,7 +439,10 @@ public class SimulationState {
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
         double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, Math.max(brakePressure, config.independentBrakePosition));
-
+        double handBrakeNewtons = config.handBrakeNewtons;
+        if (handBrakeNewtons != 0)
+            //System.out.println("HandbrakeN: " + handBrakeNewtons);
+        
         this.sliding = false;
         if (brakeAdhesionNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
             // WWWWWHHHEEEEE!!! SLIDING!!!!
@@ -447,6 +453,6 @@ public class SimulationState {
 
         brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
 
-        return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons + directResistance + startingFriction;
+        return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons + directResistance + startingFriction + handBrakeNewtons;
     }
 }

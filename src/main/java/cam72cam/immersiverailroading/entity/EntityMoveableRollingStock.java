@@ -22,6 +22,8 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
+import net.minecraft.util.text.ITextComponent;
+import scala.annotation.meta.setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,10 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     @TagSync
     @TagField("IND_BRAKE")
     private float independentBrake = 0;
+    
+    @TagSync
+    @TagField("HAND_BRAKE")
+    private float handBrake = 0;
 
     @TagSync
     @TagField("BRAKE_PRESSURE")
@@ -230,6 +236,13 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 for (Control<?> control : getDefinition().getModel().getControls()) {
                     if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
                         setIndependentBrake(Math.max(0, Math.min(1, getIndependentBrake() + (getControlPosition(control) - 0.5f) / 8)));
+                    }
+                }
+            }
+            if (getDefinition().hasHandBrake()) {
+                for (Control<?> control : getDefinition().getModel().getControls()) {
+                    if (control.part.type == ModelComponentType.HAND_BRAKE_X) {
+                        setHandBrake(Math.max(0, Math.min(1, getHandBrake() + (getControlPosition(control) - 0.5f / 8))));
                     }
                 }
             }
@@ -434,6 +447,15 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 case INDEPENDENT_BRAKE_DOWN:
                     setIndependentBrake(getIndependentBrake() - independentBrakeNotch);
                     break;
+                case HAND_BRAKE_UP:
+                    setHandBrake(getHandBrake() + independentBrakeNotch);
+                    break;
+                case HAND_BRAKE_ZERO:
+                    setHandBrake(0);
+                    break;
+                case HAND_BRAKE_DOWN:
+                    setHandBrake(getHandBrake() - independentBrakeNotch);
+                    break;
                 default:
                     super.handleKeyPress(source, key, disableIndependentThrottle);
             }
@@ -452,6 +474,21 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 setControlPositions(ModelComponentType.INDEPENDENT_BRAKE_X, newIndependentBrake);
             }
             independentBrake = newIndependentBrake;
+        }
+    }
+    
+    public float getHandBrake() {
+        if (getPassengerCount() == 1) {
+            //System.out.println("Handbrake: " + handBrake);
+        }
+        return getDefinition().hasHandBrake() ? handBrake : 0;
+    }
+    
+    public void setHandBrake(float newHandBrake) {
+        newHandBrake = Math.min(1, Math.max(0, newHandBrake));
+        if (this.getHandBrake() != newHandBrake && getDefinition().hasHandBrake()) {
+            setControlPositions(ModelComponentType.HAND_BRAKE_X, newHandBrake);
+            handBrake = newHandBrake;
         }
     }
 
