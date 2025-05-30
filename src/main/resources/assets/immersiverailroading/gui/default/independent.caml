@@ -17,7 +17,7 @@ element:
                 x = 4
                 y = 59
                 image = "immersiverailroading:gui/indicator.png"
-                readout = "INDEPENDENT_BRAKE"
+                readout = "HAND_BRAKE"
                 translate =
                     x = 0
                     y = -50

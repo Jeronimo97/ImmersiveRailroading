@@ -61,8 +61,8 @@ public enum Readouts {
                 return stock.getDefinition().isLinearBrakeControl() ? TRAIN_BRAKE.getValue(stock)
                         : lever;
             case INDEPENDENT_BRAKE:
-                return stock instanceof EntityMoveableRollingStock
-                        ? ((EntityMoveableRollingStock) stock).getIndependentBrake()
+                return stock instanceof Locomotive
+                        ? ((Locomotive) stock).getIndependentBrake()
                         : 0;
             case BRAKE_PRESSURE:
                 return stock instanceof EntityMoveableRollingStock
@@ -143,7 +143,7 @@ public enum Readouts {
                         : 0;
             case HAND_BRAKE:
                 return stock instanceof EntityMoveableRollingStock
-                        ? ((EntityMoveableRollingStock) stock).getIndependentBrake()
+                        ? ((EntityMoveableRollingStock) stock).getHandBrake()
                         : 0;
         }
         return 0;
@@ -190,8 +190,8 @@ public enum Readouts {
                 }
                 break;
             case INDEPENDENT_BRAKE:
-                if (stock instanceof EntityMoveableRollingStock) {
-                    ((EntityMoveableRollingStock) stock).setIndependentBrake(value);
+                if (stock instanceof Locomotive) {
+                    ((Locomotive) stock).setIndependentBrake(value);
                 }
                 break;
             case COUPLER_FRONT:

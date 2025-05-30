@@ -77,6 +77,11 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         gauges.addAll(Readout.getReadouts(provider, rearLocomotiveRocking, ModelComponentType.COUPLED_X, ModelPosition.REAR_LOCOMOTIVE, Readouts.COUPLED_REAR));
 
         super.parseControllable(provider, def);
+        
+        if (def.hasIndependentBrake()) {
+            addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
+            addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
+        }
 
         addGauge(provider, ModelComponentType.GAUGE_SPEED_X, Readouts.SPEED);
         addGauge(provider, ModelComponentType.GAUGE_THROTTLE_X, Readouts.THROTTLE);
