@@ -147,7 +147,7 @@ public class SimulationState {
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
-                desiredBrakePressure = 1 - (double)locomotive.getTrainBrake();
+                desiredBrakePressure = locomotive.getTrainBrake() < 0.95 ? 1 - 0.31 * (double)locomotive.getTrainBrake() : 0;
                 isSanding = locomotive.isSanding();
             } else {
                 tractiveEffortNewtons = speed -> 0d;
@@ -182,7 +182,7 @@ public class SimulationState {
                         couplerEngagedRear == other.couplerEngagedRear &&
                         Math.abs(tractiveEffortFactors - other.tractiveEffortFactors) < 0.01 &&
                         Math.abs(massKg - other.massKg)/massKg < 0.01 &&
-                        (desiredBrakePressure == null || Math.abs(desiredBrakePressure - other.desiredBrakePressure) < 0.001) &&
+                        (desiredBrakePressure == null || Math.abs(desiredBrakePressure - other.desiredBrakePressure) < 0.01) &&
                         Math.abs(independentBrake - other.independentBrake) < 0.01 &&
                         Math.abs(handBrakeNewtons - other.handBrakeNewtons) < 0.01 &&
                         Math.abs(trainBrakePressure - other.trainBrakePressure) < 0.01 &&
@@ -450,8 +450,8 @@ public class SimulationState {
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
-        //System.out.println("Hauptluftleitung: " + (config.trainBrakePressure * 5) + " bar");
-        //System.out.println("Bremszylinder: " + (config.brakeCylinderPressure * 3.5) + " bar");
+        // System.out.println(config.debugID +  ": Hauptluftleitung: " + (config.trainBrakePressure * 5) + " bar");
+        // System.out.println(config.debugID +  ": Bremszylinder: " + (config.brakeCylinderPressure * 3.5) + " bar");
         config.brakeCylinderPressure = Math.max(Math.min((1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
         double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, config.brakeCylinderPressure);
         double handBrakeNewtons = config.handBrakeNewtons;
@@ -469,6 +469,9 @@ public class SimulationState {
         brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
         
         //System.out.println(config.debugID + ": " + brakeAdhesionNewtons + " N");
+        
+        if (config.trainBrakePressure > 0.9999)
+            config.trainBrakePressure = 1;
 
         return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons + directResistance + startingFriction + handBrakeNewtons;
     }
