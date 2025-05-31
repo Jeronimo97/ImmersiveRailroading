@@ -193,7 +193,10 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Keyboard.registerKey("ir_keys_increase_hand_brake", KeyCode.COMMA, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.HAND_BRAKE_UP));
 				Keyboard.registerKey("ir_keys_zero_hand_brake", KeyCode.PERIOD, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.HAND_BRAKE_ZERO));
 				Keyboard.registerKey("ir_keys_decrease_hand_brake", KeyCode.MINUS, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.HAND_BRAKE_DOWN));
-				
+				Keyboard.registerKey("ir_keys.increase_dynamic_brake", KeyCode.NUMPAD7, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.DYNAMIC_BRAKE_UP));
+                Keyboard.registerKey("ir_keys.zero_dynamic_brake", KeyCode.NUMPAD4, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.DYNAMIC_BRAKE_ZERO));
+                Keyboard.registerKey("ir_keys.decrease_dynamic_brake", KeyCode.NUMPAD1, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.DYNAMIC_BRAKE_DOWN));
+                
 				
 				Audio.setSoundChannels(ConfigSound.customAudioChannels);
 				break;

@@ -35,6 +35,11 @@ public class DieselLocomotiveModel extends LocomotiveModel<LocomotiveDiesel, Loc
         addGauge(provider, ModelComponentType.GAUGE_TEMPERATURE_X, Readouts.TEMPERATURE);
         addControl(provider, ModelComponentType.ENGINE_START_X);
         addControl(provider, ModelComponentType.HORN_CONTROL_X);
+        
+        if (def.getDynamicBrake() != 0) {
+            addControl(provider, ModelComponentType.DYNAMIC_BRAKE_X);
+            addGauge(provider, ModelComponentType.GAUGE_DYNAMIC_BRAKE_X, Readouts.DYNAMIC_BRAKE);
+        }
     }
 
     @Override

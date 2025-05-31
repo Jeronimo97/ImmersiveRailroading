@@ -3,6 +3,7 @@ package cam72cam.immersiverailroading.entity.physics;
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
+import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.entity.Tender;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.library.Gauge;
@@ -105,6 +106,7 @@ public class SimulationState {
         public Double desiredBrakePressure;
         public float independentBrake;
         public double handBrakeNewtons;
+        public float dynamicBrakeNewtons;
         public boolean isSanding;
 
         public boolean hasPressureBrake;
@@ -163,6 +165,14 @@ public class SimulationState {
             if (stock instanceof Locomotive)
                 this.independentBrake = ((Locomotive) stock).getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
+            if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).isTurnedOn()) {
+                float speed = (float) ((Locomotive) stock).speedPercent(stock.getCurrentSpeed());
+                this.dynamicBrakeNewtons = (float) (((LocomotiveDiesel) stock).getDynamicBrake()
+                        * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier()
+                        * (speed < 0.1 ? speed / 0.1 * 15000 : 15000));
+            } else {
+                this.dynamicBrakeNewtons = 0;
+            }
             this.directResistanceNewtons = stock::getDirectFrictionNewtons;
             this.hasPressureBrake = stock.getDefinition().hasPressureBrake();
             
@@ -185,6 +195,7 @@ public class SimulationState {
                         (desiredBrakePressure == null || Math.abs(desiredBrakePressure - other.desiredBrakePressure) < 0.01) &&
                         Math.abs(independentBrake - other.independentBrake) < 0.01 &&
                         Math.abs(handBrakeNewtons - other.handBrakeNewtons) < 0.01 &&
+                        Math.abs(dynamicBrakeNewtons - other.dynamicBrakeNewtons) < 0.01 &&
                         Math.abs(trainBrakePressure - other.trainBrakePressure) < 0.01 &&
                         Math.abs(brakeCylinderPressure - other.brakeCylinderPressure) < 0.01;
             }
@@ -455,8 +466,7 @@ public class SimulationState {
         config.brakeCylinderPressure = Math.max(Math.min((1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
         double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, config.brakeCylinderPressure);
         double handBrakeNewtons = config.handBrakeNewtons;
-        if (handBrakeNewtons != 0)
-            //System.out.println("HandbrakeN: " + handBrakeNewtons);
+        float dynamicBrakeNewtons = config.dynamicBrakeNewtons;
         
         this.sliding = false;
         if (brakeAdhesionNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
@@ -468,11 +478,13 @@ public class SimulationState {
 
         brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
         
-        //System.out.println(config.debugID + ": " + brakeAdhesionNewtons + " N");
+        if (dynamicBrakeNewtons != 0)
+            System.out.println(config.debugID + ": " + dynamicBrakeNewtons + " N");
         
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
 
-        return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons + directResistance + startingFriction + handBrakeNewtons;
+        return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons
+                + directResistance + startingFriction + handBrakeNewtons + dynamicBrakeNewtons;
     }
 }

@@ -526,6 +526,10 @@ public abstract class Locomotive extends FreightTank {
         // System.out.println("Slipping: " + slipping);
         return appliedTractiveEffort;
     }
+    
+    public double speedPercent(final Speed speed) {
+        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
+    }
 
     @Override
     public double getBrakeSystemEfficiency() {
@@ -545,7 +549,7 @@ public abstract class Locomotive extends FreightTank {
      * Misc Helper functions
      */
 
-    private void copySettings(final EntityRollingStock stock, final boolean direction) {
+    protected void copySettings(final EntityRollingStock stock, final boolean direction) {
         if (stock instanceof Locomotive && ((Locomotive) stock).getDefinition().muliUnitCapable) {
             ((Locomotive) stock).setRealThrottle(this.getThrottle());
             ((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));

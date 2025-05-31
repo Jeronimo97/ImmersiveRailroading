@@ -17,7 +17,7 @@ public enum Readouts {
     INDEPENDENT_BRAKE, BRAKE_PRESSURE, COUPLER_FRONT, COUPLER_REAR, COUPLED_FRONT, COUPLED_REAR,
     COUPLER_SLACK_FRONT, COUPLER_SLACK_REAR, BELL, WHISTLE, HORN, ENGINE, FRONT_BOGEY_ANGLE,
     REAR_BOGEY_ANGLE, FRONT_LOCOMOTIVE_ANGLE, REAR_LOCOMOTIVE_ANGLE, CYLINDER_DRAIN, CARGO_FILL,
-    ENGINE_RPM, CHEST_PRESSURE, HAND_BRAKE, BRAKE_CYLINDER_PRESSURE;
+    ENGINE_RPM, CHEST_PRESSURE, HAND_BRAKE, BRAKE_CYLINDER_PRESSURE, DYNAMIC_BRAKE;
     ;
 
     public float getValue(final EntityRollingStock stock) {
@@ -148,6 +148,9 @@ public enum Readouts {
                 return stock instanceof EntityMoveableRollingStock
                         ? ((EntityMoveableRollingStock) stock).getHandBrake()
                         : 0;
+            case DYNAMIC_BRAKE:
+                return stock instanceof LocomotiveDiesel ?
+                        ((LocomotiveDiesel) stock).getDynamicBrake() : 0;
         }
         return 0;
     }

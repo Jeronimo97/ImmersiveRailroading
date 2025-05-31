@@ -203,7 +203,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         if (def.hasHandBrake()) {
             addControl(provider, ModelComponentType.HAND_BRAKE_X);
-            addGauge(provider, ModelComponentType.HAND_BRAKE_X, Readouts.HAND_BRAKE);
+            addGauge(provider, ModelComponentType.GAUGE_HAND_BRAKE_X, Readouts.HAND_BRAKE);
         }
         addGauge(provider, ModelComponentType.BRAKE_PRESSURE_X, Readouts.BRAKE_PRESSURE);
         addControl(provider, ModelComponentType.WINDOW_X);
