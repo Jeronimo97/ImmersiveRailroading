@@ -42,8 +42,6 @@ public class SimulationState {
     public UUID interactingFront;
     public UUID interactingRear;
 
-    public float brakePressure;
-
     public Vec3d recalculatedAt;
     // All positions in the stock bounds
     public List<Vec3i> collidingBlocks;
@@ -72,6 +70,8 @@ public class SimulationState {
     public float slackRearPercent;
 
     public static class Configuration {
+        public String debugID;
+        
         public UUID id;
         public Gauge gauge;
         public World world;
@@ -103,16 +103,21 @@ public class SimulationState {
         private Function<Speed, Double> tractiveEffortNewtons;
 
         public Double desiredBrakePressure;
-        public double independentBrakePosition;
+        public float independentBrake;
         public double handBrakeNewtons;
         public boolean isSanding;
 
         public boolean hasPressureBrake;
+        
+        public float trainBrakePosition;
+        public float trainBrakePressure;
+        public float brakeCylinderPressure;
 
         public Configuration(EntityCoupleableRollingStock stock) {
             id = stock.getUUID();
             gauge = stock.gauge;
             world = stock.getWorld();
+            debugID = stock.getDefinitionID();
 
             width = stock.getDefinition().getWidth(gauge);
             length = stock.getDefinition().getLength(gauge);
@@ -142,7 +147,7 @@ public class SimulationState {
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
-                desiredBrakePressure = (double)locomotive.getTrainBrake();
+                desiredBrakePressure = 1 - (double)locomotive.getTrainBrake();
                 isSanding = locomotive.isSanding();
             } else {
                 tractiveEffortNewtons = speed -> 0d;
@@ -156,10 +161,15 @@ public class SimulationState {
             this.maximumAdhesionNewtons = massKg * staticFriction * 9.8 * stock.getBrakeAdhesionEfficiency();
             this.designAdhesionNewtons = designMassKg * staticFriction * 9.8 * stock.getBrakeSystemEfficiency();
             if (stock instanceof Locomotive)
-                this.independentBrakePosition = ((Locomotive) stock).getIndependentBrake();
+                this.independentBrake = ((Locomotive) stock).getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
             this.directResistanceNewtons = stock::getDirectFrictionNewtons;
             this.hasPressureBrake = stock.getDefinition().hasPressureBrake();
+            
+            if (stock instanceof Locomotive)
+                this.trainBrakePosition = ((Locomotive) stock).getTrainBrake();
+            this.trainBrakePressure = stock.getBrakePressure();
+            this.brakeCylinderPressure = stock.getBrakeCylinderPressure();
 
             this.rollingResistanceCoefficient = stock.getDefinition().rollingResistanceCoefficient;
         }
@@ -173,8 +183,10 @@ public class SimulationState {
                         Math.abs(tractiveEffortFactors - other.tractiveEffortFactors) < 0.01 &&
                         Math.abs(massKg - other.massKg)/massKg < 0.01 &&
                         (desiredBrakePressure == null || Math.abs(desiredBrakePressure - other.desiredBrakePressure) < 0.001) &&
-                        Math.abs(independentBrakePosition - other.independentBrakePosition) < 0.01 &&
-                        Math.abs(handBrakeNewtons - other.handBrakeNewtons) < 0.01;
+                        Math.abs(independentBrake - other.independentBrake) < 0.01 &&
+                        Math.abs(handBrakeNewtons - other.handBrakeNewtons) < 0.01 &&
+                        Math.abs(trainBrakePressure - other.trainBrakePressure) < 0.01 &&
+                        Math.abs(brakeCylinderPressure - other.brakeCylinderPressure) < 0.01;
             }
             return false;
         }
@@ -194,8 +206,6 @@ public class SimulationState {
 
         interactingFront = stock.getCoupledUUID(EntityCoupleableRollingStock.CouplerType.FRONT);
         interactingRear = stock.getCoupledUUID(EntityCoupleableRollingStock.CouplerType.BACK);
-
-        brakePressure = stock.getBrakePressure();
 
         config = new Configuration(stock);
 
@@ -227,7 +237,8 @@ public class SimulationState {
         this.interactingFront = prev.interactingFront;
         this.interactingRear = prev.interactingRear;
 
-        this.brakePressure = prev.brakePressure;
+        // config.brakeCylinderPressure = prev.config.brakeCylinderPressure;
+        // config.trainBrakePressure = prev.config.trainBrakePressure;
 
         this.config = prev.config;
 
@@ -439,7 +450,10 @@ public class SimulationState {
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
-        double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, Math.max(brakePressure, config.independentBrakePosition));
+        //System.out.println("Hauptluftleitung: " + (config.trainBrakePressure * 5) + " bar");
+        //System.out.println("Bremszylinder: " + (config.brakeCylinderPressure * 3.5) + " bar");
+        config.brakeCylinderPressure = Math.max(Math.min((1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
+        double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, config.brakeCylinderPressure);
         double handBrakeNewtons = config.handBrakeNewtons;
         if (handBrakeNewtons != 0)
             //System.out.println("HandbrakeN: " + handBrakeNewtons);
@@ -453,6 +467,8 @@ public class SimulationState {
         }
 
         brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
+        
+        //System.out.println(config.debugID + ": " + brakeAdhesionNewtons + " N");
 
         return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons + directResistance + startingFriction + handBrakeNewtons;
     }

@@ -12,12 +12,13 @@ import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.entity.LocomotiveSteam;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.fluid.Fluid;
+import li.cil.repack.org.luaj.vm2.ast.Stat.Return;
 
 public enum Stat {
     SPEED, MAX_SPEED, UNITS_SPEED, LIQUID, MAX_LIQUID, UNITS_LIQUID, BOILER_PRESSURE,
     MAX_BOILER_PRESSURE, UNITS_BOILER_PRESSURE, TEMPERATURE, MAX_TEMPERATURE, UNITS_TEMPERATURE,
     BRAKE_PRESSURE, MAX_BRAKE_PRESSURE, UNITS_BRAKE_PRESSURE, CARGO_FILL, MAX_CARGO_FILL,
-    UNITS_CARGO_FILL, CHEST_PRESSURE, MAX_CHEST_PRESSURE;
+    UNITS_CARGO_FILL, CHEST_PRESSURE, MAX_CHEST_PRESSURE, BRAKE_CYLINDER_PRESSURE;
 
     public String getValue(final EntityRollingStock stock) {
         Float temp = null;
@@ -103,6 +104,11 @@ public enum Stat {
                 if (stock instanceof EntityMoveableRollingStock)
                     return String.format("%s",
                             (int) (((EntityMoveableRollingStock) stock).getBrakePressure() * 100));
+                return "";
+            case BRAKE_CYLINDER_PRESSURE:
+                if (stock instanceof EntityMoveableRollingStock)
+                    return String.format("%s",
+                            (int) (((EntityMoveableRollingStock) stock).getBrakeCylinderPressure() * 100));
                 return "";
             case MAX_BRAKE_PRESSURE:
                 return "100";

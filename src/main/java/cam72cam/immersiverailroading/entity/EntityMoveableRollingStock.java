@@ -24,6 +24,7 @@ import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
 import net.minecraft.util.text.ITextComponent;
 import scala.annotation.meta.setter;
+import scala.reflect.internal.Trees.This;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,11 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
     @TagSync
     @TagField("BRAKE_PRESSURE")
-    private float trainBrakePressure = 0;
+    private float trainBrakePressure = 1;
+    
+    @TagSync
+    @TagField("BRAKE_CYLINDER_PRESSURE")
+    private float brakeCylinderPressure = 0;
 
     @TagSync
     @TagField("SLIDING")
@@ -223,6 +228,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         super.onTick();
 
         if (getWorld().isServer) {
+            
             if (getDefinition().hasHandBrake()) {
                 for (Control<?> control : getDefinition().getModel().getControls()) {
                     if (control.part.type == ModelComponentType.HAND_BRAKE_X) {
@@ -233,7 +239,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
             SimulationState state = getCurrentState();
             if (state != null) {
-                this.trainBrakePressure = state.brakePressure;
+                this.brakeCylinderPressure = state.config.brakeCylinderPressure;
+                this.trainBrakePressure = state.config.trainBrakePressure;
                 this.sliding = state.sliding;
 
                 if (state.collided > 0.1 && getTickCount() - lastCollision > 20) {
@@ -453,6 +460,10 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
             handBrake = newHandBrake;
         }
     }
+    
+    public float getBrakeCylinderPressure() {
+        return brakeCylinderPressure;
+    }
 
     public float getBrakePressure() {
         return trainBrakePressure;
@@ -488,7 +499,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 }
             }
         }
-        double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakePressure() * newtons;
+        double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakeCylinderPressure() * newtons;
         return retardedNewtons + pressureNewtons;
     }
 

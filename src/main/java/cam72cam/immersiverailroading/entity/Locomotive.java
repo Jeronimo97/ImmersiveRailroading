@@ -46,7 +46,7 @@ public abstract class Locomotive extends FreightTank {
 
     @TagSync
     @TagField("AIR_BRAKE")
-    private float trainBrake = 0;
+    private float trainBrakePosition = 0;
     
     @TagSync
     @TagField("IND_BRAKE")
@@ -635,34 +635,24 @@ public abstract class Locomotive extends FreightTank {
         return Math.max((float) control, hornPull);
     }
 
-    @Deprecated
-    public float getAirBrake() {
-        return getTrainBrake();
-    }
-
     public float getTrainBrake() {
-        return trainBrake;
+        return trainBrakePosition;
     }
 
-    @Deprecated
-    public void setAirBrake(final float value) {
-        setTrainBrake(value);
-    }
-
-    public void setTrainBrake(final float newTrainBrake) {
-        setRealTrainBrake(newTrainBrake);
+    public void setTrainBrake(final float newTrainBrakePos) {
+        setRealTrainBrake(newTrainBrakePos);
         if (this.getDefinition().muliUnitCapable) {
             this.mapTrain(this, true, false, this::copySettings);
         }
     }
 
-    private void setRealTrainBrake(float newTrainBrake) {
-        newTrainBrake = Math.min(1, Math.max(0, newTrainBrake));
-        if (this.getTrainBrake() != newTrainBrake) {
+    private void setRealTrainBrake(float newTrainBrakePos) {
+        newTrainBrakePos = Math.min(1, Math.max(0, newTrainBrakePos));
+        if (this.getTrainBrake() != newTrainBrakePos) {
             if (getDefinition().isLinearBrakeControl()) {
-                setControlPositions(ModelComponentType.TRAIN_BRAKE_X, newTrainBrake);
+                setControlPositions(ModelComponentType.TRAIN_BRAKE_X, newTrainBrakePos);
             }
-            trainBrake = newTrainBrake;
+            trainBrakePosition = newTrainBrakePos;
             setControlPositions(ModelComponentType.THROTTLE_BRAKE_X,
                     getThrottle() / 2 + (1 - getTrainBrake()) / 2);
         }
