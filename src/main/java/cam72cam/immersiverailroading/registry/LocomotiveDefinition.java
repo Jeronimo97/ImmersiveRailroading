@@ -43,8 +43,6 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
     
-    
-
     @Override
     protected Identifier defaultDataLocation() {
         return new Identifier(ImmersiveRailroading.MODID, "rolling_stock/default/locomotive.caml");

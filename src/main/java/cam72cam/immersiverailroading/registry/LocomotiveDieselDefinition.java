@@ -69,7 +69,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
                 GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/cab_car.caml")) :
                 GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/diesel.caml"));
     }
-
+    
     @Override
     public StockModel<?, ?> getModel() {
         return (DieselLocomotiveModel) super.getModel();

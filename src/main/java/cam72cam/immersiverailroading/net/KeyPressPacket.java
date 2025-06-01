@@ -71,7 +71,6 @@ public class KeyPressPacket extends Packet {
 				ItemWirelessRemotecontrol.Data data = new ItemWirelessRemotecontrol.Data(held);
 
 				if (loco.equals(data.linked)) {
-
 					((LocomotiveDiesel) stock).handleKeyPress(player, type, disableIndependentThrottle);
 					
 				}

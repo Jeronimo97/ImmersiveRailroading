@@ -44,6 +44,11 @@ chat.immersiverailroading:misc.wood_planks=Holzbretter
 chat.immersiverailroading:build.invalid_block=Ungültiger Block: x=%s y=%s z=%s
 chat.immersiverailroading:brush.no.variants=
 
+chat.immersiverailroading:wireless.remotecontrol.link=Funksteuerung verlinkt!
+chat.immersiverailroading:wireless.remotecontrol.relink=Funksteuerung verlinkt!
+chat.immersiverailroading:wireless.remotecontrol.unlink=Funksteuerung getrennt!
+chat.immersiverailroading:wireless.remotecontrol.cantlink=Lokomotive hat keine Funksteuerung !
+
 gui.immersiverailroading:label.brake=Bremse
 gui.immersiverailroading:label.throttle=Fahrschalter
 gui.immersiverailroading:selector.type=Typ: %s
