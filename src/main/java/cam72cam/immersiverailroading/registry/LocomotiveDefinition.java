@@ -2,6 +2,8 @@ package cam72cam.immersiverailroading.registry;
 
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
+import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
+import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.library.Gauge;
@@ -11,9 +13,11 @@ import cam72cam.immersiverailroading.model.StockModel;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.resource.Identifier;
 
+import java.io.IOException;
 import java.util.List;
 
 public abstract class LocomotiveDefinition extends FreightDefinition {
+	
     public boolean toggleBell;
     public SoundDefinition bell;
     private String works;
@@ -21,6 +25,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private double traction;
     private Speed maxSpeed;
     private boolean hasRadioEquipment;
+    private boolean hasWirelessRemoteEquipment;
     public boolean muliUnitCapable;
     private boolean isCabCar;
     private boolean isLinkedBrakeThrottle;
@@ -31,7 +36,14 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
+       
     }
+    
+    public GuiBuilder getRemoteOverlay(DataBlock data) throws IOException {
+        return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
+    }
+    
+    
 
     @Override
     protected Identifier defaultDataLocation() {
@@ -47,6 +59,8 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         DataBlock properties = data.getBlock("properties");
 
         hasRadioEquipment = properties.getValue("radio_equipped").asBoolean(false);
+        
+        hasWirelessRemoteEquipment = properties.getValue("remotecontrol_equipped").asBoolean(false);
 
         isCabCar = readCabCarFlag(data);
         if (isCabCar) {
@@ -124,6 +138,11 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
 
     public boolean getRadioCapability() {
         return this.hasRadioEquipment;
+    }
+    
+    //Wireless remote Control
+    public boolean getWirelessRemoteCapability() {
+        return this.hasWirelessRemoteEquipment;
     }
 
     public boolean isLinearBrakeControl() {

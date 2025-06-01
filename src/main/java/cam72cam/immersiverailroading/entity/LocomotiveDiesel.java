@@ -68,40 +68,40 @@ public class LocomotiveDiesel extends Locomotive {
 	public float getEngineTemperature() {
 		return engineTemperature;
 	}
-	
+
 	private void setEngineTemperature(float temp) {
 		engineTemperature = temp;
 	}
-	
+
 	public void setTurnedOn(boolean value) {
 		turnedOn = value;
 		setControlPositions(ModelComponentType.ENGINE_START_X, turnedOn ? 1 : 0);
 	}
-	
+
 	public boolean isTurnedOn() {
 		return turnedOn;
 	}
-	
+
 	public void setEngineOverheated(boolean value) {
 		engineOverheated = value;
 	}
-	
+
 	public boolean isEngineOverheated() {
 		return engineOverheated && Config.ConfigBalance.canDieselEnginesOverheat;
 	}
-	
+
 	public boolean isRunning() {
 		if (!Config.isFuelRequired(gauge)) {
 			return isTurnedOn();
 		}
 		return isTurnedOn() && !isEngineOverheated() && this.getLiquidAmount() > 0;
 	}
-	
+
 	@Override
 	public LocomotiveDieselDefinition getDefinition() {
 		return super.getDefinition(LocomotiveDieselDefinition.class);
 	}
-	
+
 	@Override
 	public boolean openGui(Player player) {
 		if (!getDefinition().isCabCar() && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
@@ -112,37 +112,38 @@ public class LocomotiveDiesel extends Locomotive {
 	}
 
 	/*
-	 * Sets the throttle or brake on all connected diesel locomotives if the throttle or brake has been changed
+	 * Sets the throttle or brake on all connected diesel locomotives if the
+	 * throttle or brake has been changed
 	 */
 	@Override
 	public void handleKeyPress(Player source, KeyTypes key, boolean disableIndependentThrottle) {
-		switch(key) {
-			case START_STOP_ENGINE:
-				if (turnOnOffDelay == 0) {
-					turnOnOffDelay = 10;
-					setTurnedOn(!isTurnedOn());
-				}
-				break;
-			case REVERSER_UP:
-			case REVERSER_ZERO:
-			case REVERSER_DOWN:
-				if (this.reverserCooldown > 0) {
-					return;
-				}
-				reverserCooldown = 3;
-				super.handleKeyPress(source, key, disableIndependentThrottle);
-				break;
-			case THROTTLE_UP:
-			case THROTTLE_ZERO:
-			case THROTTLE_DOWN:
-				if (this.throttleCooldown > 0) {
-					return;
-				}
-				throttleCooldown = 2;
-				super.handleKeyPress(source, key, disableIndependentThrottle);
-				break;
-			default:
-				super.handleKeyPress(source, key, disableIndependentThrottle);
+		switch (key) {
+		case START_STOP_ENGINE:
+			if (turnOnOffDelay == 0) {
+				turnOnOffDelay = 10;
+				setTurnedOn(!isTurnedOn());
+			}
+			break;
+		case REVERSER_UP:
+		case REVERSER_ZERO:
+		case REVERSER_DOWN:
+			if (this.reverserCooldown > 0) {
+				return;
+			}
+			reverserCooldown = 3;
+			super.handleKeyPress(source, key, disableIndependentThrottle);
+			break;
+		case THROTTLE_UP:
+		case THROTTLE_ZERO:
+		case THROTTLE_DOWN:
+			if (this.throttleCooldown > 0) {
+				return;
+			}
+			throttleCooldown = 2;
+			super.handleKeyPress(source, key, disableIndependentThrottle);
+			break;
+		default:
+			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
 	}
 
@@ -151,7 +152,7 @@ public class LocomotiveDiesel extends Locomotive {
 		return this.isRunning();
 	}
 
-    @Override
+	@Override
 	protected float getReverserDelta() {
 		return 0.51f;
 	}
@@ -210,8 +211,7 @@ public class LocomotiveDiesel extends Locomotive {
 		}
 
 		OptionalDouble control = this.getDefinition().getModel().getControls().stream()
-				.filter(x -> x.part.type == ModelComponentType.HORN_CONTROL_X)
-				.mapToDouble(this::getControlPosition)
+				.filter(x -> x.part.type == ModelComponentType.HORN_CONTROL_X).mapToDouble(this::getControlPosition)
 				.max();
 		if (control.isPresent() && control.getAsDouble() > 0) {
 			this.setHorn(10, hornPlayer);
@@ -220,7 +220,7 @@ public class LocomotiveDiesel extends Locomotive {
 		float engineTemperature = getEngineTemperature();
 		float heatUpSpeed = 0.0029167f * Config.ConfigBalance.dieselLocoHeatTimeScale / 1.7f;
 		float ambientDelta = engineTemperature - ambientTemperature();
-		float coolDownSpeed = heatUpSpeed * Math.copySign((float)Math.pow(ambientDelta / 130, 2), ambientDelta);
+		float coolDownSpeed = heatUpSpeed * Math.copySign((float) Math.pow(ambientDelta / 130, 2), ambientDelta);
 
 		if (throttleCooldown > 0) {
 			throttleCooldown--;
@@ -231,42 +231,43 @@ public class LocomotiveDiesel extends Locomotive {
 		}
 
 		engineTemperature -= coolDownSpeed;
-		
+
 		if (this.getLiquidAmount() > 0 && isRunning()) {
 			float consumption = Math.abs(getThrottle()) + 0.05f;
 			float burnTime = BurnUtil.getBurnTime(this.getLiquid());
 			if (burnTime == 0) {
-				burnTime = 200; //Default to 200 for unregistered liquids
+				burnTime = 200; // Default to 200 for unregistered liquids
 			}
-			burnTime *= getDefinition().getFuelEfficiency()/100f;
+			burnTime *= getDefinition().getFuelEfficiency() / 100f;
 			burnTime *= (Config.ConfigBalance.locoDieselFuelEfficiency / 100f);
-			burnTime *= 10; // This is a workaround for the 10x tank size bug that existed for a long time and was tuned to
+			burnTime *= 10; // This is a workaround for the 10x tank size bug that existed for a long time
+							// and was tuned to
 
 			while (internalBurn < 0 && this.getLiquidAmount() > 0) {
 				internalBurn += burnTime;
 				theTank.drain(new FluidStack(theTank.getContents().getFluid(), 1), false);
 			}
-			
+
 			consumption *= 100;
 			consumption *= gauge.scale();
-			
+
 			internalBurn -= consumption;
-			
+
 			engineTemperature += heatUpSpeed * (Math.abs(getThrottle()) + 0.2f);
-			
+
 			if (engineTemperature > 150) {
 				engineTemperature = 150;
 				setEngineOverheated(true);
 			}
 		}
-		
+
 		if (engineTemperature < 100 && isEngineOverheated()) {
 			setEngineOverheated(false);
 		}
 
 		setEngineTemperature(engineTemperature);
 	}
-	
+
 	@Override
 	public List<Fluid> getFluidFilter() {
 		return BurnUtil.burnableFluids();
@@ -276,7 +277,7 @@ public class LocomotiveDiesel extends Locomotive {
 	public FluidQuantity getTankCapacity() {
 		return this.getDefinition().getFuelCapacity(gauge);
 	}
-	
+
 	@Override
 	public void onDissassemble() {
 		super.onDissassemble();
@@ -299,9 +300,10 @@ public class LocomotiveDiesel extends Locomotive {
 		}
 		if (component.part.type == ModelComponentType.REVERSER_X) {
 			// Make sure reverser is sync'd
-			setControlPositions(ModelComponentType.REVERSER_X, getReverser()/-2 + 0.5f);
+			setControlPositions(ModelComponentType.REVERSER_X, getReverser() / -2 + 0.5f);
 		}
 	}
+  
 	@Override
 	public void setTurnedOnLua(LuaValue b) {
 		setTurnedOn(b.toboolean());
