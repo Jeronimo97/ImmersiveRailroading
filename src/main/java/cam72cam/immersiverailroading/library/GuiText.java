@@ -22,6 +22,14 @@ public enum GuiText {
 	SELECTOR_PLATE_BOILER("selector.plate_boiler"),
 	SELECTOR_CAST_SINGLE("selector.cast_single"),
 	SELECTOR_CAST_REPEAT("selector.cast_repeat"),
+	SELECTOR_ALIGNMENT("selector.alignment"),
+	SELECTOR_TEXTFIELD("selector.textfield"),
+	SELECTOR_FONT("selector.font"),
+
+	SLIDER_OFFSET("slider.offset"),
+	SLIDER_LINE_SPACING("slider.line_spacing"),
+
+	CHECKBOX_GLOBAL("checkbox.global"),
 
 	TRACK_TYPE("track.type"),
 	TRACK_LENGTH("track.length"),
@@ -35,7 +43,7 @@ public enum GuiText {
 	TRACK_DIRECTION("track.direction"),
 	TRACK_PLACE_BLUEPRINT_TRUE("track.place_blueprint_true"),
 	TRACK_PLACE_BLUEPRINT_FALSE("track.place_blueprint_false"),
-	
+
 	LOCO_WORKS("loco.works"),
 	LOCO_HORSE_POWER("loco.horse_power"),
 	LOCO_TRACTION("loco.tractive_effort"),

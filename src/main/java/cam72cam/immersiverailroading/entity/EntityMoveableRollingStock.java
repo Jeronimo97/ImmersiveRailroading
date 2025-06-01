@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class EntityMoveableRollingStock extends EntityRidableRollingStock implements ICollision {
+public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovement implements ICollision {
 
     public static final String DAMAGE_SOURCE_HIT = "immersiverailroading:hitByTrain";
     public static final String DAMAGE_SOURCE_HIT_IN_DARKNESS = "immersiverailroading:hitByTrainInDarkness";
@@ -492,6 +492,10 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         double independentNewtons = getDefinition().directFrictionCoefficient * getIndependentBrake() * newtons;
         double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakePressure() * newtons;
         return retardedNewtons + independentNewtons + pressureNewtons;
+    }
+
+    public boolean getEngineState() {
+        return false;
     }
 
     public double getBrakeAdhesionEfficiency() {

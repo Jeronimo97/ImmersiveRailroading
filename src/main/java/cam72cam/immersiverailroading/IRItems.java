@@ -23,9 +23,7 @@ public class IRItems {
 	public static ItemSwitchKey ITEM_SWITCH_KEY = new ItemSwitchKey();
 	public static ItemTrackExchanger ITEM_TRACK_EXCHANGER = new ItemTrackExchanger();
 	public static ItemWirelessRemotecontrol ITEM_WIRELESS_REMOTECONTROL = new ItemWirelessRemotecontrol();
-
-
-
+	public static ItemTypewriter ITEM_TYPEWRITER = new ItemTypewriter();
 
 	public static void register() {
 		// loads static classes and ctrs

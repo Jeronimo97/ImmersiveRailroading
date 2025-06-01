@@ -58,7 +58,7 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 		}
 	}
 
-	private Vec3d getSeatPosition(UUID passenger) {
+	public Vec3d getSeatPosition(UUID passenger) {
 		String seat = seatedPassengers.entrySet().stream()
 				.filter(x -> x.getValue().equals(passenger))
 				.map(Map.Entry::getKey).findFirst().orElse(null);
@@ -102,7 +102,7 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 		}
 		return getPassengerCount() < this.getDefinition().getMaxPassengers();
 	}
-	
+
 	@Override
 	public boolean shouldRiderSit(Entity passenger) {
 		boolean nonSeated = this.getDefinition().shouldSit != null ? this.getDefinition().shouldSit : this.gauge.shouldSit();
@@ -126,7 +126,7 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 		return offset;
 	}
 
-	private boolean isNearestDoorOpen(Player source) {
+	public boolean isNearestDoorOpen(Player source) {
 		// Find any doors that are close enough that are closed (and then negate)
 		return !this.getDefinition().getModel().getDoors().stream()
 				.filter(d -> d.type == Door.Types.CONNECTING)
@@ -143,15 +143,15 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
             movement = movement.scale(3);
         }
         */
-        if (movement.length() < 0.1) {
-            return offset;
-        }
+		if (movement.length() < 0.1) {
+			return offset;
+		}
 
-        movement = new Vec3d(movement.x, 0, movement.z).rotateYaw(this.getRotationYaw() - source.getRotationYawHead());
+		movement = new Vec3d(movement.x, 0, movement.z).rotateYaw(this.getRotationYaw() - source.getRotationYawHead());
 
-        offset = offset.add(movement);
+		offset = offset.add(movement);
 
-        if (this instanceof EntityCoupleableRollingStock) {
+		if (this instanceof EntityCoupleableRollingStock) {
 			EntityCoupleableRollingStock couplable = (EntityCoupleableRollingStock) this;
 
 			boolean atFront = this.getDefinition().isAtFront(gauge, offset);
@@ -181,13 +181,13 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 					return offset;
 				}
 			}
-        }
+		}
 
-        if (getDefinition().getModel().getDoors().stream().anyMatch(x -> x.isAtOpenDoor(source, this, Door.Types.EXTERNAL)) &&
+		if (getDefinition().getModel().getDoors().stream().anyMatch(x -> x.isAtOpenDoor(source, this, Door.Types.EXTERNAL)) &&
 				getWorld().isServer &&
 				!this.getDefinition().correctPassengerBounds(gauge, offset, shouldRiderSit(source)).equals(offset)
 		) {
-        	this.removePassenger(source);
+			this.removePassenger(source);
 		}
 
 		return offset;

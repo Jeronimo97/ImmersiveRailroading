@@ -76,6 +76,7 @@ public enum ModelComponentType {
 	PRESSURE_VALVE_X("PRESSURE_VALVE_#ID#", false),
 	DIESEL_EXHAUST_X("EXHAUST_#ID#", false),
 	CYLINDER_DRAIN_SIDE("(CYLINDER|DRAIN)_(COCK|EXHAUST)_#SIDE#", false),
+	CUSTOM_PARTICLE_X("CUSTOM_PARTICLE_#ID#", false),
 
 	// Cargo
 	CARGO_FILL_X("CARGO_FILL_#ID#", false),
@@ -101,6 +102,7 @@ public enum ModelComponentType {
 	ENGINE_START_X("ENGINE_START_#ID#"),
 	COUPLER_ENGAGED_X("COUPLER_ENGAGED_#ID#"),
 	CYLINDER_DRAIN_CONTROL_X("(CYLINDER|DRAIN)_(COCK|EXHAUST)_CONTROL_#ID#"),
+	SANDING_CONTROL_X("(SANDING|SAND)_CONTROL_#ID#"),
 
 	// Gauges
 	GAUGE_LIQUID_X("GAUGE_LIQUID_#ID#"),
@@ -131,7 +133,7 @@ public enum ModelComponentType {
 	}
 
 	public static boolean shouldRender(String group) {
-		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS");
+		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS") || group.contains("TEXTFIELD_");
 	}
 
     public static class ModelPosition {

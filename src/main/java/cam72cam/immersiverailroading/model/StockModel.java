@@ -5,6 +5,7 @@ import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.entity.CarPassenger;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
+import cam72cam.immersiverailroading.entity.RenderText;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
@@ -27,6 +28,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.lwjgl.opengl.GL11.*;
+
 public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> extends OBJModel {
     private final DEFINITION def;
     public final List<ModelComponent> allComponents;
@@ -41,7 +44,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     protected Bogey bogeyRear;
     protected DrivingAssembly drivingWheels;
     private ModelComponent shell;
-    private ModelComponent remaining;
+    private final ModelComponent remaining;
     protected final List<Door<ENTITY>> doors;
     protected final List<Control<ENTITY>> controls;
     protected final List<Readout<ENTITY>> gauges;
@@ -62,6 +65,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final PartSound slidingSound;
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
+
+    private CustomParticleEmitter customParticles;
 
     public StockModel(DEFINITION def) throws Exception {
         super(def.modelLoc, def.darken, def.internal_model_scale, def.textureNames.keySet(), ConfigGraphics.textureCacheSeconds, i -> {
@@ -229,6 +234,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         this.shell = provider.parse(ModelComponentType.SHELL);
         rocking.include(shell);
+
+        customParticles = CustomParticleEmitter.get(provider);
     }
 
     protected boolean unifiedBogies() {
@@ -246,6 +253,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         doors.forEach(c -> c.effects(stock));
         gauges.forEach(c -> c.effects(stock));
         animations.forEach(c -> c.effects(stock));
+
+        customParticles.effects(stock);
 
 
         float adjust = (float) Math.abs(stock.getCurrentSpeed().metric()) / 300;
@@ -282,6 +291,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private int lod_level = LOD_LARGE;
     private int lod_tick = 0;
     public final void renderEntity(EntityMoveableRollingStock stock, RenderState state, float partialTicks) {
+        RenderText renderText = RenderText.getInstance(String.valueOf(stock.getUUID()));
+        renderText.textRender(state, animations, stock, partialTicks);
         List<ModelComponentType> available = stock.isBuilt() ? null : stock.getItemComponents()
                 .stream().flatMap(x -> x.render.stream())
                 .collect(Collectors.toList());
@@ -315,7 +326,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         Binder binder = binder().texture(stock.getTexture()).lod(lod_level);
         try (
-                OBJRender.Binding bound = binder.bind(state);
+                OBJRender.Binding bound = binder.bind(state)
         ) {
             double backup = stock.distanceTraveled;
 

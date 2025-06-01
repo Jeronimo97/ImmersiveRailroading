@@ -30,6 +30,11 @@ public class LocomotiveSteam extends Locomotive {
 	@TagSync
 	@TagField("boiler_psi")
 	private float boilerPressure = 0;
+	
+    // BAR
+    @TagSync
+    @TagField("chest_bar")
+    private float chestPressure = 0;
 
 	// Celsius
 	@TagSync
@@ -81,6 +86,32 @@ public class LocomotiveSteam extends Locomotive {
 	private void setBoilerPressure(float temp) {
 		boilerPressure = temp;
 	}
+	
+	public float getChestPressure() {
+        return chestPressure;
+    }
+
+    public float getChestPressurePsi() {
+        return chestPressure / 0.06894757f;
+    }
+
+    public float getMaxChestPressure() {
+        if (Config.isFuelRequired(gauge)) {
+            if (getBoilerPressure() * 0.06894757f > 0.5f)
+                return getBoilerPressure() * 0.06894757f - 0.5f;
+            else
+                return 0;
+        } else
+            return this.getDefinition().getMaxPSI(gauge) * 0.06894757f - 0.5f;
+    }
+
+    public float getMaxChestPressurePsi() {
+        return getMaxChestPressure() / 0.06894757f;
+    }
+
+    public float getChestPressurePercent() {
+        return chestPressure / (getDefinition().getMaxPSI(gauge) * 0.06894757f);
+    }
 
 	public Map<Integer, Integer> getBurnTime() {
 		return burnTime;
@@ -89,32 +120,27 @@ public class LocomotiveSteam extends Locomotive {
 		return burnMax;
 	}
 
-	@Override
-	public double getAppliedTractiveEffort(Speed speed) {
-		if (getDefinition().isCabCar()) {
-			return 0;
-		}
+    public double getAppliedTractiveEffort(final Speed speed) {
+        if (getDefinition().isCabCar())
+            return 0;
+        double reverser = getReverser();
+        if (reverser == 0)
+            return 0;
+        double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
 
-		// This is terrible, but allows wheel slip for both legacy and updated hp vs te
-		double traction_N = Math.max(
-				this.getDefinition().getStartingTractionNewtons(gauge),
-				this.getDefinition().getHorsePower(gauge) * 375 / Math.max(Math.abs(speed.imperial()), 1.0)
-		);
-		if (Config.isFuelRequired(gauge)) {
-			traction_N = traction_N / this.getDefinition().getMaxPSI(gauge) * this.getBoilerPressure();
-		}
+        double effectivePressure = getChestPressure() / expansion * (1 + Math.log(expansion));
 
-		// Cap the max "effective" reverser.  At high speeds having a fully open reverser just damages equipment
-		double reverser = getReverser();
-		double reverserCap = 0.25;
-		double maxReverser = 1 - Math.abs(getCurrentSpeed().metric()) / getDefinition().getMaxSpeed(gauge).metric() * reverserCap;
+        double backPressure =
+                effectivePressure * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(reverser));
 
-		// This should probably be tuned...
-		double multiplier = Math.copySign(Math.abs(Math.pow(getThrottle() * Math.min(Math.abs(reverser), maxReverser), 3)), reverser);
+        double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
+                * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
+                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
+                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
-		return traction_N * multiplier;
-	}
-	
+        return appliedTraction * Math.copySign(1, reverser);
+    }
 	
 	@Override
 	public void onDissassemble() {
@@ -126,29 +152,54 @@ public class LocomotiveSteam extends Locomotive {
 			burnTime.put(slot, 0);
 		}
 	}
+	
+    public double speedPercent(final Speed speed) {
+        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
+    }
+    
+    private void chestPressureCalc() {
+        // Anstieg Schieberkastendruck
+        if (getChestPressure() < getMaxChestPressure()) {
+            chestPressure += 0.06f
+                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
+                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
+                    * getThrottle() * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
+        }
+
+        // Abfall Schieberkastendruck
+        if (getChestPressure() > 0) {
+            if (getChestPressure() < 2 && getThrottle() < 0.05f) {
+                chestPressure -= 0.25f; // unter 2 Bar schlagartig raus
+            }
+            if (cylinderDrainsEnabled()) {
+                chestPressure -= 0.07f; // Zylinderentwässerung
+            }
+            if (slipping) {
+                chestPressure -= 0.1f; // wenn Schleudert
+            }
+            if (getChestPressure() < 0) {
+                chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
+            }
+        }
+
+        // TODO Verbrauch Schieberkastendruck
+        chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
+                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
+                * getDefinition().getWheelDiameter(gauge));
+    }
+    
+    public double getHorsePower(final Speed speed) {
+        return getReverser() == 0 ? 0
+                : this.getDefinition().getHorsePower(gauge)
+                        * (getChestPressurePercent() * Math.abs(getReverser())
+                                + getChestPressurePercent() * Math.abs(getReverser())
+                                        * (Math.log10(1) - Math.log10(Math.abs(getReverser()))));
+    }
 
 	@Override
 	public double getTractiveEffortNewtons(Speed speed) {
 		return (getDefinition().cab_forward ? -1 : 1) * super.getTractiveEffortNewtons(speed);
 	}
-
-    @Override
-    public double slipCoefficient(Speed speed) {
-		double slipMult = super.slipCoefficient(speed);
-		// Wheel balance messing with friction
-		if (speed.metric() != 0) {
-			double balance = 1d/(Math.abs(speed.metric())+300) / (1d/300);
-			slipMult *= balance;
-		}
-
-		// TODO better approximation
-		// assume wheel diameter == 5m
-		double ratio = 0.35;
-		double hammer = ratio + (slipping ? 0 : Math.abs(Math.sin(Math.toRadians(360 * distanceTraveled / (5f * gauge.scale()/ 2))) * (1-ratio)));
-		slipMult *= hammer;
-
-		return slipMult;
-    }
 
     @Override
 	protected double simulateWheelSlip() {
@@ -338,6 +389,7 @@ public class LocomotiveSteam extends Locomotive {
 			}
 			getWorld().removeEntity(this);
 		}
+		chestPressureCalc();
 	}
 
 	@Override
@@ -367,12 +419,13 @@ public class LocomotiveSteam extends Locomotive {
 		cargoItems.filter.clear();
 		this.cargoItems.filter.put(0, SlotFilter.FLUID_CONTAINER);
 		this.cargoItems.filter.put(1, SlotFilter.FLUID_CONTAINER);
+		this.cargoItems.filter.put(2, SlotFilter.SAND);
 		this.cargoItems.defaultFilter = SlotFilter.BURNABLE;
 	}
 
 	@Override
 	public int getInventorySize() {
-		return this.getDefinition().getInventorySize(gauge) + 2;
+		return this.getDefinition().getInventorySize(gauge) + 3;
 	}
 
 	@Override
@@ -437,7 +490,7 @@ public class LocomotiveSteam extends Locomotive {
 			return csm < 20;
 		}
 
-		return drains.stream().anyMatch(c -> getControlPosition(c) == 1);
+		return drains.stream().anyMatch(c -> getControlPosition(c) > 0.9);
 	}
 
 	public void setCylinderDrains(boolean enabled) {

@@ -3,10 +3,10 @@ package cam72cam.immersiverailroading.registry;
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
-import cam72cam.immersiverailroading.entity.EntityBuildableRollingStock;
+import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
-import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
-import cam72cam.immersiverailroading.entity.EntityRollingStock;
+import cam72cam.immersiverailroading.floor.Mesh;
+import cam72cam.immersiverailroading.floor.NavMesh;
 import cam72cam.immersiverailroading.util.*;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
@@ -29,10 +29,10 @@ import cam72cam.mod.world.World;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -46,6 +46,7 @@ public abstract class EntityRollingStockDefinition {
     private final Class<? extends EntityRollingStock> type;
 
     public final List<String> itemGroups;
+    public List<String> addScripts;
     public Map<String, String> textureNames;
     public float dampeningAmount;
     public Gauge recommended_gauge;
@@ -67,7 +68,8 @@ public abstract class EntityRollingStockDefinition {
     public float darken;
     public Identifier modelLoc;
     protected StockModel<?, ?> model;
-    private Vec3d passengerCenter;
+    public Identifier script;
+    public Vec3d passengerCenter;
     private float bogeyFront;
     private float bogeyRear;
     private float couplerOffsetFront;
@@ -102,9 +104,20 @@ public abstract class EntityRollingStockDefinition {
     public double rollingResistanceCoefficient;
     public double directFrictionCoefficient;
 
+    public Map<String, TextRenderOptions> textFieldDef = new HashMap<>();
+    public LinkedList<Fonts> fontDef = new LinkedList<>();
+
     public List<AnimationDefinition> animations;
     public Map<String, Float> cgDefaults;
     public Map<String, DataBlock> widgetConfig;
+
+    public Mesh mesh;
+    public NavMesh navMesh;
+
+    // used for unique text fields to check if text field input is already assigned
+    public Map<UUID, String> inputs = new HashMap<>();
+
+    private List<DataBlock> textFieldData;
 
     public static class SoundDefinition {
         public final Identifier start;
@@ -133,6 +146,15 @@ public abstract class EntityRollingStockDefinition {
             volume = obj.getValue("volume").asFloat(1.0f);
         }
 
+        public SoundDefinition(ObjectValue newSound, Map<String, DataBlock.Value> sound) {
+            start = newSound.getValueMap("start", sound).asIdentifier();
+            main = newSound.getValueMap("main", sound).asIdentifier();
+            looping = newSound.getValueMap("looping", sound).asBoolean(true);
+            stop = newSound.getValueMap("stop", sound).asIdentifier();
+            distance = newSound.getValueMap("distance", sound).asFloat();
+            volume = newSound.getValueMap("volume", sound).asFloat(1.0f);
+        }
+
         public static SoundDefinition getOrDefault(DataBlock block, String key) {
             DataBlock found = block.getBlock(key);
             if (found != null) {
@@ -144,6 +166,43 @@ public abstract class EntityRollingStockDefinition {
             }
             return null;
         }
+
+        public static SoundDefinition getOrDefault(ObjectValue value, Map<String, DataBlock.Value> sound) {
+            if (sound.containsKey("start") || sound.containsKey("main") ||
+                    sound.containsKey("looping") || sound.containsKey("stop") ||
+                    sound.containsKey("distance") || sound.containsKey("volume")) {
+                return new SoundDefinition(value, sound);
+            }
+            DataBlock.Value dataBlockValue = sound.get(value.asString());
+
+            if (dataBlockValue != null) {
+                Identifier ident = dataBlockValue.asIdentifier();
+                if (ident != null) {
+                    return new SoundDefinition(ident);
+                }
+            }
+            return null;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            SoundDefinition that = (SoundDefinition) obj;
+
+            return Objects.equals(start, that.start) &&
+                    Objects.equals(main, that.main) &&
+                    looping == that.looping &&
+                    Objects.equals(stop, that.stop) &&
+                    Objects.equals(distance, that.distance) &&
+                    Objects.equals(volume, that.volume);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(start, main, looping, stop, distance, volume);
+        }
+
+
     }
 
     public static class AnimationDefinition {
@@ -309,6 +368,9 @@ public abstract class EntityRollingStockDefinition {
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
 
+        this.mesh = Executors.newCachedThreadPool().submit(() -> Mesh.loadMesh(this.model)).get();
+        this.navMesh = new NavMesh(this.mesh);
+
         this.renderComponents = new HashMap<>();
         for (ModelComponent component : model.allComponents) {
             renderComponents.computeIfAbsent(component.type, v -> new ArrayList<>())
@@ -350,6 +412,12 @@ public abstract class EntityRollingStockDefinition {
         heightBounds = model.heightOfGroups(heightGroups);
 
         this.heightmap = initHeightmap();
+
+        // initialize text fields
+        if (textFieldData != null) {
+            List<TextRenderOptions> options = textFieldData.stream().map(this::loadTextField).collect(Collectors.toList());
+            options.forEach(o -> textFieldDef.put(o.componentId, o));
+        }
     }
 
     public final EntityRollingStock spawn(World world, Vec3d pos, float yaw, Gauge gauge, String texture) {
@@ -435,7 +503,7 @@ public abstract class EntityRollingStockDefinition {
             for (DataBlock alternate : alternates) {
                 alternate.getValueMap().forEach((key, value) -> textureNames.put(value.asString(), key));
             }
-        } catch (java.io.FileNotFoundException ex) {
+        } catch (FileNotFoundException ex) {
             ImmersiveRailroading.catching(ex);
         }
 
@@ -475,6 +543,15 @@ public abstract class EntityRollingStockDefinition {
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
 
+        script = data.getValue("script").asIdentifier();
+
+        List<DataBlock> fonts = data.getBlocks("fonts");
+        if (fonts != null) {
+            fontDef = fonts.stream().map(this::loadFontData).collect(Collectors.toCollection(LinkedList::new));;
+        }
+
+        textFieldData = data.getBlocks("textfield");
+
         brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.CAST_IRON);
         try {
             brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.valueOf(properties.getValue("brake_shoe_material").asString()));
@@ -494,6 +571,12 @@ public abstract class EntityRollingStockDefinition {
         DataBlock lights = data.getBlock("lights");
         if (lights != null) {
             lights.getBlockMap().forEach((key, block) -> this.lights.put(key, new LightDefinition(block)));
+        }
+
+        addScripts = new ArrayList<>();
+        List<DataBlock.Value> controlGroup1 = data.getValues("add_scripts");
+        if (controlGroup1 != null) {
+            controlGroup1.forEach(value -> addScripts.add(value.asString()));
         }
 
         DataBlock sounds = data.getBlock("sounds");
@@ -900,4 +983,160 @@ public abstract class EntityRollingStockDefinition {
         return brakeCoefficient;
     }
 
+    public void setTraction(double val){
+    }
+
+    public void setHorsepower(double val) {
+    }
+
+    public void setMaxSpeed(double val) {
+    }
+
+    public double getMaxSpeed() {
+        return 0d;
+    }
+
+    public double getTraction() {
+        return 0d;
+    }
+
+    public double getHorsepower() {
+        return 0d;
+    }
+
+    public void setSounds(List<Map<String, DataBlock.Value>> newSound, EntityMoveableRollingStock stock) {
+    }
+
+    public static class Position {
+        public final Vec3d normal;
+        public final List<Vec3d> vertices;
+
+        public Position (Vec3d normal, List<Vec3d> vertices) {
+            this.normal = normal;
+            this.vertices = vertices;
+        }
+    }
+
+    public static class Fonts {
+        public Identifier font;
+        public int resX;
+        public int resY;
+        public int size;
+
+        Fonts(Identifier i, int x, int y, int s) {
+            this.font = i;
+            this.resX = x;
+            this.resY = y;
+            this.size = s;
+        }
+    }
+
+    private Fonts loadFontData (DataBlock font) {
+        Identifier identifier = font.getValue("font").asIdentifier();
+        int resX = font.getValue("textureWidth").asInteger(512);
+        int resY = font.getValue("textureHeight").asInteger(12);
+        int size = font.getValue("fontSize").asInteger(12);
+
+        return new Fonts(identifier, resX, resY, size);
+    }
+
+    private TextRenderOptions loadTextField(DataBlock textField) {
+        Identifier font = textField.getValue("font").asIdentifier(null);
+        String textFieldId = textField.getValue("ID").asString(null);
+        int resX = textField.getValue("resX").asInteger(0);
+        int resY = textField.getValue("resY").asInteger(0);
+        boolean flipped = textField.getValue("flipped") != null && textField.getValue("flipped").asBoolean();
+        int textureHeight = textField.getValue("textureHeight").asInteger(12);
+        int fontSize = textField.getValue("fontSize").asInteger(textureHeight);
+        int fontLength = textField.getValue("textureWidth").asInteger(512);
+        int fontGap = textField.getValue("fontGap").asInteger(1);
+        List<DataBlock.Value> fontList = textField.getValues("fontId");
+        List<Integer> fontId = new ArrayList<>();
+        if (fontList != null) {
+            fontId = fontList.stream().map(DataBlock.Value::asInteger).collect(Collectors.toList());
+        }
+//        int fontId = textField.getValue("overlay").asInteger(0);
+        String hexCode = textField.getValue("color").asString(null);
+        boolean fullbright = textField.getValue("fullbright").asBoolean(false);
+        boolean allStock = textField.getValue("global").asBoolean(false);
+        boolean useAlternative = textField.getValue("useAltAlignment").asBoolean(false);
+        int lineSpacingPixels = textField.getValue("lineSpacing").asInteger(1);
+        int offset = textField.getValue("offset").asInteger(0);
+
+        Font.TextAlign align;
+        if (textField.getValue("align") != null) {
+            String alignStr = textField.getValue("align").asString();
+            if (alignStr.equalsIgnoreCase("right")) {
+                align = Font.TextAlign.RIGHT;
+            } else if (alignStr.equalsIgnoreCase("center")) {
+                align = Font.TextAlign.CENTER;
+            } else {
+                align = Font.TextAlign.LEFT;
+            }
+        } else {
+            align = Font.TextAlign.LEFT;
+        }
+
+        List<DataBlock.Value> linkedData = textField.getValues("linked");
+        List<String> linked = new ArrayList<>();
+        if (linkedData != null) {
+            linked = linkedData.stream().map(DataBlock.Value::asString).collect(Collectors.toList());
+        }
+
+        String text = textField.getValue("text") != null ? textField.getValue("text").asString() : "";
+
+        List<DataBlock.Value> filterData = textField.getValues("filter");
+        List<String> filter = new ArrayList<>();
+        if (filterData != null) {
+            filter = filterData.stream().map(DataBlock.Value::asString).collect(Collectors.toList());
+            List<String> rangeFilter = new ArrayList<>();
+            int padding = determinePadding(filter);
+            filter.forEach(s -> {
+                if (s.contains("-")) {
+                    String[] parts = s.split("-");
+                    int start = Integer.parseInt(parts[0]);
+                    int end = Integer.parseInt(parts[1]);
+                    for (int i = start; i <= end ; i++) {
+                        rangeFilter.add(String.format("%0" + padding + "d", i));
+                    }
+                }
+            });
+            filter = filter.stream().filter(n -> !n.contains("-")).collect(Collectors.toList());
+            filter.addAll(rangeFilter);
+        }
+
+        TextRenderOptions options = new TextRenderOptions(
+                font, text, resX, resY, align, flipped, textFieldId, fontSize, fontLength, fontGap, fontId, hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, offset, allStock, this
+        );
+
+        options.setLinked(linked);
+        options.setSelectable(textField.getValue("selectable").asBoolean(true));
+        options.setUnique(textField.getValue("unique").asBoolean(false));
+        options.setIsNumberPlate(textField.getValue("isNumberPlate").asBoolean(false));
+        options.setFilter(filter);
+
+        return options;
+    }
+
+    private static int determinePadding(List<String> input) {
+        int maxLength = 0;
+        for (String item : input) {
+            if (item.contains("-")) {
+                String[] parts = item.split("-");
+                maxLength = Math.max(maxLength, parts[0].length());
+                maxLength = Math.max(maxLength, parts[1].length());
+            } else {
+                maxLength = Math.max(maxLength, item.length());
+            }
+        }
+        return maxLength;
+    }
+
+    public Mesh getMesh() {
+        return this.mesh;
+    }
+    
+    public String getName() {
+        return name;
+    }
 }

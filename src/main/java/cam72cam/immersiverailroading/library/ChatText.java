@@ -41,6 +41,7 @@ public enum ChatText {
 	WIRELESS_REMOTECONTROL_UNLINK("wireless.remotecontrol.unlink"),
 	WIRELESS_REMOTECONTROL_RELINK("wireless.remotecontrol.relink"),
 	WIRELESS_REMOTECONTROL_CANTLINK("wireless.remotecontrol.cantlink"),
+	TYPEWRITER_NO_STOCK("typewriter.no_stock")
 	;
 	
 	private String value;

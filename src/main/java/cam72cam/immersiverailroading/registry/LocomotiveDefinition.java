@@ -4,6 +4,7 @@ import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
+import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.library.GuiText;
@@ -33,6 +34,8 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private boolean isLinkedBrakeThrottle;
     private boolean isCog;
     private double factorOfAdhesion;
+    private boolean speedLimiter;
+    protected double powerMultiplier;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -79,6 +82,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         isLinkedBrakeThrottle = properties.getValue("isLinkedBrakeThrottle").asBoolean();
         toggleBell = properties.getValue("toggle_bell").asBoolean();
         isCog = properties.getValue("cog").asBoolean();
+        speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
     }
 
     protected boolean readCabCarFlag(DataBlock data) {
@@ -95,15 +99,21 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         List<String> tips = super.getTooltip(gauge);
         tips.add(GuiText.LOCO_WORKS.toString(this.works));
         if (!isCabCar) {
-            tips.add(GuiText.LOCO_HORSE_POWER.toString(this.getHorsePower(gauge)));
-            tips.add(GuiText.LOCO_TRACTION.toString(this.getStartingTractionNewtons(gauge)));
-            tips.add(GuiText.LOCO_MAX_SPEED.toString(this.getMaxSpeed(gauge).metricString()));
+            tips.add(GuiText.LOCO_HORSE_POWER.toString(getHorsePower(gauge)));
+            tips.add(GuiText.LOCO_TRACTION.toString(getStartingTractionNewtons(gauge)));
+            tips.add(GuiText.LOCO_MAX_SPEED.toString(getMaxSpeed(gauge).metric()));
         }
         return tips;
     }
 
-    public int getHorsePower(Gauge gauge) {
+    public int getHorsePower(Gauge gauge){
         return (int) Math.ceil(gauge.scale() * this.power);
+    }
+
+    public int getScriptedHorsePower(Gauge gauge, Locomotive stock) {
+        return stock.localHorsepower != -1
+                ? (int) Math.ceil(gauge.scale() * stock.localHorsepower)
+                : (int) Math.ceil(gauge.scale() * this.power);
     }
 
     /**
@@ -113,8 +123,20 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         return (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
     }
 
-    public Speed getMaxSpeed(Gauge gauge) {
+    public int getScriptedStartingTractionNewtons(Gauge gauge, Locomotive stock) {
+        return stock.localTraction != -1
+                ? (int) Math.ceil(gauge.scale() * stock.localTraction * 4.44822)
+                : (int) Math.ceil(gauge.scale() * this.traction * 4.44822);
+    }
+
+    public Speed getMaxSpeed(Gauge gauge){
         return Speed.fromMinecraft(gauge.scale() * this.maxSpeed.minecraft());
+    }
+
+    public Speed getScriptedMaxSpeed(Gauge gauge, Locomotive stock) {
+        return stock.localMaxSpeed != -1
+                ? Speed.fromMinecraft(gauge.scale() * (stock.localMaxSpeed / (20 * 3.6)))
+                : Speed.fromMinecraft(gauge.scale() * this.maxSpeed.minecraft());
     }
 
     public boolean getRadioCapability() {
@@ -145,5 +167,42 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     public double factorOfAdhesion() {
         return this.factorOfAdhesion;
     }
+
+    @Override
+    public void setTraction(double val) {
+        this.traction = val;
+    }
+
+    @Override
+    public void setHorsepower(double val) {
+        this.power = val;
+    }
+
+    @Override
+    public void setMaxSpeed(double val) {
+        this.maxSpeed = Speed.fromMetric(val);
+    }
+
+    @Override
+    public double getMaxSpeed() {
+        return this.maxSpeed.metric();
+    }
+
+    @Override
+    public double getTraction() {
+        return traction;
+    }
+
+    @Override
+    public double getHorsepower() {
+        return this.power;
+    }
     
+    public boolean isSpeedLimiter() {
+        return this.speedLimiter;
+    }
+    
+    public double getPowerMultiplier() {
+        return powerMultiplier;
+    }
 }

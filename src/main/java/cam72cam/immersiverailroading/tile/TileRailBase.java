@@ -9,32 +9,48 @@ import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
+import cam72cam.immersiverailroading.gui.LuaSelector;
 import cam72cam.immersiverailroading.items.ItemRailAugment;
 import cam72cam.immersiverailroading.items.ItemTrackExchanger;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.part.Door;
 import cam72cam.immersiverailroading.physics.MovementTrack;
+import cam72cam.immersiverailroading.script.LuaLibrary;
+import cam72cam.immersiverailroading.script.ScriptVectorUtil;
 import cam72cam.immersiverailroading.thirdparty.trackapi.BlockEntityTrackTickable;
 import cam72cam.immersiverailroading.util.*;
+import cam72cam.mod.ModCore;
 import cam72cam.mod.block.IRedstoneProvider;
+import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.boundingbox.IBoundingBox;
+import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.fluid.FluidTank;
 import cam72cam.mod.fluid.ITank;
 import cam72cam.mod.item.*;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
-import cam72cam.mod.serialization.TagField;
+import cam72cam.mod.net.Packet;
+import cam72cam.mod.resource.Identifier;
+import cam72cam.mod.serialization.*;
 import cam72cam.mod.sound.Audio;
 import cam72cam.mod.sound.SoundCategory;
 import cam72cam.mod.sound.StandardSound;
 import cam72cam.mod.text.PlayerMessage;
 import cam72cam.mod.util.Facing;
-import cam72cam.mod.serialization.TagCompound;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.mod.util.SingleCache;
-import org.apache.commons.lang3.ArrayUtils;
+import cam72cam.mod.world.World;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.lib.jse.JsePlatform;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneProvider {
@@ -77,6 +93,20 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 	@TagField("pushPull")
 	private boolean pushPull = true;
 
+	/*
+	 * Variables for the Lua Augment
+	 */
+
+	@TagSync
+	@TagField(value = "selectedScript", mapper = SelectedScriptMapper.class)
+	public LuaSelector.ScriptDef selectedScript;
+	private Globals globals;
+	private EntityScriptableRollingStock scriptableRollingStock;
+	private LuaValue stockEvent;
+	/*
+	@TagField(value = "luaAugment", mapper = TileRailBase.LuaTagMapper.class)
+	public LuaAugment luaAugment;
+	 */
 	public void setBedHeight(float height) {
 		this.bedHeight = height;
 	}
@@ -107,6 +137,122 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 	public float getRailHeight() {
 		return this.railHeight;
 	}
+
+	public void loadLuaScript() {
+		globals = JsePlatform.standardGlobals();
+
+		LuaValue safeOs = LuaValue.tableOf();
+		safeOs.set("time", globals.get("os").get("time"));
+		safeOs.set("date", globals.get("os").get("date"));
+		safeOs.set("clock", globals.get("os").get("clock"));
+		safeOs.set("difftime", globals.get("os").get("difftime"));
+		globals.set("os", safeOs);
+
+		globals.set("io", LuaValue.NIL);
+		globals.set("luajava", LuaValue.NIL);
+		globals.set("coroutine", LuaValue.NIL);
+		globals.set("debug", LuaValue.NIL);
+
+		Identifier script = selectedScript.script;
+
+		if (selectedScript.additional != null) {
+			Map<String, InputStream> moduleMap = new HashMap<>();
+			for (String modules : selectedScript.additional) {
+                try {
+                    Identifier newModule = selectedScript.script.getRelative(modules);
+					moduleMap.put(modules.replace(".lua", ""), newModule.getResourceStream());
+                } catch (IOException e) {
+                    /* Ignore for now */
+                }
+            }
+			preloadModules(globals, moduleMap);
+		}
+
+		LuaLibrary.create("Stock")
+				.addFunction("setCG", (control, val) -> scriptableRollingStock.setControlGroup(control.tojstring(), val.tofloat()))
+				.addFunctionWithReturn("getCG", control -> LuaValue.valueOf(scriptableRollingStock.getControlGroup(control.tojstring())))
+				.addFunction("setPaint", newTexture -> scriptableRollingStock.setNewTexture(newTexture.tojstring()))
+				.addFunctionWithReturn("getPaint", () -> LuaValue.valueOf(scriptableRollingStock.getCurrentTexture()))
+				.addFunctionWithReturn("getReadout", readout -> LuaValue.valueOf(scriptableRollingStock.getReadout(readout.tojstring())))
+				.addFunction("couplerEngaged", (positionLua, engagedLua) -> scriptableRollingStock.setCouplerEngagedLua(positionLua, engagedLua))
+				.addFunction("setThrottle", val1 -> scriptableRollingStock.setThrottleLua(val1))
+				.addFunctionWithReturn("getThrottle", () -> scriptableRollingStock.getThrottleLua())
+				.addFunction("setReverser", val2 -> scriptableRollingStock.setReverserLua(val2))
+				.addFunctionWithReturn("getReverser", () -> scriptableRollingStock.getReverserLua())
+				.addFunction("setTrainBrake", val3 -> scriptableRollingStock.setTrainBrakeLua(val3))
+				.addFunctionWithReturn("getTrainBrake", () -> scriptableRollingStock.getTrainBrakeLua())
+				.addFunction("setIndependentBrake", val4 -> scriptableRollingStock.setIndependentBrakeLua(val4))
+				.addFunction("setSound", val -> {/*this.setNewSound(val)*/})
+				.addFunction("setGlobal", (control, val) -> scriptableRollingStock.setGlobalControlGroup(control.tojstring(), val.tofloat()))
+				.addFunction("setUnit", (control, val) -> scriptableRollingStock.setUnitControlGroup(control.tojstring(), val.tofloat()))
+				.addFunction("setText", result -> scriptableRollingStock.textFieldDef(result))
+				.addFunction("setTag", val -> scriptableRollingStock.setEntityTag(val.tojstring()))
+				.addFunctionWithReturn("getTrain", () -> scriptableRollingStock.getTrainConsist())
+				.addFunction("setIndividualCG", stockUnit -> scriptableRollingStock.setIndividualCG(stockUnit))
+				.addFunctionWithReturn("getIndividualCG", stockUnit1 -> scriptableRollingStock.getIndividualCG(stockUnit1))
+				.addFunctionWithReturn("isTurnedOn", () -> LuaValue.valueOf(scriptableRollingStock.getEngineState()))
+				.addFunction("engineStartStop", b -> scriptableRollingStock.setTurnedOnLua(b))
+				.addFunctionWithReturn("getStockPosition", () -> ScriptVectorUtil.constructVec3Table(scriptableRollingStock.getPosition()))
+				.addFunctionWithReturn("getStockMatrix", () -> ScriptVectorUtil.constructMatrix4Table(scriptableRollingStock.getModelMatrix()))
+				.addFunctionWithReturn("newVector", (x, y, z) -> ScriptVectorUtil.constructVec3Table(x, y, z))
+				.addFunction("callFunction", (func) -> callLuaFunction(func))
+				.addFunction("callFunctionWithArgs", (func, args) -> callLuaFunction(func, args))
+				.addFunctionWithReturn("callFunctionWithReturn", (func) -> callLuaFunctionWithReturn(func))
+				.addFunctionWithReturn("callFunctionWithReturnArgs", (func, args) -> callLuaFunctionWithReturn(func, args))
+				.setInGlobals(globals);
+
+		LuaLibrary.create("Augment")
+				.addFunctionWithReturn("getRedstone", () -> LuaValue.valueOf(getWorld().getRedstone(getPos())))
+				.setInGlobals(globals);
+
+		LuaLibrary.create("Debug")
+				.addFunction("printToInfoLog", (arg) -> ModCore.info(arg.tojstring()))
+				.addFunction("printToWarnLog", (arg) -> ModCore.warn(arg.tojstring()))
+				.addFunction("printToErrorLog", (arg) -> ModCore.error(arg.tojstring()))
+				.addFunction("printToPassengerDialog", arg -> scriptableRollingStock.getPassengers().stream()
+						.filter(Entity::isPlayer)
+						.map(Entity::asPlayer)
+						.forEach(player -> player.sendMessage(PlayerMessage.direct(arg.tojstring()))))
+				.setInGlobals(globals);
+
+		LuaLibrary.create("Utils")
+				.addFunction("writeToChat", (arg) -> getWorld().getEntities(Player.class).forEach(p -> p.sendMessage(PlayerMessage.direct(arg.tojstring()))))
+				.setInGlobals(globals);
+
+
+		try {
+			String luaScript = IOUtils.toString(script.getResourceStream(), StandardCharsets.UTF_8);
+
+			LuaValue chunk = globals.load(luaScript);
+			chunk.call();
+			stockEvent = globals.get("StockEvent");
+			if (stockEvent.isnil()) {
+				ModCore.error("Function \"StockEvent\" is not defined in Script:", script);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void preloadModules(Globals globals, Map<String, InputStream> moduleStreams) {
+		LuaValue packageLib = globals.get("package");
+		LuaValue preloadTable = packageLib.get("preload");
+
+		for (Map.Entry<String, InputStream> entry : moduleStreams.entrySet()) {
+			String moduleName = entry.getKey();
+			InputStream moduleStream = entry.getValue();
+
+			try {
+				// Step 5: Load the Lua chunk from the InputStream
+				LuaValue chunk = globals.load(moduleStream, moduleName, "bt", globals);
+
+				// Step 6: Add the chunk to package.preload with the module name
+				preloadTable.set(moduleName, chunk);
+			} catch (Exception e) {
+				ModCore.error("An error occurred while preloading lua modules", e);
+			}
+		}
+	}
 	
 	public void setAugment(Augment augment) {
 		this.augment = augment;
@@ -123,6 +269,11 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 				}
 			}
 		}
+
+		if (augment == Augment.LUA_SCRIPTER) {
+			// not Needed
+		}
+
 		setAugmentFilter(null);
 		redstoneMode = RedstoneMode.ENABLED;
 		this.markDirty();
@@ -251,6 +402,9 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			if (!nbt.hasKey("railHeight")) {
 				railHeight = bedHeight;
 			}
+		}
+		if (augment == Augment.LUA_SCRIPTER && selectedScript != null && getWorld().isServer) {
+			this.loadLuaScript();
 		}
 	}
 	@Override
@@ -507,20 +661,22 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
 	@Override
 	public void update() {
+	    World world = this.getWorld();
 		if (this.getWorld().isClient) {
 			return;
 		}
 		
 		ticksExisted += 1;
-
+		Vec3i pos = getPos();
+		
 		if (ConfigDebug.snowAccumulateRate > 0 && ((int) (Math.random() * ConfigDebug.snowAccumulateRate * 10) == 0)) {
-			if (getWorld().isSnowing(getPos()) && getWorld().canSeeSky(getPos().up())) {
+			if (world.isSnowing(pos) && world.canSeeSky(pos.up())) {
 				this.handleSnowTick();
 			}
 		}
 		if (ConfigDebug.snowMeltRate != 0 && this.snowLayers != 0) {
 			if ((int) (Math.random() * ConfigDebug.snowMeltRate * 10) == 0) {
-				if (!getWorld().isSnowing(getPos())) {
+				if (!world.isSnowing(pos)) {
 					this.setSnowLayers(this.snowLayers -= 1);
 				}
 			}
@@ -531,25 +687,25 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			// Wont fire on first due to incr above
 			blockUpdate = false;
 
-			if (this.getParent() == null || !getWorld().isBlockLoaded(this.getParent())) {
+			if (this.getParent() == null || !world.isBlockLoaded(this.getParent())) {
 				return;
 			}
 
 			if (this.getParentTile() == null) {
 				// Fire update event
-				if (IRBlocks.BLOCK_RAIL_GAG.tryBreak(getWorld(), getPos(), null)) {
-					getWorld().breakBlock(getPos());
+				if (IRBlocks.BLOCK_RAIL_GAG.tryBreak(world, pos, null)) {
+					world.breakBlock(pos);
 				}
 				return;
 			} else {
 				augmentGauge = getParentTile().info.settings.gauge;
 			}
 			
-			if (Config.ConfigDamage.requireSolidBlocks && this instanceof TileRail && getWorld().isBlock(getPos(), IRBlocks.BLOCK_RAIL)) {
+			if (Config.ConfigDamage.requireSolidBlocks && this instanceof TileRail && world.isBlock(pos, IRBlocks.BLOCK_RAIL)) {
 				double floating = ((TileRail)this).percentFloating();
 				if (floating > ConfigBalance.trackFloatingPercent) {
 					if (this.tryBreak(null)) {
-						getWorld().breakBlock(getPos());
+						world.breakBlock(pos);
 					}
 					return;
 				}
@@ -562,7 +718,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
 		if (overhead != null && ticksExisted % 5 == 0) {
 			SimulationState state = overhead.getCurrentState();
-			if (state == null || !state.trackToUpdate.contains(getPos())) {
+			if (state == null || !state.trackToUpdate.contains(pos)) {
 				overhead = null;
 			}
 		}
@@ -591,7 +747,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
 				for (Facing side : Facing.values()) {
-					IInventory inventory = getWorld().getInventory(getPos().offset(side));
+					IInventory inventory = world.getInventory(pos.offset(side));
 					if (inventory != null) {
 						inventory.transferAllTo(freight.cargoItems);
 					}
@@ -605,7 +761,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
 				for (Facing side : Facing.values()) {
-					IInventory inventory = getWorld().getInventory(getPos().offset(side));
+					IInventory inventory = world.getInventory(pos.offset(side));
 					if (inventory != null) {
 						inventory.transferAllFrom(freight.cargoItems);
 					}
@@ -619,7 +775,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
                 for (Facing side : Facing.values()) {
-                	List<ITank> tanks = getWorld().getTank(getPos().offset(side));
+                	List<ITank> tanks = world.getTank(pos.offset(side));
                 	if (tanks != null) {
                 		tanks.forEach(tank -> stock.theTank.drain(tank, 100, false));
 					}
@@ -633,7 +789,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 					break;
 				}
                 for (Facing side : Facing.values()) {
-                    List<ITank> tanks = getWorld().getTank(getPos().offset(side));
+                    List<ITank> tanks = world.getTank(pos.offset(side));
                     if (tanks != null) {
 						tanks.forEach(tank -> stock.theTank.fill(tank, 100, false));
 					}
@@ -656,7 +812,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			case LOCO_CONTROL: {
 				Locomotive loco = this.getStockNearBy(Locomotive.class);
 				if (loco != null) {
-					int power = getWorld().getRedstone(getPos());
+					int power = world.getRedstone(pos);
 
 					switch (controlMode) {
 						case THROTTLE:
@@ -739,7 +895,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			case ACTUATOR: {
 				EntityRollingStock stock = this.getStockNearBy(EntityRollingStock.class);
 				if (stock != null) {
-					float value = getWorld().getRedstone(getPos())/15f;
+					float value = world.getRedstone(pos)/15f;
 					for (Door d : stock.getDefinition().getModel().getDoors()) {
 						if (d.type == Door.Types.EXTERNAL) {
 							stock.setControlPosition(d, value);
@@ -748,6 +904,16 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 				}
 			}
 				break;
+
+			case LUA_SCRIPTER: {
+				EntityScriptableRollingStock stock = this.getStockNearBy(EntityScriptableRollingStock.class);
+				if (stock != null && stockEvent != null) {
+					this.scriptableRollingStock = stock;
+					stockEvent.call();
+				}
+				break;
+			}
+
 			default:
 				break;
 			}
@@ -758,12 +924,12 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
 	@Override
 	public int getStrongPower(Facing facing) {
-		return getAugment() == Augment.DETECTOR ? this.redstoneLevel : 0;
+		return getAugment() == Augment.DETECTOR || getAugment() == Augment.LUA_SCRIPTER ? this.redstoneLevel : 0;
 	}
 
 	@Override
 	public int getWeakPower(Facing facing) {
-		return getAugment() == Augment.DETECTOR ? this.redstoneLevel : 0;
+		return getAugment() == Augment.DETECTOR || getAugment() == Augment.LUA_SCRIPTER ? this.redstoneLevel : 0;
 	}
 
 	public Vec3i getParentReplaced() {
@@ -949,6 +1115,11 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			}
 			return true;
 		}
+
+        if (this.augment == Augment.LUA_SCRIPTER && player.hasPermission(Permissions.AUGMENT_TRACK)) {
+			GuiTypes.LUA_SCRIPT_SELECTOR.open(player, getPos());
+			return true;
+		}
 		return false;
 	}
 
@@ -1049,6 +1220,52 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 		return true;
 	}
 
+	private void callLuaFunction(LuaValue func) {
+		if (scriptableRollingStock.globals == null) {
+			return;
+		}
+
+		LuaValue stockFunction = scriptableRollingStock.globals.get(func);
+		if (stockFunction != null) {
+			stockFunction.call();
+		}
+	}
+
+	private void callLuaFunction(LuaValue func, LuaValue args) {
+		if (scriptableRollingStock.globals == null) {
+			return;
+		}
+
+		LuaValue stockFunction = scriptableRollingStock.globals.get(func);
+		if (stockFunction != null) {
+			stockFunction.call(args);
+		}
+	}
+
+	private LuaValue callLuaFunctionWithReturn(LuaValue func) {
+		if (scriptableRollingStock.globals == null) {
+			return LuaValue.NIL;
+		}
+
+		LuaValue stockFunction = scriptableRollingStock.globals.get(func);
+		if (stockFunction != null) {
+			return stockFunction.call();
+		}
+		return LuaValue.NIL;
+	}
+
+	private LuaValue callLuaFunctionWithReturn(LuaValue func, LuaValue args) {
+		if (scriptableRollingStock.globals == null) {
+			return LuaValue.NIL;
+		}
+
+		LuaValue stockFunction = scriptableRollingStock.globals.get(func);
+		if (stockFunction != null) {
+			return stockFunction.call(args);
+		}
+		return LuaValue.NIL;
+	}
+
     public boolean clacks() {
 		return getParent() != null && getParentTile().clacks();
     }
@@ -1068,4 +1285,103 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
     public void stockOverhead(EntityMoveableRollingStock stock) {
 		this.overhead = stock;
     }
+
+	public void setSelectedScript(LuaSelector.ScriptDef def) {
+		this.selectedScript = def;
+	}
+
+	public static class AugmentPacket extends Packet {
+		@TagField(value = "selectedScript", mapper = SelectedScriptMapper.class)
+		public LuaSelector.ScriptDef selectedScript;
+		@TagField(value = "scriptDef", mapper = DefTagMapper.class)
+		public List<LuaSelector.ScriptDef> scriptDef;
+		@TagField("pos")
+		public Vec3i pos;
+
+		public AugmentPacket() {}
+
+		public AugmentPacket(TileRailBase tile, LuaSelector.ScriptDef selectedScript) {
+			this.selectedScript = selectedScript;
+			this.pos = tile.getPos();
+		}
+
+		@Override
+		protected void handle() {
+			TileRailBase te = getWorld().getBlockEntity(pos, TileRailBase.class);
+			te.setSelectedScript(selectedScript);
+			te.loadLuaScript();
+		}
+	}
+
+	public static class DefTagMapper implements TagMapper<List<LuaSelector.ScriptDef>> {
+
+		@Override
+		public TagAccessor<List<LuaSelector.ScriptDef>> apply(Class<List<LuaSelector.ScriptDef>> type, String fieldName, TagField tag) throws SerializationException {
+			return new TagAccessor<>(
+                    (d, o) -> {
+						if (o != null) {
+							d.set(fieldName, new TagCompound()
+									.setList("scriptDefList", o, def -> new TagCompound()
+											.setString("name", def.name)
+											.setString("script", def.script.toString())
+											.setString("desc", def.desc != null ? def.desc : "")
+											.setList("additional", def.additional != null ? def.additional : new ArrayList<>(), a -> new TagCompound()
+													.setString("id", a != null ? a.toString() : ""))));
+						}
+					},
+                    d -> {
+                        TagCompound cmp = d.get(fieldName);
+                        List<LuaSelector.ScriptDef> def = cmp.getList("scriptDefList", t -> new LuaSelector.ScriptDef(
+                                t.getString("name"), new Identifier(t.getString("script"))
+                        )
+                                .setDesc(t.getString("desc"))
+                                .setAdditional(t.getList("additional", id -> id.getString("id"))));
+
+
+                        return def;
+                    }
+            );
+		}
+	}
+
+	public static class SelectedScriptMapper implements TagMapper<LuaSelector.ScriptDef> {
+
+		@Override
+		public TagAccessor<LuaSelector.ScriptDef> apply(Class<LuaSelector.ScriptDef> type, String fieldName, TagField tag) throws SerializationException {
+			return new TagAccessor<LuaSelector.ScriptDef>(
+                    (d, o) -> {
+						if (o != null) {
+							d.set(fieldName, new TagCompound()
+									.setString("name", o.name)
+									.setString("script", o.script.toString())
+									.setString("desc", o.desc != null ? o.desc : "")
+									.setList("additional", o.additional != null ? o.additional : new ArrayList<>(), a -> new TagCompound()
+											.setString("id", a != null ? a.toString() : "")));
+						}
+					},
+                    d -> {
+                        TagCompound cmp = d.get(fieldName);
+                        LuaSelector.ScriptDef def = new LuaSelector.ScriptDef(cmp.getString("name"), new Identifier(cmp.getString("script")))
+                                .setDesc(cmp.getString("desc"))
+                                .setAdditional(cmp.getList("additional", id -> id.getString("id")));
+                        return def;
+                    }
+            );
+		}
+	}
+
+	public static class ListStringMapper implements TagMapper<List<String>> {
+
+		@Override
+		public TagAccessor<List<String>> apply(Class<List<String>> type, String fieldName, TagField tag) throws SerializationException {
+			return new TagAccessor<List<String>>(
+                    (d, o) -> {
+						if (o != null) {
+							d.setList(fieldName, o, str -> new TagCompound().setString("s", str));
+						}
+					},
+                    d -> new ArrayList<>(d.getList(fieldName, str -> str.getString("s")))
+            );
+		}
+	}
 }

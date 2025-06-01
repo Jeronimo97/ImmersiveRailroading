@@ -14,6 +14,7 @@ import cam72cam.immersiverailroading.library.Permissions;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
 import cam72cam.mod.entity.sync.TagSync;
+import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
@@ -69,14 +70,14 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 	
 	@TagSync
 	@TagField(value = "CoupledFront", mapper = StrictTagMapper.class)
-	private UUID coupledFront = null;
+	public UUID coupledFront = null;
 	@TagSync
 	@TagField("frontCouplerEngaged")
 	private boolean frontCouplerEngaged = true;
 
 	@TagSync
 	@TagField(value = "CoupledBack", mapper = StrictTagMapper.class)
-	private UUID coupledBack = null;
+	public UUID coupledBack = null;
 	@TagSync
 	@TagField("backCouplerEngaged")
 	private boolean backCouplerEngaged = true;
@@ -382,7 +383,47 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 			fn.accept(stock.stock, stock.direction);
 		}
 	}
-	
+
+	public final List<List<EntityCoupleableRollingStock>> getUnit(boolean followDisengaged) {
+		List<List<EntityCoupleableRollingStock>> units = new ArrayList<>();
+		List<EntityCoupleableRollingStock> currentUnit = new ArrayList<>();
+		final boolean[] firstLocomotiveFound = {false};
+
+		this.mapUnit(this, followDisengaged, (EntityCoupleableRollingStock e) -> {
+			if (e.defID.contains("locomotive")) {
+				if (firstLocomotiveFound[0]) {
+					currentUnit.add(e);
+					units.add(new ArrayList<>(currentUnit));
+					currentUnit.clear();
+					firstLocomotiveFound[0] = false;
+				} else {
+					currentUnit.add(e);
+					firstLocomotiveFound[0] = true;
+				}
+			} else if (e.defID.contains("passenger")) {
+				if (firstLocomotiveFound[0]) {
+					currentUnit.add(e);
+				}
+			}
+		});
+		if (!currentUnit.isEmpty() && firstLocomotiveFound[0]) {
+			units.add(currentUnit);
+		}
+
+		return units;
+	}
+
+	public final void mapUnit(EntityCoupleableRollingStock prev, boolean followDisengaged, Consumer<EntityCoupleableRollingStock> fn) {
+		this.mapUnit(prev, true, followDisengaged, (EntityCoupleableRollingStock e, Boolean b) -> fn.accept(e));
+	}
+
+	public final void mapUnit(EntityCoupleableRollingStock prev, boolean direction, boolean followDisengaged, BiConsumer<EntityCoupleableRollingStock, Boolean> fn) {
+		for (DirectionalStock stock : getDirectionalTrain(followDisengaged)) {
+			fn.accept(stock.stock, stock.direction);
+		}
+	}
+
+
 
 	public static class DirectionalStock {
 		public final EntityCoupleableRollingStock prev;

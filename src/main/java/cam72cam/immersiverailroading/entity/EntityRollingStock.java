@@ -25,12 +25,13 @@ import cam72cam.mod.util.SingleCache;
 import org.apache.commons.lang3.tuple.Pair;
 import util.Matrix4;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class EntityRollingStock extends CustomEntity implements ITickable, IClickable, IKillable {
+public class EntityRollingStock extends CustomEntity implements ITickable, IClickable, IKillable, ControlPositionEventHandler {
 	@TagField("defID")
     protected String defID;
 	@TagField("gauge")
@@ -72,7 +73,6 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 	public boolean allowsDefaultMovement() {
 		return false;
 	}
-
 
 	/* TODO?
 	@Override
@@ -315,6 +315,7 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 
 	public void setControlPressed(Control<?> control, boolean pressed) {
 		controlPositions.put(control.controlGroup, Pair.of(pressed, getControlPosition(control)));
+
 	}
 
 	public float getControlPosition(Control<?> control) {
@@ -327,7 +328,8 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 
 	public void setControlPosition(Control<?> control, float val) {
 		val = Math.min(1, Math.max(0, val));
-		controlPositions.put(control.controlGroup, Pair.of(getControlPressed(control), val));
+		handleControlPositionEvent(control, val, controlPositions, getControlPressed(control));
+
 	}
 
 	public void setControlPosition(String control, float val) {
@@ -341,6 +343,10 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 
 	public boolean playerCanDrag(Player player, Control<?> control) {
 		return control.part.type != ModelComponentType.INDEPENDENT_BRAKE_X || player.hasPermission(Permissions.BRAKE_CONTROL);
+	}
+
+	public void setEntityTag(String tag){
+		this.tag = tag;
 	}
 
 

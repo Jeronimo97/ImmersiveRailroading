@@ -183,9 +183,9 @@ public abstract class ValveGear {
             float delta = 0.03f;
             if (stock instanceof LocomotiveSteam) {
                 LocomotiveSteam loco = (LocomotiveSteam) stock;
-                if (Math.abs(loco.getThrottle() * loco.getReverser()) <= 0.01) {
+                if (Math.abs(Math.max(loco.getChestPressurePercent(), loco.getThrottle())
+                        * loco.getReverser()) <= 0.01)
                     return false;
-                }
 
                 delta = Math.abs(loco.getReverser())/4;
             }
@@ -227,16 +227,20 @@ public abstract class ValveGear {
 
         public void update(Vec3d particlePos, boolean enteredStroke, boolean drain_enabled) {
             if (!chuffOn) {
-                if (enteredStroke && Math.abs(stock.getThrottle() * stock.getReverser()) > 0) {
+                if (enteredStroke
+                        && Math.abs(Math.max(stock.getChestPressurePercent(), stock.getThrottle())
+                                * stock.getReverser()) > 0) {
                     chuffOn = true;
                     pitchStroke = !pitchStroke;
 
                     double speed = Math.abs(stock.getCurrentSpeed().minecraft());
-                    double maxSpeed = Math.abs(stock.getDefinition().getMaxSpeed(stock.gauge).minecraft());
+                    double maxSpeed = Math.abs(stock.getDefinition().getScriptedMaxSpeed(stock.gauge, stock).minecraft());
                     if (maxSpeed == 0) {
                         maxSpeed = 200;
                     }
-                    float volume = (float) Math.max(1-speed/maxSpeed, 0.3) * Math.abs(stock.getThrottle() * stock.getReverser());
+                    float volume = (float) Math.max(1 - speed / maxSpeed, 0.3) * Math
+                            .abs(Math.max(stock.getChestPressurePercent(), stock.getThrottle())
+                                    * stock.getReverser());
                     volume = (float) Math.sqrt(volume);
                     double fraction = 3;
                     float pitch = 0.8f + (float) (speed/maxSpeed/fraction * 0.2);
@@ -271,14 +275,16 @@ public abstract class ValveGear {
 
             if (drain_volume > 0 && !cylinder_drain.isPlaying()) {
                 cylinder_drain.setPitch(1 - pitchOffset*5);
-                cylinder_drain.setVolume(drain_volume * stock.getThrottle());
+                cylinder_drain.setVolume(drain_volume
+                        * Math.max(stock.getChestPressurePercent(), stock.getThrottle()));
                 cylinder_drain.play(particlePos);
             }
             if (drain_volume <= 0 && cylinder_drain.isPlaying()) {
                 cylinder_drain.stop();
             }
             if (cylinder_drain.isPlaying()) {
-                cylinder_drain.setVolume(drain_volume * stock.getThrottle());
+                cylinder_drain.setVolume(drain_volume
+                        * Math.max(stock.getChestPressurePercent(), stock.getThrottle()));
                 cylinder_drain.setPosition(particlePos);
                 cylinder_drain.setVelocity(stock.getVelocity());
             }

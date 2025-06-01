@@ -7,6 +7,7 @@ import cam72cam.immersiverailroading.gui.container.*;
 import cam72cam.immersiverailroading.multiblock.CastingMultiblock;
 import cam72cam.immersiverailroading.multiblock.PlateRollerMultiblock;
 import cam72cam.immersiverailroading.tile.TileMultiblock;
+import cam72cam.immersiverailroading.tile.TileRailBase;
 import cam72cam.immersiverailroading.tile.TileRailPreview;
 import cam72cam.mod.config.ConfigGui;
 import cam72cam.mod.gui.GuiRegistry;
@@ -15,18 +16,21 @@ import cam72cam.mod.gui.GuiRegistry.EntityGUI;
 import cam72cam.mod.gui.GuiRegistry.GUI;
 import cam72cam.mod.gui.screen.IScreen;
 import cam72cam.mod.resource.Identifier;
+import org.luaj.vm2.Lua;
 
 public class GuiTypes {
     public static final EntityGUI<Freight> FREIGHT = GuiRegistry.registerEntityContainer(Freight.class, FreightContainer::new);
     public static final EntityGUI<FreightTank> TANK = GuiRegistry.registerEntityContainer(FreightTank.class, TankContainer::new);
     public static final EntityGUI<Tender> TENDER = GuiRegistry.registerEntityContainer(Tender.class, TenderContainer::new);
     public static final EntityGUI<LocomotiveSteam> STEAM_LOCOMOTIVE = GuiRegistry.registerEntityContainer(LocomotiveSteam.class, SteamLocomotiveContainer::new);
-    public static final EntityGUI<LocomotiveDiesel> DIESEL_LOCOMOTIVE = GuiRegistry.registerEntityContainer(LocomotiveDiesel.class, TankContainer::new);
+    public static final EntityGUI<LocomotiveDiesel> DIESEL_LOCOMOTIVE = GuiRegistry.registerEntityContainer(LocomotiveDiesel.class, DieselLocomotiveContainer::new);
 
     public static final GUI RAIL = GuiRegistry.register(new Identifier(ImmersiveRailroading.MODID, "RAIL"), TrackGui::new);
     public static final BlockGUI RAIL_PREVIEW = GuiRegistry.registerBlock(TileRailPreview.class, TrackGui::new);
     public static final GUI TRACK_EXCHANGER = GuiRegistry.register(new Identifier(ImmersiveRailroading.MODID, "TRACK_EXCHANGER"), TrackExchangerGui::new);
     public static final GUI PAINT_BRUSH = GuiRegistry.register(new Identifier(ImmersiveRailroading.MODID, "PAINT_BRUSH"), PaintBrushPicker::new);
+    public static final GUI TEXT_FIELD = GuiRegistry.register(new Identifier(ImmersiveRailroading.MODID, "TEXT_FIELD"), TextFieldGUI::new);
+    public static final BlockGUI LUA_SCRIPT_SELECTOR = GuiRegistry.registerBlock(TileRailBase.class, LuaSelector::new);
 
     public static final BlockGUI STEAM_HAMMER = GuiRegistry.registerBlockContainer(TileMultiblock.class, SteamHammerContainer::new);
     public static final BlockGUI CASTING = GuiRegistry.registerBlock(TileMultiblock.class, GuiTypes::createMultiblockScreen);

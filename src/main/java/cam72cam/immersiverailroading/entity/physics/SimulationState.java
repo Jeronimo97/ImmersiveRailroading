@@ -104,6 +104,7 @@ public class SimulationState {
 
         public Double desiredBrakePressure;
         public double independentBrakePosition;
+        public boolean isSanding;
 
         public boolean hasPressureBrake;
 
@@ -141,10 +142,12 @@ public class SimulationState {
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
                 desiredBrakePressure = (double)locomotive.getTrainBrake();
+                isSanding = locomotive.isSanding();
             } else {
                 tractiveEffortNewtons = speed -> 0d;
                 tractiveEffortFactors = 0;
                 desiredBrakePressure = null;
+                isSanding = false;
             }
 
 
