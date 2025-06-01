@@ -106,7 +106,7 @@ public class SimulationState {
         public Double desiredBrakePressure;
         public float independentBrake;
         public double handBrakeNewtons;
-        public float dynamicBrakeNewtons;
+        public double dynamicBrakeNewtons;
         public boolean isSanding;
 
         public boolean hasPressureBrake;
@@ -165,11 +165,8 @@ public class SimulationState {
             if (stock instanceof Locomotive)
                 this.independentBrake = ((Locomotive) stock).getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
-            if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).isTurnedOn()) {
-                float speed = (float) ((Locomotive) stock).speedPercent(stock.getCurrentSpeed());
-                this.dynamicBrakeNewtons = (float) (((LocomotiveDiesel) stock).getDynamicBrake()
-                        * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier()
-                        * (speed < 0.1 ? speed / 0.1 * 15000 : 15000));
+            if (stock instanceof LocomotiveDiesel) {
+                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() * 15000;
             } else {
                 this.dynamicBrakeNewtons = 0;
             }
@@ -466,7 +463,7 @@ public class SimulationState {
         config.brakeCylinderPressure = Math.max(Math.min((1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
         double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, config.brakeCylinderPressure);
         double handBrakeNewtons = config.handBrakeNewtons;
-        float dynamicBrakeNewtons = config.dynamicBrakeNewtons;
+        double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
         
         this.sliding = false;
         if (brakeAdhesionNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {

@@ -149,8 +149,8 @@ public enum Readouts {
                         ? ((EntityMoveableRollingStock) stock).getHandBrake()
                         : 0;
             case DYNAMIC_BRAKE:
-                return stock instanceof LocomotiveDiesel ?
-                        ((LocomotiveDiesel) stock).getDynamicBrake() : 0;
+                return (float) (stock instanceof LocomotiveDiesel ?
+                        ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
         }
         return 0;
     }

@@ -333,6 +333,13 @@ public class LocomotiveDiesel extends Locomotive {
         return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
     }
     
+    public double getDynamicBrakeNewtons() {
+        if (!turnedOn)
+            return 0;
+        double speed = speedPercent(getCurrentSpeed());
+        return getDynamicBrake() * (speed < 0.1 ? speed / 0.1 : 1);
+    }
+    
     public float getDynamicBrakeMultiplier() {
         return getDefinition().getDynamicBrake();
     }
