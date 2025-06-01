@@ -475,8 +475,8 @@ public class SimulationState {
 
         brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
         
-        if (dynamicBrakeNewtons != 0)
-            System.out.println(config.debugID + ": " + dynamicBrakeNewtons + " N");
+        //if (dynamicBrakeNewtons != 0)
+        //    System.out.println(config.debugID + ": " + dynamicBrakeNewtons + " N");
         
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
