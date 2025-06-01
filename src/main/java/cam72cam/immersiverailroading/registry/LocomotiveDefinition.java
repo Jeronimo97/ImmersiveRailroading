@@ -17,9 +17,6 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class LocomotiveDefinition extends FreightDefinition {
-	private static final String LocomotiveDiesel = null;
-
-	public DataBlock data;
 	
     public boolean toggleBell;
     public SoundDefinition bell;
@@ -39,7 +36,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
-        this.data = data;
+       
     }
     
     public GuiBuilder getRemoteOverlay(DataBlock data) throws IOException {

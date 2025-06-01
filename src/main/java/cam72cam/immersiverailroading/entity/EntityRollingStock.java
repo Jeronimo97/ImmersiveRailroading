@@ -363,9 +363,5 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 		}
 	}
 
-	//wer weiß
-	public int getEntityId() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	
 }

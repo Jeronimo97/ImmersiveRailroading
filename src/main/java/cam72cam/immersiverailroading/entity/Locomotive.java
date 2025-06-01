@@ -23,7 +23,6 @@ import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
-import net.minecraft.entity.player.EntityPlayer;
 import org.luaj.vm2.LuaValue;
 import java.util.List;
 import java.util.OptionalDouble;

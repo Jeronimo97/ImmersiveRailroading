@@ -3,7 +3,6 @@ package cam72cam.immersiverailroading;
 import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
-import cam72cam.immersiverailroading.items.ItemWirelessRemotecontrol;
 import cam72cam.immersiverailroading.items.ItemPaintBrush;
 import cam72cam.immersiverailroading.items.ItemTypewriter;
 import cam72cam.immersiverailroading.library.GuiTypes;
@@ -43,9 +42,6 @@ import cam72cam.mod.render.opengl.RenderState;
 import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.sound.Audio;
 import cam72cam.mod.text.Command;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.item.ItemArmor.ArmorMaterial;
-
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -57,12 +53,6 @@ public class ImmersiveRailroading extends ModCore.Mod {
 
 	public static final int ENTITY_SYNC_DISTANCE = 512;
 	private static ImmersiveRailroading instance;
-
-	//
-	public static Object remoteThrottleUp;
-	public static Object remoteThrottleDown;
-	public static Object remoteHorn;
-	//
 
 	public ImmersiveRailroading() {
 		instance = this;

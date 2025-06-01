@@ -16,7 +16,6 @@ import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.fluid.Fluid;
 import cam72cam.mod.fluid.FluidStack;
 import cam72cam.mod.serialization.TagField;
-import net.minecraft.entity.player.EntityPlayer;
 import org.luaj.vm2.LuaValue;
 
 import java.util.List;

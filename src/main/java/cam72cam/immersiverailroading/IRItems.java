@@ -2,8 +2,6 @@ package cam72cam.immersiverailroading;
 
 import cam72cam.immersiverailroading.items.*;
 import cam72cam.immersiverailroading.items.ItemGoldenSpike;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemArmor.ArmorMaterial;
 
 public class IRItems {
 	public static ItemRollingStock ITEM_ROLLING_STOCK = new ItemRollingStock();
