@@ -162,7 +162,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				ItemRender.register(IRItems.ITEM_MANUAL, new Identifier(MODID, "items/engineerslexicon"));
 				ItemRender.register(IRItems.ITEM_TRACK_EXCHANGER, new TrackExchangerModel());
 				ItemRender.register(IRItems.ITEM_TYPEWRITER, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/typewriter.obj"), new Vec3d(0.5, 0.5, 0.5), 1 ));
-        ItemRender.register(IRItems.ITEM_WIRELESS_REMOTECONTROL, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/wireless_remotecontrol/wireless_remotecontrol.obj"), new Vec3d(0.5, 0.5, 0.5), 1));
+				ItemRender.register(IRItems.ITEM_WIRELESS_REMOTECONTROL, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/wireless_remotecontrol/wireless_remotecontrol.obj"), new Vec3d(0.5, 0.5, 0.5), 1));
 
 				IEntityRender<EntityMoveableRollingStock> stockRender = new IEntityRender<EntityMoveableRollingStock>() {
 					@Override
@@ -197,7 +197,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 					new KeyPressPacket(type, target).sendToServer();
 				}
 				new KeyPressPacket(type).sendToServer();
-			};
+				};
 				Keyboard.registerKey("ir_keys.increase_throttle", KeyCode.NUMPAD8, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.THROTTLE_UP));
 				Keyboard.registerKey("ir_keys.zero_throttle", KeyCode.NUMPAD5, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.THROTTLE_ZERO));
 				Keyboard.registerKey("ir_keys.decrease_throttle", KeyCode.NUMPAD2, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.THROTTLE_DOWN));
@@ -246,13 +246,18 @@ public class ImmersiveRailroading extends ModCore.Mod {
 					if (!(riding instanceof EntityRollingStock)) {
 						return true;
 					}
-				}
+                    EntityRollingStock stock = (EntityRollingStock) riding;
+                    if (stock.getDefinition().getOverlay() != null) {
+                        return stock.getDefinition().getOverlay().click(evt, stock);
+                    }
+                    return true;
+                });
 
 			ClientEvents.TICK.subscribe(GuiBuilder::onClientTick);
 			ClientEvents.TICK.subscribe(EntityRollingStockDefinition.ControlSoundsDefinition::cleanupStoppedSounds);
                                          
-				Particles.SMOKE = Particle.register(SmokeParticle::new, SmokeParticle::renderAll);
-				Particles.CUSTOM = Particle.register(CustomParticle::new, CustomParticle::renderAll);
+			Particles.SMOKE = Particle.register(SmokeParticle::new, SmokeParticle::renderAll);
+			Particles.CUSTOM = Particle.register(CustomParticle::new, CustomParticle::renderAll);
 
 			ClientPartDragging.register();
 			break;
