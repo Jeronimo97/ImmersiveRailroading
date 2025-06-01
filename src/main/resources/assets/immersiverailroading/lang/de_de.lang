@@ -15,6 +15,8 @@ item.immersiverailroading:item_manual.name=Immersive Railroading Handbuch
 item.immersiverailroading:item_rail.name=Schienenplan
 item.immersiverailroading:item_conductor_whistle.name=Pfeife
 
+item.immersiverailroading:item_wireless_remotecontrol.name=Funkfernsteuerung
+
 tile.immersiverailroading:block_rail.name=Schiene
 tile.immersiverailroading:block_rail_gag.name=Schiene (Gag)
 tile.immersiverailroading:block_rail_preview.name=Schienenentwurf
@@ -185,6 +187,9 @@ key.categories.immersiverailroading=Immersive Railroading
 ir_keys.increase_throttle=Fahrschalter erhöhen
 ir_keys.zero_throttle=Fahrschalter zurücksetzen
 ir_keys.decrease_throttle=Fahrschalter reduzieren
+ir_keys.increase_reverser=Richtungswender vor
+ir_keys.zero_reverser=Richtungswender mitte
+ir_keys.decrease_reverser=Richtungswender zurück
 ir_keys.increase_brake=Bremse erhöhen
 ir_keys.zero_brake=Bremse zurücksetzen
 ir_keys.decrease_brake=Bremse reduzieren

@@ -2,6 +2,8 @@ package cam72cam.immersiverailroading;
 
 import cam72cam.immersiverailroading.items.*;
 import cam72cam.immersiverailroading.items.ItemGoldenSpike;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemArmor.ArmorMaterial;
 
 public class IRItems {
 	public static ItemRollingStock ITEM_ROLLING_STOCK = new ItemRollingStock();
@@ -20,6 +22,10 @@ public class IRItems {
 	public static ItemRadioCtrlCard ITEM_RADIO_CONTROL_CARD = new ItemRadioCtrlCard();
 	public static ItemSwitchKey ITEM_SWITCH_KEY = new ItemSwitchKey();
 	public static ItemTrackExchanger ITEM_TRACK_EXCHANGER = new ItemTrackExchanger();
+	public static ItemWirelessRemotecontrol ITEM_WIRELESS_REMOTECONTROL = new ItemWirelessRemotecontrol();
+
+
+
 
 	public static void register() {
 		// loads static classes and ctrs

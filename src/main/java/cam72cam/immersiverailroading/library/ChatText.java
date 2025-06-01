@@ -36,6 +36,11 @@ public enum ChatText {
 	SWITCH_RESET("switch_state.reset"),
 	SWITCH_CANT_RESET("switch_state.cant_reset"),
 	SWITCH_ALREADY_RESET("switch_state.already_reset"),
+	WIRELESS_REMOTECONTROL_LINK("wireless.remotecontrol.link"),
+	WIRELESS_REMOTECONTROL_NOLINK("wireless.remotecontrol.nolink"),
+	WIRELESS_REMOTECONTROL_UNLINK("wireless.remotecontrol.unlink"),
+	WIRELESS_REMOTECONTROL_RELINK("wireless.remotecontrol.relink"),
+	WIRELESS_REMOTECONTROL_CANTLINK("wireless.remotecontrol.cantlink"),
 	;
 	
 	private String value;

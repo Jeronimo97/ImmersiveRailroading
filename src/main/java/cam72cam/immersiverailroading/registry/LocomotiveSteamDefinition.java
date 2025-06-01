@@ -86,7 +86,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     }
 
     @Override
-    protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
+	public GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
         return readCabCarFlag(data) ?
                 GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/cab_car.caml")) :
                 GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/steam.caml"));

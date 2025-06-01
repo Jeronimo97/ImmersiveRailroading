@@ -201,6 +201,14 @@ public class Config {
 		@Range(min = 0, max = 1000)
 		public static int RadioCostPerMetre = 0;
 		
+		//Wireless remote control
+		@Comment("Only select Locomotives with suitable equipment can be wireless-controlled")
+		public static boolean WirelessRemoteEquipmentRequired = true;
+		
+		@Comment("Range of wireless-control, positive integer")
+		@Range(min = 0, max = 1000)
+		public static int WirelessRemoteRange = 750;
+		
 		@Comment("Prevent stock from being built outside the recommended and model gauges")
 		public static boolean DesignGaugeLock = false;
 

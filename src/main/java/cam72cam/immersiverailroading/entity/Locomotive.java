@@ -4,6 +4,7 @@ import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
 import cam72cam.immersiverailroading.items.ItemRadioCtrlCard;
+import cam72cam.immersiverailroading.items.ItemWirelessRemotecontrol;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.physics.MovementTrack;
@@ -18,6 +19,7 @@ import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
+import net.minecraft.entity.player.EntityPlayer;
 
 import java.util.OptionalDouble;
 import java.util.UUID;
@@ -289,9 +291,10 @@ public abstract class Locomotive extends FreightTank {
 				return true;
 		}
     }
-
+    //Wireless Control - Remote Control
+    @Override
     public ClickResult onClick(Player player, Player.Hand hand) {
-		if (player.getHeldItem(hand).is(IRItems.ITEM_RADIO_CONTROL_CARD) && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+		if (player.getHeldItem(hand).is(IRItems.ITEM_RADIO_CONTROL_CARD ) && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
 			if (getWorld().isClient) {
 				return ClickResult.ACCEPTED;
 			}
@@ -311,8 +314,31 @@ public abstract class Locomotive extends FreightTank {
 			}
 			return ClickResult.ACCEPTED;
 		}
+		if (player.getHeldItem(hand).is(IRItems.ITEM_WIRELESS_REMOTECONTROL ) && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+			if (getWorld().isClient) {
+				return ClickResult.ACCEPTED;
+			}
+			if(this.gauge.isModel() || this.getDefinition().getWirelessRemoteCapability() || !Config.ConfigBalance.WirelessRemoteEquipmentRequired) {
+				ItemWirelessRemotecontrol.Data data = new ItemWirelessRemotecontrol.Data(player.getHeldItem(hand));
+				if (player.isCrouching()) {
+					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_NOLINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_LINK.getMessage());
+					data.linked = null;
+				} else {
+					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_LINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_RELINK.getMessage());
+					data.linked = this.getUUID();
+				}
+				data.write();
+				
+			}
+			
+			else {
+				player.sendMessage(ChatText.WIRELESS_REMOTECONTROL_CANTLINK.getMessage(this.getDefinition().name()));;
+			}
+			return ClickResult.ACCEPTED;
+		} 
 		return super.onClick(player, hand);
 	}
+    
 
 	@Override
 	public boolean canFitPassenger(Entity passenger) {
@@ -634,5 +660,11 @@ public abstract class Locomotive extends FreightTank {
 	public float ambientTemperature() {
 	    // null during registration
 		return internal != null ? getWorld().getTemperature(getBlockPosition()) : 0f;
+	}
+
+	//
+	public void handleKeyPress(EntityPlayer player, KeyTypes type) {
+		// TODO Auto-generated method stub
+		
 	}
 }
