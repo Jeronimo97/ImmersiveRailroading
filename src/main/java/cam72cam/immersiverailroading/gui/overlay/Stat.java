@@ -12,7 +12,6 @@ import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.entity.LocomotiveSteam;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.fluid.Fluid;
-import li.cil.repack.org.luaj.vm2.ast.Stat.Return;
 
 public enum Stat {
     SPEED, MAX_SPEED, UNITS_SPEED, LIQUID, MAX_LIQUID, UNITS_LIQUID, BOILER_PRESSURE,
