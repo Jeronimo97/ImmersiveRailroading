@@ -120,6 +120,7 @@ public class LocomotiveSteam extends Locomotive {
 		return burnMax;
 	}
 
+	@Override
     public double getAppliedTractiveEffort(final Speed speed) {
         if (getDefinition().isCabCar())
             return 0;
@@ -133,12 +134,17 @@ public class LocomotiveSteam extends Locomotive {
         double backPressure =
                 effectivePressure * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(reverser));
 
+        double pressurePercent = (effectivePressure - backPressure) / getMaxChestPressure();
+        if (pressurePercent <= 0)
+            return 0;
+
         double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
-                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
-                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getDefinition().getPistonStroke(gauge) * 1.02
+                * Math.pow(pressurePercent, 1 / (0.2 * Math.abs(reverser) + 0.8))
+                * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
-
+        
         return appliedTraction * Math.copySign(1, reverser);
     }
 	
@@ -186,14 +192,6 @@ public class LocomotiveSteam extends Locomotive {
         chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
                 * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
                 * getDefinition().getWheelDiameter(gauge));
-    }
-    
-    public double getHorsePower(final Speed speed) {
-        return getReverser() == 0 ? 0
-                : this.getDefinition().getHorsePower(gauge)
-                        * (getChestPressurePercent() * Math.abs(getReverser())
-                                + getChestPressurePercent() * Math.abs(getReverser())
-                                        * (Math.log10(1) - Math.log10(Math.abs(getReverser()))));
     }
 
 	@Override

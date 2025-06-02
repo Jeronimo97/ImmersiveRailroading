@@ -32,6 +32,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private double factorOfAdhesion;
     private boolean speedLimiter;
     protected double powerMultiplier;
+    private boolean hasIndependentBrake;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -75,6 +76,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         toggleBell = properties.getValue("toggle_bell").asBoolean();
         isCog = properties.getValue("cog").asBoolean();
         speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
+        hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
     }
 
     protected boolean readCabCarFlag(DataBlock data) {
@@ -192,5 +194,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     
     public double getPowerMultiplier() {
         return powerMultiplier;
+    }
+    
+    public boolean hasIndependentBrake() {
+        return hasIndependentBrake;
     }
 }

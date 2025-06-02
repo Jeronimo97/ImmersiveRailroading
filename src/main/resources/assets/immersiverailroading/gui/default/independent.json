@@ -8,13 +8,27 @@
       "elements": [
         {
           "comment": "ind brake",
-          "x": 4,
+          "x": 2,
           "y": 59,
           "image": "immersiverailroading:gui/indicator.png",
-          "readout": "INDEPENDENT_BRAKE",
+          "readout": "HAND_BRAKE",
           "translate": {
             "x": 0,
             "y": -50
+          }
+        },
+        {
+          "comment": "brake cylinder",
+          "x": 6,
+          "y": 59,
+          "image": "immersiverailroading:gui/indicator.png",
+          "readout": "BRAKE_CYLINDER_PRESSURE",
+          "translate": {
+            "x": 0,
+            "y": -50
+          },
+          "color" : {
+            "0.0" : "0xDDa4ffa4"
           }
         },
         {

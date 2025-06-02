@@ -33,7 +33,11 @@ public enum Readouts {
     CYLINDER_DRAIN,
     CARGO_FILL,
     ENGINE_RPM,
-    CHEST_PRESSURE;
+    CHEST_PRESSURE,
+    HAND_BRAKE,
+    BRAKE_CYLINDER_PRESSURE,
+    DYNAMIC_BRAKE
+    ;
 
     public float getValue(EntityRollingStock stock) {
         return getValue(stock, 0);
@@ -69,7 +73,7 @@ public enum Readouts {
             case TRAIN_BRAKE_LEVER:
                 return stock.getDefinition().isLinearBrakeControl() ? TRAIN_BRAKE.getValue(stock) : lever;
             case INDEPENDENT_BRAKE:
-                return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getIndependentBrake() : 0;
+                return stock instanceof Locomotive ? ((Locomotive) stock).getIndependentBrake() : 0;
             case BRAKE_PRESSURE:
                 return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getBrakePressure() : 0;
             case COUPLER_FRONT:
@@ -111,6 +115,13 @@ public enum Readouts {
                 return stock instanceof LocomotiveSteam
                         ? ((LocomotiveSteam) stock).getChestPressurePercent()
                         : 0;
+            case HAND_BRAKE:
+                return stock instanceof EntityMoveableRollingStock
+                        ? ((EntityMoveableRollingStock) stock).getHandBrake()
+                        : 0;
+            case DYNAMIC_BRAKE:
+                return (float) (stock instanceof LocomotiveDiesel ?
+                        ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
         }
         return 0;
     }
@@ -155,8 +166,8 @@ public enum Readouts {
                 }
                 break;
             case INDEPENDENT_BRAKE:
-                if (stock instanceof EntityMoveableRollingStock) {
-                    ((EntityMoveableRollingStock) stock).setIndependentBrake(value);
+                if (stock instanceof Locomotive) {
+                    ((Locomotive) stock).setIndependentBrake(value);
                 }
                 break;
             case COUPLER_FRONT:

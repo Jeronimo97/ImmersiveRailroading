@@ -496,21 +496,21 @@ public class Consist {
                             .mapToDouble(s -> s.config.desiredBrakePressure)
                             .max().orElse(0);
 
-                    boolean needsBrakeEqualization = linked.stream().anyMatch(s -> s.config.hasPressureBrake && Math.abs(s.brakePressure - desiredBrakePressure) > 0.01);
+                    boolean needsBrakeEqualization = linked.stream().anyMatch(s -> s.config.hasPressureBrake && Math.abs(s.config.trainBrakePressure - desiredBrakePressure) > 0.0001);
 
                     if (needsBrakeEqualization) {
-                        double brakePressureDelta = 0.1 / linked.stream().filter(s -> s.config.hasPressureBrake).count();
+                        double brakePressureDelta = (linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.95) ? 0.08 : 0.01) / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                         linked.forEach(p -> {
                             if (p.config.hasPressureBrake) {
                                 if (Config.ImmersionConfig.instantBrakePressure) {
-                                    p.brakePressure = desiredBrakePressure;
+                                    p.config.trainBrakePressure = desiredBrakePressure;
                                 } else {
-                                    if (p.brakePressure > desiredBrakePressure + brakePressureDelta) {
-                                        p.brakePressure -= brakePressureDelta;
-                                    } else if (p.brakePressure < desiredBrakePressure - brakePressureDelta) {
-                                        p.brakePressure += brakePressureDelta;
+                                    if (p.config.trainBrakePressure > desiredBrakePressure + brakePressureDelta) {
+                                        p.config.trainBrakePressure -= brakePressureDelta;
+                                    } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
+                                        p.config.trainBrakePressure += brakePressureDelta;
                                     } else {
-                                        p.brakePressure = desiredBrakePressure;
+                                        p.config.trainBrakePressure = desiredBrakePressure;
                                     }
                                 }
                             }

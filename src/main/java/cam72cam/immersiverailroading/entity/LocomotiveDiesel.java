@@ -38,6 +38,10 @@ public class LocomotiveDiesel extends Locomotive {
 	@TagSync
 	@TagField("ENGINE_OVERHEATED")
 	private boolean engineOverheated = false;
+	
+	@TagSync
+    @TagField("DYNAMIC_BRAKE")
+    private float dynamicBrakePosition = 0;
 
 	private int throttleCooldown;
 	private int reverserCooldown;
@@ -145,6 +149,23 @@ public class LocomotiveDiesel extends Locomotive {
 		default:
 			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
+		
+		if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
+            float dynamicBrakeNotch = 0.04f;
+            switch (key) {
+                case DYNAMIC_BRAKE_UP:
+                    setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
+                    break;
+                case DYNAMIC_BRAKE_ZERO:
+                    setDynamicBrake(0f);
+                    break;
+                case DYNAMIC_BRAKE_DOWN:
+                    setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
+                    break;
+                default:
+                    super.handleKeyPress(source, key, disableIndependentThrottle);
+            }
+        }
 	}
 
 	@Override
@@ -303,6 +324,46 @@ public class LocomotiveDiesel extends Locomotive {
 			setControlPositions(ModelComponentType.REVERSER_X, getReverser() / -2 + 0.5f);
 		}
 	}
+	
+	@Override
+    protected void copySettings(final EntityRollingStock stock, final boolean direction) {
+        if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).getDefinition().muliUnitCapable) {
+            ((LocomotiveDiesel) stock).setRealDynamicBrake(this.getDynamicBrake());
+        }
+        super.copySettings(stock, direction);
+    }
+	
+	public float getDynamicBrake() {
+        return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
+    }
+
+    public double getDynamicBrakeNewtons() {
+        if (!turnedOn)
+            return 0;
+        double speed = speedPercent(getCurrentSpeed());
+        return getDynamicBrake() * (speed < 0.1 ? speed / 0.1 : 1);
+    }
+
+    public float getDynamicBrakeMultiplier() {
+        return getDefinition().getDynamicBrake();
+    }
+
+    public void setDynamicBrake(final float newDynamicBrakePos) {
+        setRealDynamicBrake(newDynamicBrakePos);
+        if (this.getDefinition().muliUnitCapable) {
+            this.mapTrain(this, true, false, this::copySettings);
+        }
+    }
+
+    private void setRealDynamicBrake(float newDynamicBrakePos) {
+        newDynamicBrakePos = Math.min(1, Math.max(0, newDynamicBrakePos));
+        if (this.getDynamicBrake() != newDynamicBrakePos) {
+            if (getDefinition().isLinearBrakeControl()) {
+                setControlPositions(ModelComponentType.DYNAMIC_BRAKE_X, newDynamicBrakePos);
+            }
+            dynamicBrakePosition = newDynamicBrakePos;
+        }
+    }
   
 	@Override
 	public void setTurnedOnLua(LuaValue b) {

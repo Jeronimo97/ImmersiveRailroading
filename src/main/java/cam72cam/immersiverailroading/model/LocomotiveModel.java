@@ -77,23 +77,22 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         gauges.addAll(Readout.getReadouts(provider, rearLocomotiveRocking, ModelComponentType.COUPLED_X, ModelPosition.REAR_LOCOMOTIVE, Readouts.COUPLED_REAR));
 
         super.parseControllable(provider, def);
+        
+        if (def.hasIndependentBrake()) {
+            addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
+            addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
+        }
 
         addGauge(provider, ModelComponentType.GAUGE_SPEED_X, Readouts.SPEED);
         addGauge(provider, ModelComponentType.GAUGE_THROTTLE_X, Readouts.THROTTLE);
         addGauge(provider, ModelComponentType.GAUGE_REVERSER_X, Readouts.REVERSER);
         addGauge(provider, ModelComponentType.GAUGE_TRAIN_BRAKE_X, Readouts.TRAIN_BRAKE);
-        if (def.hasIndependentBrake()) {
-            addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
-        }
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);
         addControl(provider, ModelComponentType.THROTTLE_X);
         addControl(provider, ModelComponentType.REVERSER_X);
         addControl(provider, ModelComponentType.TRAIN_BRAKE_X);
-        if (def.hasIndependentBrake()) {
-            addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
-        }
         addControl(provider, ModelComponentType.SANDING_CONTROL_X);
     }
 

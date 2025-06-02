@@ -47,7 +47,11 @@ public abstract class Locomotive extends FreightTank{
 
 	@TagSync
 	@TagField("AIR_BRAKE")
-	private float trainBrake = 0;
+	private float trainBrakePosition = 0;
+	
+	@TagSync
+    @TagField("IND_BRAKE")
+    private float independentBrake = 0;
 
 	@TagSync
 	@TagField("HORN")
@@ -75,7 +79,8 @@ public abstract class Locomotive extends FreightTank{
 	
     protected int sandTime = 0;
     protected boolean isSanding = false;
-    protected boolean isSandingKey = false;
+    protected boolean sandingKey = false;
+    protected int sandingKeyTimeout = 0;
 
 	@TagSync
 	@TagField("localMaxSpeed")
@@ -230,17 +235,39 @@ public abstract class Locomotive extends FreightTank{
 				this.deadManChangeTimeout = 5;
 			}
 			break;
-        case SANDING:
-            if (isSandingKey) {
-                isSandingKey = false;
-            } else {
-                isSandingKey = true;
+		case SANDING:
+            if (sandingKeyTimeout == 0) {
+                sandingKey = !sandingKey;
+                sandingKeyTimeout = 5;
+
+                List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                        .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                        .collect(Collectors.toList());
+                for (Control<?> sand : sanding) {
+                    setControlPosition(sand, sandingKey ? 1 : 0);
+                }
             }
-            setSanding(isSandingKey);
             break;
-			default:
-				super.handleKeyPress(source, key, disableIndependentThrottle);
+		default:
+			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
+		
+        if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
+            float independentBrakeNotch = 0.04f;
+            switch (key) {
+                case INDEPENDENT_BRAKE_UP:
+                    setIndependentBrake(getIndependentBrake() + independentBrakeNotch);
+                    break;
+                case INDEPENDENT_BRAKE_ZERO:
+                    setIndependentBrake(0f);
+                    break;
+                case INDEPENDENT_BRAKE_DOWN:
+                    setIndependentBrake(getIndependentBrake() - independentBrakeNotch);
+                    break;
+                default:
+                    super.handleKeyPress(source, key, disableIndependentThrottle);
+            }
+        }
 	}
 
 	protected boolean forceLinkThrottleReverser() {
@@ -274,6 +301,11 @@ public abstract class Locomotive extends FreightTank{
 				setTrainBrake(1 - getControlPosition(component)*2);
 				setThrottle(getControlPosition(component)*2 - 1);
 				break;
+			case INDEPENDENT_BRAKE_X:
+                if (getDefinition().isLinearBrakeControl()) {
+                    setIndependentBrake(getControlPosition(component));
+                }
+                break;
 		}
 	}
 
@@ -388,6 +420,14 @@ public abstract class Locomotive extends FreightTank{
 					setTrainBrake(Math.max(0, Math.min(1, getTrainBrake() + (getControlPosition(control) - 0.5f) / 8)));
 				}
 			}
+			
+			if (getDefinition().hasIndependentBrake()) {
+                for (Control<?> control : getDefinition().getModel().getControls()) {
+                    if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
+                        setIndependentBrake(Math.max(0, Math.min(1, getIndependentBrake() + (getControlPosition(control) - 0.5f) / 8)));
+                    }
+                }
+            }
 
 			if (deadManChangeTimeout > 0) {
 				deadManChangeTimeout -= 1;
@@ -448,21 +488,18 @@ public abstract class Locomotive extends FreightTank{
 			}
 		}
 		
-		isSanding = false;
-        if (this.isSanding()) {
-            System.out.println("Time: " + sandTime);
-
+		if (sandingKeyTimeout > 0) {
+            sandingKeyTimeout--;
+        }
+        isSanding = false;
+        sandingKey = sandingKey || isSanding();
+        if (sandingKey) {
             ItemStack stack = this.cargoItems.get(2);
             if (sandTime == 0) {
                 stack.setCount(stack.getCount() - 1);
                 sandTime = 60 * Config.ConfigBalance.SandEfficiency;
-
-
-
             }
             if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
-
-
                 sandTime--;
                 isSanding = true;
             }
@@ -506,6 +543,10 @@ public abstract class Locomotive extends FreightTank{
         }
         return appliedTractiveEffort;
     }
+    
+    public double speedPercent(final Speed speed) {
+        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
+    }
 
 	@Override
 	public double getBrakeSystemEfficiency() {
@@ -527,12 +568,11 @@ public abstract class Locomotive extends FreightTank{
 	 * Misc Helper functions
 	 */
 
-	private void copySettings(EntityRollingStock stock, boolean direction) {
+	protected void copySettings(EntityRollingStock stock, boolean direction) {
 		if (stock instanceof Locomotive && ((Locomotive)stock).getDefinition().muliUnitCapable) {
 			((Locomotive) stock).setRealThrottle(this.getThrottle());
 			((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
 			((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
-			((Locomotive) stock).setRealIndependentBrake(this.getIndependentBrake());
 		}
 	}
 
@@ -647,12 +687,8 @@ public abstract class Locomotive extends FreightTank{
 		return LuaValue.valueOf(getTrainBrake());
 	}
 
-	@Deprecated
-	public float getAirBrake() {
-		return getTrainBrake();
-	}
 	public float getTrainBrake() {
-		return trainBrake;
+		return trainBrakePosition;
 	}
 
 	@Override
@@ -660,11 +696,6 @@ public abstract class Locomotive extends FreightTank{
 		setTrainBrake(val.tofloat());
 	}
 
-
-	@Deprecated
-	public void setAirBrake(float value) {
-		setTrainBrake(value);
-	}
 	public void setTrainBrake(float newTrainBrake) {
 		setRealTrainBrake(newTrainBrake);
 		if (this.getDefinition().muliUnitCapable) {
@@ -677,25 +708,31 @@ public abstract class Locomotive extends FreightTank{
 			if (getDefinition().isLinearBrakeControl()) {
 				setControlPositions(ModelComponentType.TRAIN_BRAKE_X, newTrainBrake);
 			}
-			trainBrake = newTrainBrake;
+			trainBrakePosition = newTrainBrake;
 			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrake())/2);
 		}
 	}
+	
+    public float getIndependentBrake() {
+        return getDefinition().hasIndependentBrake() ? independentBrake : 0;
+    }
 
-	@Override
 	public void setIndependentBrakeLua(LuaValue val) {
 		setIndependentBrake(val.tofloat());
 	}
 
-	@Override
 	public void setIndependentBrake(float newIndependentBrake) {
 		setRealIndependentBrake(newIndependentBrake);
-		if (this.getDefinition().muliUnitCapable) {
-			this.mapTrain(this, true, false, this::copySettings);
-		}
 	}
+	
 	private void setRealIndependentBrake(float newIndependentBrake) {
-		super.setIndependentBrake(newIndependentBrake);
+	    newIndependentBrake = Math.min(1, Math.max(0, newIndependentBrake));
+        if (this.getIndependentBrake() != newIndependentBrake && getDefinition().hasIndependentBrake()) {
+            if (getDefinition().isLinearBrakeControl()) {
+                setControlPositions(ModelComponentType.INDEPENDENT_BRAKE_X, newIndependentBrake);
+            }
+            independentBrake = newIndependentBrake;
+        }
 	}
 
 
@@ -765,19 +802,10 @@ public abstract class Locomotive extends FreightTank{
 		}
 	}
 	
-	public boolean isSanding() {
+    public boolean isSanding() {
         List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
-        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5 || isSandingKey);
-    }
-
-    public void setSanding(final boolean enabled) {
-        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
-                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
-                .collect(Collectors.toList());
-        for (Control<?> sand : sanding) {
-            setControlPosition(sand, enabled ? 1 : 0);
-        }
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
     }
 }
