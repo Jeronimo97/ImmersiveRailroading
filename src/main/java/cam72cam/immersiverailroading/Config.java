@@ -198,7 +198,7 @@ public class Config {
 		
 		@Comment("Range of radio-control, positive integer")
 		@Range(min = 0, max = 1000)
-		public static int RadioRange = 750;
+		public static int RadioRange = 500;
 		
 		@Comment("IEnergy cost (RF) per radio transmission per metre")
 		@Range(min = 0, max = 1000)
