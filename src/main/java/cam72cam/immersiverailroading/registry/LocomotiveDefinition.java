@@ -25,7 +25,6 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private double traction;
     private Speed maxSpeed;
     private boolean hasRadioEquipment;
-    private boolean hasWirelessRemoteEquipment;
     public boolean muliUnitCapable;
     private boolean isCabCar;
     private boolean isLinkedBrakeThrottle;
@@ -43,8 +42,6 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
     
-    
-
     @Override
     protected Identifier defaultDataLocation() {
         return new Identifier(ImmersiveRailroading.MODID, "rolling_stock/default/locomotive.caml");
@@ -60,8 +57,6 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
 
         hasRadioEquipment = properties.getValue("radio_equipped").asBoolean(false);
         
-        hasWirelessRemoteEquipment = properties.getValue("remotecontrol_equipped").asBoolean(false);
-
         isCabCar = readCabCarFlag(data);
         if (isCabCar) {
             power = 0;
@@ -140,11 +135,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         return this.hasRadioEquipment;
     }
     
-    //Wireless remote Control
-    public boolean getWirelessRemoteCapability() {
-        return this.hasWirelessRemoteEquipment;
-    }
-
+    
     public boolean isLinearBrakeControl() {
         return isLinkedBrakeThrottle() || super.isLinearBrakeControl();
     }

@@ -346,10 +346,10 @@ public abstract class Locomotive extends FreightTank{
 			if (getWorld().isClient) {
 				return ClickResult.ACCEPTED;
 			}
-			if(this.gauge.isModel() || this.getDefinition().getWirelessRemoteCapability() || !Config.ConfigBalance.WirelessRemoteEquipmentRequired) {
+			if(this.gauge.isModel() || this.getDefinition().getRadioCapability() || !Config.ConfigBalance.RadioEquipmentRequired) {
 				ItemWirelessRemotecontrol.Data data = new ItemWirelessRemotecontrol.Data(player.getHeldItem(hand));
 				if (player.isCrouching()) {
-					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_NOLINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_LINK.getMessage());
+					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_NOLINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_UNLINK.getMessage());
 					data.linked = null;
 				} else {
 					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_LINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_RELINK.getMessage());

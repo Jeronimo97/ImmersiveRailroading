@@ -1,5 +1,6 @@
 package cam72cam.immersiverailroading.items;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -7,6 +8,7 @@ import java.util.UUID;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
+import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.net.WirelessRemotecontrolInputHandler;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.Player.Hand;
@@ -14,6 +16,7 @@ import cam72cam.mod.item.CreativeTab;
 import cam72cam.mod.item.CustomItem;
 import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.render.GlobalRender;
+import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
 
@@ -51,9 +54,9 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 
 	@Override
 	public void onClickAir(Player player, World world, Hand hand) {
-		ItemStack stack = player.getHeldItem(hand);
+		ItemStack stack = player.getHeldItem(Hand.SECONDARY);
 		Data data = new Data(stack);
-		System.out.println(data.linked);
+		
 		if (data.linked == null) {
 			return;
 		}
@@ -68,20 +71,26 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 			isRendering = false;
 		} else if (!doubleClick) {
 			isRendering = true;
+			
+		
+			
+			try {
+				GuiBuilder gui = GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/fbg.json"));
+				GlobalRender.registerOverlay((state, pt) -> {
+					if (isRendering && !doubleClick) {
+						gui.render(state, loco);
+					}
+				});
+				
+			} catch (IOException e) {
+				
+			}
 		}
 		if (doubleClick) {
 			doubleClick = false;
 		} else {
 			doubleClick = true;
 		}
-
-		GlobalRender.registerOverlay((state, pt) -> {
-			if (isRendering && !doubleClick) {
-				loco.getDefinition().getOverlay().render(state, loco);
-
-			}
-
-		});
 
 		ItemWirelessRemotecontrol.Data data1 = new ItemWirelessRemotecontrol.Data(stack);
 		if (isRendering && !doubleClick && data1.linked != null) {

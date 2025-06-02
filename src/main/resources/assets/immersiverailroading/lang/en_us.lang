@@ -66,6 +66,12 @@ chat.immersiverailroading:switch_state.reset=The last-locked switch has been wir
 chat.immersiverailroading:switch_state.cant_reset=You haven't locked any switches with this key!
 chat.immersiverailroading:switch_state.already_reset=The last-locked switch is already unlocked!
 
+chat.immersiverailroading:wireless.remotecontrol.link=Wireless Remotecontrol linked!
+chat.immersiverailroading:wireless.remotecontrol.relink=Wireless Remotecontrol relinked!
+chat.immersiverailroading:wireless.remotecontrol.unlink=Wireless Remotecontrol unlinked!
+chat.immersiverailroading:wireless.remotecontrol.cantlink=Locomotive does not have Wireless control equipment!
+
+
 gui.immersiverailroading:label.brake=Brake
 gui.immersiverailroading:label.throttle=Throttle
 gui.immersiverailroading:label.reverser=Reverser
@@ -271,3 +277,4 @@ ir_keys.bell=Sound Bell
 ir_keys.dead_mans_switch=Deadman's Switch
 ir_keys.start_stop_engine=Start/Stop engine
 ir_keys.config=Config
+ir_keys.sanding=Sanding
