@@ -50,7 +50,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         notches = properties.getValue("throttle_notches").asInteger();
 
         hornSus = properties.getValue("horn_sustained").asBoolean();
-        dynamicBrake = properties.getValue("dynamic_brake_factor").asFloat(0);
+        dynamicBrake = properties.getValue("dynamic_brake_factor").asFloat(1);
 
         DataBlock sounds = data.getBlock("sounds");
         idle = SoundDefinition.getOrDefault(sounds, "idle");

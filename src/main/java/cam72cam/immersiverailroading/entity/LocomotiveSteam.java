@@ -158,10 +158,6 @@ public class LocomotiveSteam extends Locomotive {
 			burnTime.put(slot, 0);
 		}
 	}
-	
-    public double speedPercent(final Speed speed) {
-        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
-    }
     
     private void chestPressureCalc() {
         // Anstieg Schieberkastendruck

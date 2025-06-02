@@ -76,6 +76,9 @@ public enum Readouts {
                 return stock instanceof Locomotive ? ((Locomotive) stock).getIndependentBrake() : 0;
             case BRAKE_PRESSURE:
                 return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getBrakePressure() : 0;
+            case BRAKE_CYLINDER_PRESSURE:
+                return stock instanceof EntityMoveableRollingStock ?
+                    ((EntityMoveableRollingStock) stock).getBrakeCylinderPressure() : 0;
             case COUPLER_FRONT:
                 return stock instanceof EntityCoupleableRollingStock ? ((EntityCoupleableRollingStock) stock).isCouplerEngaged(CouplerType.FRONT) ? 1 : 0 : 0;
             case COUPLER_REAR:

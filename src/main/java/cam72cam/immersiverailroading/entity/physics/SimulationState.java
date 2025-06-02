@@ -150,7 +150,7 @@ public class SimulationState {
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
-                desiredBrakePressure = locomotive.getTrainBrake() < 0.95 ? 1 - 0.31 * (double)locomotive.getTrainBrake() : 0;
+                desiredBrakePressure = locomotive.getTrainBrake() < 0.98 ? 1 - 0.31 * (double)locomotive.getTrainBrake() : 0;
                 isSanding = locomotive.isSanding();
                 isSanding = locomotive.isSanding();
             } else {
@@ -168,7 +168,7 @@ public class SimulationState {
                 this.independentBrake = ((Locomotive) stock).getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
             if (stock instanceof LocomotiveDiesel) {
-                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() * 15000;
+                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() * 150000;
             } else {
                 this.dynamicBrakeNewtons = 0;
             }
@@ -216,6 +216,8 @@ public class SimulationState {
         interactingFront = stock.getCoupledUUID(EntityCoupleableRollingStock.CouplerType.FRONT);
         interactingRear = stock.getCoupledUUID(EntityCoupleableRollingStock.CouplerType.BACK);
 
+        // TODO brakePressure = stock.getBrakePressure();
+        
         config = new Configuration(stock);
 
         bounds = config.bounds.apply(this);
@@ -245,6 +247,8 @@ public class SimulationState {
 
         this.interactingFront = prev.interactingFront;
         this.interactingRear = prev.interactingRear;
+        
+        // TODO this.brakePressure = prev.brakePressure;
 
         this.config = prev.config;
 
