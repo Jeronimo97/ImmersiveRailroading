@@ -346,7 +346,7 @@ public abstract class Locomotive extends FreightTank{
 			if (getWorld().isClient) {
 				return ClickResult.ACCEPTED;
 			}
-			if(this.gauge.isModel() || this.getDefinition().getWirelessRemoteCapability() || !Config.ConfigBalance.RadioEquipmentRequired) {
+			if(this.gauge.isModel() || this.getDefinition().getRadioCapability() || !Config.ConfigBalance.RadioEquipmentRequired) {
 				ItemWirelessRemotecontrol.Data data = new ItemWirelessRemotecontrol.Data(player.getHeldItem(hand));
 				if (player.isCrouching()) {
 					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_NOLINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_UNLINK.getMessage());
@@ -478,7 +478,7 @@ public abstract class Locomotive extends FreightTank{
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 0);
+                * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 1);
     }
 	
     protected double simulateWheelSlip() {

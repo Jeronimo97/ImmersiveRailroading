@@ -56,7 +56,7 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 	public void onClickAir(Player player, World world, Hand hand) {
 		ItemStack stack = player.getHeldItem(Player.Hand.SECONDARY);
 		Data data = new Data(stack);
-		System.out.println(data.linked);
+		
 		if (data.linked == null) {
 			return;
 		}
@@ -81,9 +81,9 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 						gui.render(state, loco);
 					}
 				});
-				System.out.println("[Remote] Eigenes Overlay aktiviert.");
+				
 			} catch (IOException e) {
-				System.err.println("[Remote] Fehler beim Laden des GUIs: " + e.getMessage());
+				
 			}
 		}
 		if (doubleClick) {

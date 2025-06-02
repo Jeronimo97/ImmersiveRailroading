@@ -198,15 +198,11 @@ public class Config {
 		
 		@Comment("Range of radio-control, positive integer")
 		@Range(min = 0, max = 1000)
-		public static int RadioRange = 500;
+		public static int RadioRange = 750;
 		
 		@Comment("IEnergy cost (RF) per radio transmission per metre")
 		@Range(min = 0, max = 1000)
 		public static int RadioCostPerMetre = 0;
-		
-		//Wireless remote control
-		@Comment("Only select Locomotives with suitable equipment can be wireless-controlled")
-		public static boolean WirelessRemoteEquipmentRequired = true;
 		
 		@Comment("Prevent stock from being built outside the recommended and model gauges")
 		public static boolean DesignGaugeLock = false;
