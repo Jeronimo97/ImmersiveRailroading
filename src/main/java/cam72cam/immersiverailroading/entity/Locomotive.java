@@ -478,7 +478,7 @@ public abstract class Locomotive extends FreightTank{
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 0);
+                * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 1);
     }
 	
     protected double simulateWheelSlip() {
