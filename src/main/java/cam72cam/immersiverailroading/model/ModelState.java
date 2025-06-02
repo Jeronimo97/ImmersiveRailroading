@@ -238,6 +238,9 @@ public class ModelState {
             }
         }
 
+        // Filter out text fields
+        groups = groups.stream().filter(group -> !group.contains("TEXTFIELD_")).collect(Collectors.toList());
+
         // Filter out groups that aren't currently visible
         if (groupVisibility != null) {
             groups = groups.stream().filter(group -> {

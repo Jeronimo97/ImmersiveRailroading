@@ -2,10 +2,7 @@ package cam72cam.immersiverailroading.model;
 
 import cam72cam.immersiverailroading.ConfigGraphics;
 import cam72cam.immersiverailroading.ConfigSound;
-import cam72cam.immersiverailroading.entity.CarPassenger;
-import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
-import cam72cam.immersiverailroading.entity.Locomotive;
-import cam72cam.immersiverailroading.entity.RenderText;
+import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
@@ -16,6 +13,7 @@ import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.model.part.TrackFollower.TrackFollowers;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
+import cam72cam.immersiverailroading.textUtil.TextField;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
@@ -291,8 +289,6 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private int lod_level = LOD_LARGE;
     private int lod_tick = 0;
     public final void renderEntity(EntityMoveableRollingStock stock, RenderState state, float partialTicks) {
-        RenderText renderText = RenderText.getInstance(String.valueOf(stock.getUUID()));
-        renderText.textRender(state, animations, stock, partialTicks);
         List<ModelComponentType> available = stock.isBuilt() ? null : stock.getItemComponents()
                 .stream().flatMap(x -> x.render.stream())
                 .collect(Collectors.toList());
@@ -370,6 +366,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         doors.forEach(c -> c.postRender(stock, state, partialTicks));
         gauges.forEach(c -> c.postRender(stock, state, partialTicks));
         headlights.forEach(x -> x.postRender(stock, state));
+        // I don't like this, but I can't think of another way to implement the text fields into the pipeline
+        ((EntityScriptableRollingStock) stock).textFields.forEach((n, t) -> t.postRender(stock, state, animations, partialTicks));
     }
 
     public List<Control<ENTITY>> getControls() {

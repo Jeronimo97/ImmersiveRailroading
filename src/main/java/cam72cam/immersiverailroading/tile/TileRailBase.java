@@ -185,7 +185,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 				.addFunction("setSound", val -> {/*this.setNewSound(val)*/})
 				.addFunction("setGlobal", (control, val) -> scriptableRollingStock.setGlobalControlGroup(control.tojstring(), val.tofloat()))
 				.addFunction("setUnit", (control, val) -> scriptableRollingStock.setUnitControlGroup(control.tojstring(), val.tofloat()))
-				.addFunction("setText", result -> scriptableRollingStock.textFieldDef(result))
+				.addFunction("setText", result -> {/*scriptableRollingStock.textFieldDef(result)*/})
 				.addFunction("setTag", val -> scriptableRollingStock.setEntityTag(val.tojstring()))
 				.addFunctionWithReturn("getTrain", () -> scriptableRollingStock.getTrainConsist())
 				.addFunction("setIndividualCG", stockUnit -> scriptableRollingStock.setIndividualCG(stockUnit))

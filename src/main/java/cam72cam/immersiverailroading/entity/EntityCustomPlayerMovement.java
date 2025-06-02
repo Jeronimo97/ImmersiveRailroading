@@ -8,11 +8,9 @@ import cam72cam.immersiverailroading.model.part.Door;
 import cam72cam.immersiverailroading.util.VecUtil;
 import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
-import cam72cam.mod.entity.boundingbox.IBoundingBox;
 import cam72cam.mod.math.Vec3d;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class EntityCustomPlayerMovement extends EntityRidableRollingStock {
@@ -246,7 +244,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
     private boolean isAtCoupler(Vec3d offset, Vec3d movement, EntityCoupleableRollingStock.CouplerType type) {
         offset = offset.rotateYaw(-90);
         double coupler = getDefinition().getCouplerPosition(type, this.gauge);
-        Vec3d couplerPos = new Vec3d(type == EntityCoupleableRollingStock.CouplerType.FRONT ? coupler : -coupler, offset.y, offset.z);
+        Vec3d couplerPos = new Vec3d(type == EntityCoupleableRollingStock.CouplerType.FRONT ? -coupler : coupler, offset.y, offset.z);
 
         CollisionBox queryBox = new CollisionBox(
                 couplerPos.subtract(0.2, 0.2, 0.2),
@@ -266,7 +264,7 @@ public abstract class EntityCustomPlayerMovement extends EntityRidableRollingSto
             double distance = offset.subtract(closestPoint).length();
             if (distance < 0.5) {
                 Vec3d toCoupler = couplerPos.subtract(offset).normalize();
-                double dot = VecUtil.dotProduct(toCoupler, movement.rotateYaw(90).normalize());
+                double dot = VecUtil.dotProduct(toCoupler, movement.rotateYaw(-90).normalize());
                 if (dot > 0.5) return true;
             }
         }

@@ -2,15 +2,13 @@ package cam72cam.immersiverailroading.floor;
 
 import cam72cam.immersiverailroading.model.StockModel;
 import cam72cam.immersiverailroading.util.VecUtil;
+import cam72cam.mod.Config;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
+import cam72cam.mod.model.obj.Vec2f;
 import cam72cam.mod.model.obj.VertexBuffer;
-import cam72cam.mod.resource.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,7 +31,7 @@ public class Mesh {
     public static class Face {
         public List<Vec3d> vertices = new ArrayList<>();
         public Vec3d normal;
-        public Pair<Float, Float> uv;
+        public List<Vec2f> uv = new ArrayList<>();
 
         public CollisionBox getCollisionBox() {
             Vec3d min = vertices.get(0).min(vertices.get(1).min(vertices.get(2)));
@@ -74,6 +72,8 @@ public class Mesh {
 
             List<Face> faces = new ArrayList<>();
 
+
+
             for (int vIdx = vertexStart; vIdx < vertexEnd; vIdx += vertsPerFace) {
                 Face face = new Face();
 
@@ -89,10 +89,8 @@ public class Mesh {
 
                     Vec3d vertex = new Vec3d(vx, vy, vz);
                     face.vertices.add(vertex);
-
-                    if (i == 0) {
-                        face.uv = Pair.of(u, v);
-                    }
+                    Vec2f uv = new Vec2f(u, v);
+                    face.uv.add(uv);
                 }
 
                 if (vbo.hasNormals) {

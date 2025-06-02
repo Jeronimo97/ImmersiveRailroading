@@ -20,6 +20,7 @@ item.immersiverailroading:item_golden_spike.name=Golden Spike
 item.immersiverailroading:item_radio_control_card.name=Train Radio-control Card
 item.immersiverailroading:item_switch_key.name=Switch Key
 item.immersiverailroading:item_track_exchanger.name=Track Exchanger
+item.immersiverailroading:item_typewriter.name=Typewriter
 
 item.immersiverailroading:item_wireless_remotecontrol.name=Wireless Remote Control
 
@@ -65,6 +66,7 @@ chat.immersiverailroading:switch_state.locked=Switch locked to %s
 chat.immersiverailroading:switch_state.reset=The last-locked switch has been wirelessly unlocked!
 chat.immersiverailroading:switch_state.cant_reset=You haven't locked any switches with this key!
 chat.immersiverailroading:switch_state.already_reset=The last-locked switch is already unlocked!
+chat.immersiverailroading:typewriter.no_stock=Not looking at any stock
 
 chat.immersiverailroading:wireless.remotecontrol.link=Wireless Remotecontrol linked!
 chat.immersiverailroading:wireless.remotecontrol.relink=Wireless Remotecontrol relinked!
@@ -95,7 +97,7 @@ gui.immersiverailroading:selector.alignment=Alignment: %s
 gui.immersiverailroading:selector.textfield=Text Field: %s
 gui.immersiverailroading:selector.font=Font: %s
 
-gui.immersiverailroading:slider.offset=Offset in px: %s
+gui.immersiverailroading:slider.offset=Gap in px:
 gui.immersiverailroading:slider.line_spacing=Line Spacing in px: %s
 gui.immersiverailroading:checkbox.global= Global
 

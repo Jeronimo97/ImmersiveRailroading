@@ -20,6 +20,11 @@ public class LuaLibrary {
         this.functions = new HashMap<>();
     }
 
+    private LuaLibrary() {
+        this.functions = new HashMap<>();
+        this.type = null;
+    }
+
     /**
      * A static factory method
      * @param typeName Type of the object or namespace of the library
@@ -27,6 +32,10 @@ public class LuaLibrary {
      */
     public static LuaLibrary create(String typeName){
         return new LuaLibrary(typeName);
+    }
+
+    public static LuaLibrary create() {
+        return new LuaLibrary();
     }
 
     /**
@@ -227,6 +236,10 @@ public class LuaLibrary {
      */
     public void setInGlobals(Globals globals){
         globals.set(this.type, initFunctions(new LuaTable()));
+    }
+
+    public LuaTable getAsTable() {
+        return initFunctions(new LuaTable());
     }
 
     /**

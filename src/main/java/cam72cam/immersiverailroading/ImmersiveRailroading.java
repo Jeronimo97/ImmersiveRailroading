@@ -4,7 +4,6 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.items.ItemPaintBrush;
-import cam72cam.immersiverailroading.items.ItemTypewriter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.Particles;
@@ -22,6 +21,7 @@ import cam72cam.immersiverailroading.render.item.*;
 import cam72cam.immersiverailroading.render.multiblock.MBBlueprintRender;
 import cam72cam.immersiverailroading.render.multiblock.TileMultiblockRender;
 import cam72cam.immersiverailroading.render.rail.RailPreviewRender;
+import cam72cam.immersiverailroading.textUtil.TextField;
 import cam72cam.immersiverailroading.thirdparty.CompatLoader;
 import cam72cam.immersiverailroading.tile.*;
 import cam72cam.immersiverailroading.util.IRFuzzy;
@@ -90,8 +90,8 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(GuiBuilder.ControlChangePacket::new, PacketDirection.ClientToServer);
 				Packet.register(ItemPaintBrush.PaintBrushPacket::new, PacketDirection.ClientToServer);
 				Packet.register(TileRailBase.AugmentPacket::new, PacketDirection.ClientToServer);
-				Packet.register(ItemTypewriter.TypewriterPacket::new, PacketDirection.ClientToServer);
-				Packet.register(ItemTypewriter.TypewriterSyncPacket::new, PacketDirection.ServerToClient);
+				Packet.register(TextField.PacketSyncTextField::new, PacketDirection.ServerToClient);
+				Packet.register(TextField.PacketSyncTextFieldServer::new, PacketDirection.ClientToServer);
 
 				ServerChronoState.register();
 

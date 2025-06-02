@@ -303,6 +303,9 @@ public class Config {
 		
 	    @Comment( "Print extra info" )
 	    public static boolean debugLogging = false;
+
+		@Comment("Render Debug lines of text fields")
+		public static boolean renderDebugLines = false;
     }
 
 	public static boolean isFuelRequired(Gauge gauge) {
