@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.entity.physics;
 
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
+import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
@@ -499,10 +500,12 @@ public class Consist {
                     boolean needsBrakeEqualization = linked.stream().anyMatch(s -> s.config.hasPressureBrake && Math.abs(s.config.trainBrakePressure - desiredBrakePressure) > 0.0001);
 
                     if (needsBrakeEqualization) {
-                        double brakePressureDelta = (linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.98) ? 0.08 : 0.01) / linked.stream().filter(s -> s.config.hasPressureBrake).count();
+                        double brakePressureDelta = Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                                0.1 / linked.stream().filter(s -> s.config.hasPressureBrake).count() :
+                                (linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.98) ? 0.08 : 0.01) / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                         linked.forEach(p -> {
                             if (p.config.hasPressureBrake) {
-                                if (Config.ImmersionConfig.instantBrakePressure) {
+                                if (Config.ImmersionConfig.brakeMode.equals(BrakeMode.INSTANT)) {
                                     p.config.trainBrakePressure = desiredBrakePressure;
                                 } else {
                                     if (p.config.trainBrakePressure > desiredBrakePressure + brakePressureDelta) {

@@ -6,6 +6,7 @@ import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.entity.Tender;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
+import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.library.PhysicalMaterials;
 import cam72cam.immersiverailroading.library.TrackItems;
@@ -150,7 +151,8 @@ public class SimulationState {
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
-                desiredBrakePressure = locomotive.getTrainBrake() < 0.98 ? 1 - 0.31 * (double)locomotive.getTrainBrake() : 0;
+                desiredBrakePressure = Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                        1 - locomotive.getTrainBrake() : locomotive.getTrainBrake() < 0.98 ? 1 - 0.31 * (double)locomotive.getTrainBrake() : 0;
                 isSanding = locomotive.isSanding();
                 isSanding = locomotive.isSanding();
             } else {
@@ -215,8 +217,6 @@ public class SimulationState {
 
         interactingFront = stock.getCoupledUUID(EntityCoupleableRollingStock.CouplerType.FRONT);
         interactingRear = stock.getCoupledUUID(EntityCoupleableRollingStock.CouplerType.BACK);
-
-        // TODO brakePressure = stock.getBrakePressure();
         
         config = new Configuration(stock);
 
@@ -247,8 +247,6 @@ public class SimulationState {
 
         this.interactingFront = prev.interactingFront;
         this.interactingRear = prev.interactingRear;
-        
-        // TODO this.brakePressure = prev.brakePressure;
 
         this.config = prev.config;
 
@@ -460,7 +458,9 @@ public class SimulationState {
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
-        config.brakeCylinderPressure = Math.max(Math.min((1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
+        config.brakeCylinderPressure = Math.max(Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                1 - config.trainBrakePressure :
+                    (1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
         double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, config.brakeCylinderPressure);
         double handBrakeNewtons = config.handBrakeNewtons;
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
