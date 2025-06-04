@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.mod.config.ConfigFile.Comment;
 import cam72cam.mod.config.ConfigFile.File;
@@ -89,9 +90,9 @@ public class Config {
         @Name("Disable Independent Throttle")
         public static boolean disableIndependentThrottle = true;
 
-        @Comment("Old style brake control")
-        @Name("Instant Brake Pressure")
-        public static boolean instantBrakePressure = false;
+        @Comment("Change brake mode. Possible: instant (old style), default, realistic")
+        @Name("Brake Mode")
+        public static BrakeMode brakeMode = BrakeMode.DEFAULT;
 
         @Comment("Enable coupler slack")
         public static boolean slackEnabled = true;
