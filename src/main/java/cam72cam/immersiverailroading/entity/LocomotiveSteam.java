@@ -59,6 +59,8 @@ public class LocomotiveSteam extends Locomotive {
 
     private float drainRemainder;
 
+    private boolean chuffOn = false;
+
     public LocomotiveSteam() {
         boilerTemperature = ambientTemperature();
     }
@@ -138,8 +140,8 @@ public class LocomotiveSteam extends Locomotive {
 
         double effectivePressure = getChestPressure() / expansion * (1 + Math.log(expansion));
 
-        double backPressure =
-                effectivePressure * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(reverser));
+        double backPressure = effectivePressure * Math.log(1 + 2.67 * speedPercent(speed)
+                * Math.abs(reverser) * getDefinition().getCylinderCount() == 3 ? 1.15 : 1);
 
         double pressurePercent = (effectivePressure - backPressure) / getMaxChestPressure();
         if (pressurePercent <= 0)
@@ -193,26 +195,45 @@ public class LocomotiveSteam extends Locomotive {
                     * getThrottle() * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
         }
 
-        // Abfall Schieberkastendruck
-        if (getChestPressure() > 0) {
-            if (getChestPressure() < 2 && getThrottle() < 0.05f) {
-                chestPressure -= 0.25f; // unter 2 Bar schlagartig raus
-            }
-            if (cylinderDrainsEnabled()) {
-                chestPressure -= 0.07f; // Zylinderentwässerung
-            }
-            if (slipping) {
-                chestPressure -= 0.1f; // wenn Schleudert
-            }
-            if (getChestPressure() < 0) {
-                chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
-            }
+        if (cylinderDrainsEnabled()) {
+            chestPressure -= 0.07f; // Zylinderentwässerung
         }
 
         // TODO Verbrauch Schieberkastendruck
-        chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
-                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
-                * getDefinition().getWheelDiameter(gauge));
+        // chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
+        // * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
+        // * getDefinition().getWheelDiameter(gauge));
+
+        boolean isEndStroke = isEndStroke(0, 0.25) || isEndStroke(180, 0.25);
+
+        if (!chuffOn && isEndStroke) {
+            chuffOn = true;
+            chestPressure -= 2 * getReverser();
+        } else {
+            if (!isEndStroke) {
+                chuffOn = false;
+            }
+        }
+        if (getChestPressure() < 0) {
+            chestPressure = 0;
+        }
+
+    }
+
+    public boolean isEndStroke(final double offset, final double pos) {
+        double percent = angle(distanceTraveled / gauge.scale(), offset) / 360;
+        double pistonPos = pos;
+        float delta = 0.125f;
+
+        // There's probably a much better way of doing this...
+        return Math.abs(percent - pistonPos) < delta || Math.abs(percent - pistonPos - 1) < delta
+                || Math.abs(percent - pistonPos + 1) < delta;
+    }
+
+    public float angle(final double distance, final double offset) {
+        double circumference = getDefinition().getWheelDiameter(gauge) * Math.PI;
+        double relDist = distance % circumference;
+        return (float) (360 * relDist / circumference + offset);
     }
 
     public double getHorsePower(final Speed speed) {

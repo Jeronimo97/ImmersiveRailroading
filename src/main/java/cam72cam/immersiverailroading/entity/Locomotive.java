@@ -496,7 +496,7 @@ public abstract class Locomotive extends FreightTank {
         double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
         if (this instanceof LocomotiveSteam) {
             appliedTractiveEffort =
-                    appliedTractiveEffort / getDefinition().getPowerMultiplier() * 1.5;
+                    appliedTractiveEffort / getDefinition().getPowerMultiplier();
         }
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
