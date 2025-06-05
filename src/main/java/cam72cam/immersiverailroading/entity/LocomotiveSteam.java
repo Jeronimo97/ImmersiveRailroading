@@ -189,39 +189,51 @@ public class LocomotiveSteam extends Locomotive {
     private void chestPressureCalc() {
         // Anstieg Schieberkastendruck
         if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure += 0.06f
-                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
-                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
-                    * getThrottle() * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
+            chestPressure +=
+                    Config.ConfigBalance.ChestPressureRise
+                            * Math.pow(
+                                    (Config.isFuelRequired(gauge) ? getBoilerPressure()
+                                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f,
+                                    0.5f)
+                            * getThrottle()
+                            * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
         }
 
         if (cylinderDrainsEnabled()) {
-            chestPressure -= 0.07f; // Zylinderentwässerung
+            chestPressure -= Config.ConfigBalance.CylinderCocks; // Zylinderentwässerung
         }
 
         // TODO Verbrauch Schieberkastendruck
-        // chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
-        // * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
-        // * getDefinition().getWheelDiameter(gauge));
 
-        boolean isEndStroke = isEndStroke(0, 0.25) || isEndStroke(180, 0.25);
-
-        if (!chuffOn && isEndStroke) {
-            chuffOn = true;
-            chestPressure -= 2 * getReverser();
-        } else {
-            if (!isEndStroke) {
-                chuffOn = false;
+        if ((speedPercent(getCurrentSpeed())
+                * getDefinition().getMaxSpeed(gauge).metric()) < getDefinition()
+                        .getWheelDiameter(gauge) / (0.035 * getDefinition().getCylinderCount())) {
+            boolean isEndStroke = isEndStroke(0, 0.25); // || isEndStroke(180, 0.25);
+            if (!chuffOn && isEndStroke) {
+                chuffOn = true;
+                chestPressure -= Config.ConfigBalance.ChestPressureLowSpeed * Math.abs(getReverser());
+                System.out.println("Chuff");
+                System.out.println(".");
+            } else {
+                if (!isEndStroke) {
+                    chuffOn = false;
+                }
             }
+        } else {
+            chestPressure -= (float) (Config.ConfigBalance.ChestPressureHighSpeed * 15
+                    * Math.abs(getReverser()) * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
+                    * getDefinition().getWheelDiameter(gauge));
+        }
+        if (slipping) {
+            chestPressure -= Config.ConfigBalance.ChestPressureSlip; // wenn Schleudert
         }
         if (getChestPressure() < 0) {
             chestPressure = 0;
         }
-
     }
 
     public boolean isEndStroke(final double offset, final double pos) {
-        double percent = angle(distanceTraveled / gauge.scale(), offset) / 360;
+        double percent = angle(distanceTraveled / gauge.scale(), offset);
         double pistonPos = pos;
         float delta = 0.125f;
 
@@ -231,18 +243,11 @@ public class LocomotiveSteam extends Locomotive {
     }
 
     public float angle(final double distance, final double offset) {
-        double circumference = getDefinition().getWheelDiameter(gauge) * Math.PI;
+        double circumference = getDefinition().getWheelDiameter(gauge) * Math.PI
+                / (2 * getDefinition().getCylinderCount());
         double relDist = distance % circumference;
-        return (float) (360 * relDist / circumference + offset);
-    }
-
-    public double getHorsePower(final Speed speed) {
-        // TODO unused
-        return getReverser() == 0 ? 0
-                : this.getDefinition().getHorsePower(gauge)
-                        * (getChestPressurePercent() * Math.abs(getReverser())
-                                + getChestPressurePercent() * Math.abs(getReverser())
-                                        * (Math.log10(1) - Math.log10(Math.abs(getReverser()))));
+        // System.out.println("Rel Dist: " + relDist);
+        return (float) (relDist / circumference + offset);
     }
 
     @Override
