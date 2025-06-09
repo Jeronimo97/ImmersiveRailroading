@@ -187,6 +187,8 @@ public class LocomotiveSteam extends Locomotive {
     }
 
     private void chestPressureCalc() {
+        Speed speed = super.getCurrentSpeed();
+        
         // Anstieg Schieberkastendruck
         if (getChestPressure() < getMaxChestPressure()) {
             chestPressure +=
@@ -196,7 +198,7 @@ public class LocomotiveSteam extends Locomotive {
                                             : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f,
                                     0.5f)
                             * getThrottle()
-                            * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
+                            * (1 + Math.max(speedPercent(speed), 0.01f));
         }
 
         if (cylinderDrainsEnabled()) {
@@ -205,15 +207,15 @@ public class LocomotiveSteam extends Locomotive {
 
         // TODO Verbrauch Schieberkastendruck
 
-        if ((speedPercent(getCurrentSpeed())
+        if ((speedPercent(speed)
                 * getDefinition().getMaxSpeed(gauge).metric()) < getDefinition()
                         .getWheelDiameter(gauge) / (0.035 * getDefinition().getCylinderCount())) {
             boolean isEndStroke = isEndStroke(0, 0.25); // || isEndStroke(180, 0.25);
             if (!chuffOn && isEndStroke) {
                 chuffOn = true;
                 chestPressure -= Config.ConfigBalance.ChestPressureLowSpeed * Math.abs(getReverser());
-                System.out.println("Chuff");
-                System.out.println(".");
+                //System.out.println("Chuff");
+                //System.out.println(".");
             } else {
                 if (!isEndStroke) {
                     chuffOn = false;
@@ -221,11 +223,15 @@ public class LocomotiveSteam extends Locomotive {
             }
         } else {
             chestPressure -= (float) (Config.ConfigBalance.ChestPressureHighSpeed * 15
-                    * Math.abs(getReverser()) * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
+                    * Math.abs(getReverser()) * Math.abs(speedPercent(speed)) * Math.PI
                     * getDefinition().getWheelDiameter(gauge));
         }
         if (slipping) {
-            chestPressure -= Config.ConfigBalance.ChestPressureSlip; // wenn Schleudert
+            chestPressure -= Config.ConfigBalance.ChestPressureSlip * simulateWheelSlip(); // wenn Schleudert
+            System.out.println("Slipping");
+            System.out.println("Factor: " + simulateWheelSlip());
+            System.out.println("Applied: " + getAppliedTractiveEffort(speed));
+            System.out.println("Static: " + getStaticTractiveEffort());
         }
         if (getChestPressure() < 0) {
             chestPressure = 0;
@@ -555,7 +561,7 @@ public class LocomotiveSteam extends Locomotive {
                 .filter(x -> x.part.type == ModelComponentType.CYLINDER_DRAIN_CONTROL_X)
                 .collect(Collectors.toList());
         if (drains.isEmpty()) {
-            double csm = Math.abs(getCurrentSpeed().metric()) / gauge.scale();
+            double csm = Math.abs(super.getCurrentSpeed().metric()) / gauge.scale();
             return csm < 20;
         }
 
