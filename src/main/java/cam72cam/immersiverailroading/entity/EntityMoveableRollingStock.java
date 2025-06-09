@@ -22,10 +22,6 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
-import net.minecraft.util.text.ITextComponent;
-import scala.annotation.meta.setter;
-import scala.reflect.internal.Trees.This;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
