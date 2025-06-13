@@ -109,6 +109,10 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             ItemTypewriter.onStockInteract(this, player, hand);
             return ClickResult.ACCEPTED;
         }
+        //TODO DEBUG Test
+        this.getDefinition().textFields.forEach((i,t) -> {
+            textFields.put(i, t);
+        });
         return super.onClick(player, hand);
     }
 
