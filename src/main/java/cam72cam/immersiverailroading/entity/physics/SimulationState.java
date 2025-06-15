@@ -456,7 +456,7 @@ public class SimulationState {
         double rollingResistanceNewtons = config.rollingResistanceCoefficient * (config.massKg * 9.8);
         // https://www.arema.org/files/pubs/pgre/PGChapter2.pdf
         // ~15 lb/ton -> 0.01 weight ratio -> 0.001 uS with gravity
-        double startingFriction = velocity == 0 ? 0.001 * config.massKg * 9.8 : 0;
+        double startingFriction = velocity == 0 ? 0.03 * config.massKg * 9.8 : 0;
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
