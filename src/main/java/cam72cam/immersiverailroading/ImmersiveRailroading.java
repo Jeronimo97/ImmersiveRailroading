@@ -206,6 +206,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Keyboard.registerKey("ir_keys.bell", KeyCode.SUBTRACT, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.BELL));
 				Keyboard.registerKey("ir_keys.config", KeyCode.DIVIDE, "key.categories." + ImmersiveRailroading.MODID, () -> GuiTypes.CONFIG.open(MinecraftClient.getPlayer()));
 				Keyboard.registerKey("ir_keys.sanding", KeyCode.DECIMAL, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.SANDING));
+				//Keyboard.registerKey("ir_keys.emergency", KeyCode.MINUS, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.EMERGENCY));
 				
 				Audio.setSoundChannels(ConfigSound.customAudioChannels);
 				break;
@@ -255,9 +256,12 @@ public class ImmersiveRailroading extends ModCore.Mod {
 			DefinitionManager.initDefinitions();
 			break;
 		}
+		
 	}
 
 	@Override
 	public void serverEvent(ModEvent event) {
 	}
+	
+	
 }

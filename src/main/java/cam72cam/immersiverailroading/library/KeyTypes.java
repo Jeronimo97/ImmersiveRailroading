@@ -19,5 +19,6 @@ public enum KeyTypes {
 	START_STOP_ENGINE,
 	BELL,
 	SANDING,
+	//EMERGENCY,
 	;
 }

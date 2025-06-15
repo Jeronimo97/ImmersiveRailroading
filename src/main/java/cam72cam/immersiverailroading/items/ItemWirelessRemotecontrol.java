@@ -5,10 +5,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.luaj.vm2.LuaValue;
+
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
+import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.net.WirelessRemotecontrolInputHandler;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.Player.Hand;
@@ -23,14 +26,6 @@ import cam72cam.mod.world.World;
 public class ItemWirelessRemotecontrol extends CustomItem {
 	private boolean isRendering = false;
 	private boolean doubleClick = false;
-	/*
-	private ItemStack stack;
-	
-	public ItemWirelessRemotecontrol(ItemStack stack) {
-		super(ImmersiveRailroading.MODID, "item_wireless_remotecontrol");
-		this.stack = stack;
-	} */
-	
 	public ItemWirelessRemotecontrol() {
 		super(ImmersiveRailroading.MODID, "item_wireless_remotecontrol");
 		
@@ -52,8 +47,15 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 		return Collections.singletonList(d.linked == null ? "Not linked to any locomotive" : "Linked to: " + d.linked);
 	}
 
+	
 	@Override
 	public void onClickAir(Player player, World world, Hand hand) {
+	
+		// Verhindert die Serverseitige abfrage
+				if (!world.isClient) {
+					return;
+				} 
+		
 		ItemStack stack = player.getHeldItem(Hand.SECONDARY);
 		Data data = new Data(stack);
 		
@@ -61,24 +63,27 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 			return;
 		}
 		// Sucht in der World eine Entity mit der UUID in form einer Diesellokomotive
-		// und speichern das ab als
+		// und speichern das ab 
 		Locomotive loco = world.getEntity(data.linked, LocomotiveDiesel.class);
 		if (loco == null) {
 			return;
 		}
-
+		
+		
 		if (isRendering && !doubleClick) {
 			isRendering = false;
 		} else if (!doubleClick) {
 			isRendering = true;
 			
-		
-			
-			try {
+		try {
 				GuiBuilder gui = GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/fbg.json"));
 				GlobalRender.registerOverlay((state, pt) -> {
-					if (isRendering && !doubleClick) {
+					if (isRendering && !doubleClick && !world.isClient || isRendering && !doubleClick && !world.isServer ) {
+						
 						gui.render(state, loco);
+						
+						
+			
 					}
 				});
 				
@@ -100,10 +105,15 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 
 	}
 	
+	
+	
 	public  boolean getControl() {
+		
 		return isRendering && !doubleClick;
 	}
 
+	
+	
 	public static class Data extends ItemDataSerializer {
 		@TagField("linked")
 		public UUID linked;

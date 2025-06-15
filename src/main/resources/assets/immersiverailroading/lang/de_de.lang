@@ -48,6 +48,8 @@ chat.immersiverailroading:wireless.remotecontrol.link=Funksteuerung verlinkt!
 chat.immersiverailroading:wireless.remotecontrol.relink=Funksteuerung verlinkt!
 chat.immersiverailroading:wireless.remotecontrol.unlink=Funksteuerung getrennt!
 chat.immersiverailroading:wireless.remotecontrol.cantlink=Lokomotive hat keine Funksteuerung !
+chat.immersiverailroading:emergency_activated=Not aus aktiviert!
+
 
 gui.immersiverailroading:label.brake=Bremse
 gui.immersiverailroading:label.throttle=Fahrschalter
@@ -203,3 +205,4 @@ ir_keys.dead_mans_switch=Sicherheitsfahrschalter
 ir_keys.start_stop_engine=Antrieb an-/ausschalten
 ir_keys.config=Config
 ir_keys.sanding=Sanden
+ir_keys.emergency=Not aus

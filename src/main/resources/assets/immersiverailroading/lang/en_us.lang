@@ -70,7 +70,7 @@ chat.immersiverailroading:wireless.remotecontrol.link=Wireless Remotecontrol lin
 chat.immersiverailroading:wireless.remotecontrol.relink=Wireless Remotecontrol relinked!
 chat.immersiverailroading:wireless.remotecontrol.unlink=Wireless Remotecontrol unlinked!
 chat.immersiverailroading:wireless.remotecontrol.cantlink=Locomotive does not have Wireless control equipment!
-
+chat.immersiverailroading:emergency_activated=Emergency!
 
 gui.immersiverailroading:label.brake=Brake
 gui.immersiverailroading:label.throttle=Throttle
@@ -278,3 +278,4 @@ ir_keys.dead_mans_switch=Deadman's Switch
 ir_keys.start_stop_engine=Start/Stop engine
 ir_keys.config=Config
 ir_keys.sanding=Sanding
+ir_keys.emergency=Emergency Button

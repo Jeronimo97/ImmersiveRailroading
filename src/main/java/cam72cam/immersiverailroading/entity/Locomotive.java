@@ -77,6 +77,10 @@ public abstract class Locomotive extends FreightTank{
     protected boolean isSanding = false;
     protected boolean isSandingKey = false;
 
+    protected boolean emergency = false;
+    protected boolean isEmergencyKey = false;
+    protected boolean isEmergency = false;
+
 	@TagSync
 	@TagField("localMaxSpeed")
 	public double localMaxSpeed = -1;
@@ -240,6 +244,17 @@ public abstract class Locomotive extends FreightTank{
             break;
 			default:
 				super.handleKeyPress(source, key, disableIndependentThrottle);
+	/*
+		case EMERGENCY:
+			if (isEmergencyKey) {
+				isEmergencyKey = false;
+			} else {
+				emergency = true;
+				setEmergency(isEmergencyKey);
+				source.sendMessage(ChatText.EMERGENCY_ACTIVATE.getMessage());
+				break;
+			}
+			*/
 		}
 	}
 
@@ -314,6 +329,7 @@ public abstract class Locomotive extends FreightTank{
 			case HORN_CONTROL_X:
 			case ENGINE_START_X:
 			case SANDING_CONTROL_X:
+			case EMERGENCY_CONTROL_X:
 				return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
 			default:
 				return true;
@@ -779,5 +795,27 @@ public abstract class Locomotive extends FreightTank{
         for (Control<?> sand : sanding) {
             setControlPosition(sand, enabled ? 1 : 0);
         }
+ 
     }
+    /*
+    public boolean isEmergency() {
+        List<Control<?>> emergency = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.EMERGENCY_CONTROL_X)
+                .collect(Collectors.toList());
+   
+        return  emergency.stream().anyMatch(c -> getControlPosition(c) > 0.5 || isEmergencyKey);
+    }
+    
+    public void setEmergency(final boolean enabled) {
+        List<Control<?>> emergency = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.EMERGENCY_CONTROL_X)
+                .collect(Collectors.toList());
+        for (Control<?> emerg : emergency) {
+            setControlPosition(emerg, enabled ? 1 : 0);
+        }
+        this.setThrottle(0);
+		this.setTrainBrake(1);
+		this.setReverser(0);
+    }
+    */
 }

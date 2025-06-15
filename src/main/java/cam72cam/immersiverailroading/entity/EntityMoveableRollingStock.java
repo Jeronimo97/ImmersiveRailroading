@@ -22,7 +22,6 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -122,9 +121,7 @@ public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovem
         return currentSpeed;
     }
 
-    public void setCurrentSpeed(Speed newSpeed) {
-        this.currentSpeed = newSpeed;
-    }
+    
 
     /** This is where fun network synchronization is handled
      * So normally every 2 seconds we get a new packet with stock positional information for the next 4 seconds
@@ -372,6 +369,9 @@ public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovem
             setControlPosition("NOTMOVING", getCurrentSpeed().minecraft() == 0 ? 1 : 0);
             setControlPosition("MOVINGBACKWARD", getCurrentSpeed().minecraft() < 0 ? 1 : 0);
         }
+        
+    
+        
     }
 
     protected void clearPositionCache() {
