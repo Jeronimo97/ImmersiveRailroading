@@ -240,9 +240,9 @@ public class Config {
         @Range(min = 0, max = 10)
         public static double CylinderCocks = 0.07;
         
-        @Comment("Abfall Schieberkastendruck Niedrige Geschwindigkeit (Standard: 1.5)")
+        @Comment("Abfall Schieberkastendruck Niedrige Geschwindigkeit (Standard: 1)")
         @Range(min = 0, max = 10)
-        public static double ChestPressureLowSpeed = 1.5;
+        public static double ChestPressureLowSpeed = 1;
         
         @Comment("Abfall Schieberkastendruck Hohe Geschwindigkeit (Standard: 0.015)")
         @Range(min = 0, max = 10)

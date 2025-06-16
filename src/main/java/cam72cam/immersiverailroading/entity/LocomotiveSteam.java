@@ -195,7 +195,7 @@ public class LocomotiveSteam extends Locomotive {
         // Anstieg Schieberkastendruck
         if (getChestPressure() < getMaxChestPressure()) {
             chestPressure +=
-                    0.06 //Config.ConfigBalance.ChestPressureRise
+                    Config.ConfigBalance.ChestPressureRise
                             * Math.pow(
                                     (Config.isFuelRequired(gauge) ? getBoilerPressure()
                                             : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f,
@@ -204,11 +204,12 @@ public class LocomotiveSteam extends Locomotive {
         }
 
         if (cylinderDrainsEnabled()) {
-            // chestPressure -= Config.ConfigBalance.CylinderCocks; // Zylinderentwässerung
+            chestPressure -= Config.ConfigBalance.CylinderCocks; // Zylinderentwässerung
         }
 
         // TODO Verbrauch Schieberkastendruck
-        double factor = (float) (0.015f * chestPressure * Math.abs(getReverser())
+        double factor = (float) (Config.ConfigBalance.ChestPressureHighSpeed
+                * chestPressure * Math.abs(getReverser())
                 * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
                 * getDefinition().getWheelDiameter(gauge));
         //System.out.println("Faktor: " + factor);
@@ -218,7 +219,7 @@ public class LocomotiveSteam extends Locomotive {
         if (!chuffOn && isEndStroke) {
             chuffOn = true;
             
-            chestPressure -= 1 * Math.abs(getReverser() * (1 - 4 * speedPercent(speed)));
+            chestPressure -= Config.ConfigBalance.ChestPressureLowSpeed * Math.abs(getReverser() * (1 - 4 * speedPercent(speed)));
             //chestPressure -= chestPressure * 0.01 * Math.abs(getReverser()) * (1 - speedPercent(speed));           
             // System.out.println("Chuff");
             // System.out.println(".");
