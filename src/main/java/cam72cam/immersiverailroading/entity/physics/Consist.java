@@ -499,12 +499,12 @@ public class Consist {
 
                     boolean needsBrakeEqualization = linked.stream().anyMatch(s -> s.config.hasPressureBrake && Math.abs(s.config.trainBrakePressure - desiredBrakePressure) > 0.0001);
 
-                    linked.stream().forEach(s -> System.out.println(s.config.trainBrakePressure + ":" + desiredBrakePressure));
+                    //linked.stream().forEach(s -> System.out.println(s.config.trainBrakePressure + ":" + desiredBrakePressure));
                     
                     if (needsBrakeEqualization) {
                         double brakePressureDelta = Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
                                 0.1 / linked.stream().filter(s -> s.config.hasPressureBrake).count() :
-                                (linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.98) ? 0.08 : 0.01) / linked.stream().filter(s -> s.config.hasPressureBrake).count();
+                                (linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.98) ? 0.2 : 0.01) / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                         linked.forEach(p -> {
                             if (p.config.hasPressureBrake) {
                                 if (Config.ImmersionConfig.brakeMode.equals(BrakeMode.INSTANT)) {
