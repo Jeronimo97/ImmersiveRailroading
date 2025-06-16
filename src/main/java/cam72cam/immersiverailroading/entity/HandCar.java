@@ -38,6 +38,11 @@ public class HandCar extends Locomotive {
 	public boolean providesElectricalPower() {
 		return false;
 	}
+	
+	@Override
+	public boolean providesAirPressure() {
+	    return false;
+	}
 
 	@Override
 	protected boolean forceLinkThrottleReverser() {
