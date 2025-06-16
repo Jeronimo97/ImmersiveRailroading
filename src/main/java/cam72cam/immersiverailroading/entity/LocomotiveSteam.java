@@ -120,7 +120,7 @@ public class LocomotiveSteam extends Locomotive {
     public float getChestPressurePercent() {
         return chestPressure / (getDefinition().getMaxPSI(gauge) * 0.06894757f);
     }
-    
+
     public Map<Integer, Integer> getBurnTime() {
         return burnTime;
     }
@@ -187,20 +187,19 @@ public class LocomotiveSteam extends Locomotive {
     }
 
     private void chestPressureCalc() {
-        Speed speed = super.getCurrentSpeed();
-        double reverser = getReverser();
+        double reverser = Math.abs(getReverser());
         if (reverser == 0)
             return;
+        Speed speed = super.getCurrentSpeed();
+        double speedPercent = Math.abs(speedPercent(speed));
+        double throttle = getThrottle();
 
         // Anstieg Schieberkastendruck
         if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure +=
-                    Config.ConfigBalance.ChestPressureRise
-                            * Math.pow(
-                                    (Config.isFuelRequired(gauge) ? getBoilerPressure()
-                                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f,
-                                    0.5f)
-                            * getThrottle() * (1 + Math.max(speedPercent(speed), 0.01f));
+            chestPressure += Config.ConfigBalance.ChestPressureRise
+                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
+                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
+                    * throttle * (1 + Math.max(speedPercent, 0.01f));
         }
 
         if (cylinderDrainsEnabled()) {
@@ -208,56 +207,32 @@ public class LocomotiveSteam extends Locomotive {
         }
 
         // TODO Verbrauch Schieberkastendruck
-        double factor = (float) (Config.ConfigBalance.ChestPressureHighSpeed
-                * chestPressure * Math.abs(getReverser())
-                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
-                * getDefinition().getWheelDiameter(gauge));
-        //System.out.println("Faktor: " + factor);
+        double factor = (float) (Config.ConfigBalance.ChestPressureHighSpeed * chestPressure
+                * reverser * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge));
+        // System.out.println("Faktor: " + factor);
         chestPressure -= (float) factor;
-        
-        boolean isEndStroke = isEndStroke(0, 0.25);
-        if (!chuffOn && isEndStroke) {
-            chuffOn = true;
-            
-            chestPressure -= Config.ConfigBalance.ChestPressureLowSpeed * Math.abs(getReverser() * (1 - 4 * speedPercent(speed)));
-            //chestPressure -= chestPressure * 0.01 * Math.abs(getReverser()) * (1 - speedPercent(speed));           
-            // System.out.println("Chuff");
-            // System.out.println(".");
-        } else {
-            if (!isEndStroke) {
-                chuffOn = false;
-                chestPressure += getThrottle() * (1 - speedPercent(speed)) * 0.2;
-            }
-        }
-        /*
-        if ((speedPercent(speed) * getDefinition().getMaxSpeed(gauge).metric()) < getDefinition()
-                .getWheelDiameter(gauge) / (0.035 * getDefinition().getCylinderCount())) {
-            boolean isEndStroke = isEndStroke(0, 0.25); // || isEndStroke(180, 0.25);
+
+        if ((speedPercent(speed) * getDefinition().getMaxSpeed(gauge).metric())
+                < getDefinition().getWheelDiameter(gauge) / (0.035
+                        * getDefinition().getCylinderCount())) {
+            boolean isEndStroke = isEndStroke(0, 0.25);
             if (!chuffOn && isEndStroke) {
                 chuffOn = true;
-                
-                // double factor = chestPressure * Config.ConfigBalance.ChestPressureLowSpeed * Math.abs(getReverser()) * (1.75 - speedPercent(speed));
-                double factor = chestPressure * 0.1 * Math.abs(getReverser()) * (1 - speedPercent(speed));
-                
-                chestPressure -= factor;           
-                System.out.println("Faktor low: " + factor);
+
+                chestPressure -=
+                        Config.ConfigBalance.ChestPressureLowSpeed * reverser * (1 - 4 * speedPercent);
                 // System.out.println("Chuff");
                 // System.out.println(".");
             } else {
                 if (!isEndStroke) {
                     chuffOn = false;
+                        chestPressure += throttle * (1 - speedPercent) * 0.2;
                 }
             }
-        } else {
-            double factor = (0.12 //Config.ConfigBalance.ChestPressureHighSpeed
-                    * Math.abs(getReverser()) * Math.abs(speedPercent(speed)) * Math.PI
-                    * getDefinition().getWheelDiameter(gauge));
-            System.out.println("Faktor high: " + factor);
-            chestPressure -= (float) factor;
         }
-        */
+
         if (slipping) {
-            chestPressure -= Config.ConfigBalance.ChestPressureSlip * simulateWheelSlip(); // wenn Schleudert
+            chestPressure -= Config.ConfigBalance.ChestPressureSlip * Math.abs(simulateWheelSlip()); // wenn Schleudert
             System.out.println("Slipping");
             // System.out.println("Factor: " + simulateWheelSlip());
             // System.out.println("Applied: " + getAppliedTractiveEffort(speed));
