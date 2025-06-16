@@ -46,7 +46,7 @@ public abstract class Locomotive extends FreightTank {
 
     @TagSync
     @TagField("AIR_BRAKE")
-    private float trainBrakePosition = 0;
+    private float trainBrakePosition = 1;
     
     @TagSync
     @TagField("IND_BRAKE")
@@ -707,6 +707,8 @@ public abstract class Locomotive extends FreightTank {
     }
 
     public abstract boolean providesElectricalPower();
+    
+    public abstract boolean providesAirPressure();
 
     @Override
     public boolean hasElectricalPower() {

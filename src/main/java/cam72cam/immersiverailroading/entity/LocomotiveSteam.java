@@ -492,6 +492,11 @@ public class LocomotiveSteam extends Locomotive {
     public boolean providesElectricalPower() {
         return getBoilerPressure() > 0 || !ConfigBalance.FuelRequired;
     }
+    
+    @Override
+    public boolean providesAirPressure() {
+        return providesElectricalPower();
+    }
 
     @Override
     public void onDrag(final Control<?> component, final double newValue) {

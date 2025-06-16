@@ -168,6 +168,11 @@ public class LocomotiveDiesel extends Locomotive {
     public boolean providesElectricalPower() {
         return this.isRunning();
     }
+    
+    @Override
+    public boolean providesAirPressure() {
+        return turnedOn;
+    }
 
     @Override
     protected float getReverserDelta() {
