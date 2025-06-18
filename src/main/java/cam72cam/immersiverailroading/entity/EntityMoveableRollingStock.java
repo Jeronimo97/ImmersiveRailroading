@@ -284,7 +284,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         this.currentSpeed = currentPos.speed;
 
         if (!sliding) {
-            distanceTraveled += (float) this.currentSpeed.minecraft() * getTickSkew();
+            //distanceTraveled += (float) this.currentSpeed.minecraft() * getTickSkew();
             distanceTraveled = distanceTraveled % 32000;// Wrap around to prevent double float issues
         }
 
