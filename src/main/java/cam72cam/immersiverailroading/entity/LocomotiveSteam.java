@@ -150,7 +150,7 @@ public class LocomotiveSteam extends Locomotive {
         double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
                 * getDefinition().getPistonStroke(gauge) * 1.02
-                * Math.pow(pressurePercent, 1 / (0.2 * Math.abs(reverser) + 0.8))
+                * Math.pow(pressurePercent, 2 / (0.2 * Math.abs(reverser) + 0.8))
                 * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
