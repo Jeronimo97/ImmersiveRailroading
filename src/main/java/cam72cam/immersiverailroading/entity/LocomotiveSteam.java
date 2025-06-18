@@ -212,7 +212,7 @@ public class LocomotiveSteam extends Locomotive {
         // System.out.println("Faktor: " + factor);
         chestPressure -= (float) factor;
 
-        if ((speedPercent(speed) * getDefinition().getMaxSpeed(gauge).metric())
+        if ((speedPercent * getDefinition().getMaxSpeed(gauge).metric())
                 < getDefinition().getWheelDiameter(gauge) / (0.035
                         * getDefinition().getCylinderCount())) {
             boolean isEndStroke = isEndStroke(0, 0.25);
