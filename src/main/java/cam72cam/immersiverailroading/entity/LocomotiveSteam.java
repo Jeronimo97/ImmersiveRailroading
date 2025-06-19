@@ -136,41 +136,42 @@ public class LocomotiveSteam extends Locomotive {
         double reverser = getReverser();
         if (reverser == 0)
             return 0;
+        
         double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
 
-        double effectivePressure = getChestPressure() / expansion * (1 + Math.log(expansion));
+        double expansionPressure = getChestPressure() / expansion * (1 + Math.log(expansion));
 
-        double backPressure = effectivePressure * Math.log(1 + 2.67 * speedPercent(speed)
+        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
                 * Math.abs(reverser) * (getDefinition().getCylinderCount() == 3 ? 1.15 : 1));
 
-        double pressurePercent = (effectivePressure - backPressure) / getMaxChestPressure();
+        double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
         if (pressurePercent <= 0)
             return 0;
 
         double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
                 * getDefinition().getPistonStroke(gauge) * 1.02
-                * Math.pow(pressurePercent, 2 / (0.2 * Math.abs(reverser) + 0.8))
+                * Math.pow(pressurePercent, 2 * (0.6 * Math.abs(reverser) + 0.4))
                 * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
         double appliedTraction1 = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
-                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
+                * getDefinition().getPistonStroke(gauge) * 1.02 * (expansionPressure - backPressure)
                 * Math.pow(getChestPressurePercent(), 1 / (0.2 * Math.abs(reverser) + 0.8))
                 / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
         double appliedTraction2 = 0.97 * 101.97 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
-                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
+                * getDefinition().getPistonStroke(gauge) * 1.02 * (expansionPressure - backPressure)
                 / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
         // System.out.println("Druck: " + (pressurePercent * 100) + "%");
         // System.out.println("Neu: " + appliedTraction);
-        // System.out.println("Neu-Neu: " + appliedTraction1);
-        // System.out.println("Alt: " + appliedTraction2);
+        // System.out.println("Neu-Neu: " + (1 / (0.2 * Math.abs(reverser) + 0.8)));
+        // System.out.println("Alt: " + oldForce);
 
         return appliedTraction * Math.copySign(1, reverser);
     }
