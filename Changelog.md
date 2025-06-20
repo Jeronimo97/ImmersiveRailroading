@@ -1,5 +1,4 @@
 ## Changelog
-
 * feat: added chest pressure system
 * feat: added power multiplier
 * feat: added speedLimiter property (if false, you can accelerate beyond max speed)
