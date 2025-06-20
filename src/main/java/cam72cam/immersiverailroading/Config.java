@@ -229,28 +229,9 @@ public class Config {
         public static boolean RoundStockTankToNearestBucket = true;
 
         @Comment("Sand Efficiency")
-        @Range(min = 1, max = 10)
+        @Range(min = 0, max = 10)
         public static int SandEfficiency = 1;
-        
-        @Comment("Anstieg Schieberkasten (Standard: 0.06)")
-        @Range(min = 0, max = 10)
-        public static double ChestPressureRise = 0.06;
-        
-        @Comment("Zylinderhähne (Standard: 0.07)")
-        @Range(min = 0, max = 10)
-        public static double CylinderCocks = 0.07;
-        
-        @Comment("Abfall Schieberkastendruck Niedrige Geschwindigkeit (Standard: 1)")
-        @Range(min = 0, max = 10)
-        public static double ChestPressureLowSpeed = 1;
-        
-        @Comment("Abfall Schieberkastendruck Hohe Geschwindigkeit (Standard: 0.015)")
-        @Range(min = 0, max = 10)
-        public static double ChestPressureHighSpeed = 0.015;
-        
-        @Comment("Abfall Schieberkastendruck Schlupf (Standard: 1)")
-        @Range(min = 0, max = 10)
-        public static double ChestPressureSlip = 1;
+
     }
 
     @Name("performance")

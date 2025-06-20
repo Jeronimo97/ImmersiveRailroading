@@ -182,17 +182,17 @@ public class LocomotiveSteam extends Locomotive {
         double throttle = getThrottle();
 
         if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure += Config.ConfigBalance.ChestPressureRise
+            chestPressure += 0.06
                     * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
                             : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
                     * throttle * (1 + Math.max(speedPercent, 0.01f));
         }
 
         if (cylinderDrainsEnabled()) {
-            chestPressure -= Config.ConfigBalance.CylinderCocks;
+            chestPressure -= 0.07;
         }
 
-        double factor = (float) (Config.ConfigBalance.ChestPressureHighSpeed * chestPressure
+        double factor = (float) (0.015 * chestPressure
                 * reverser * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge));
         chestPressure -= (float) factor;
 
@@ -202,7 +202,7 @@ public class LocomotiveSteam extends Locomotive {
             if (!chuffOn && isEndStroke) {
                 chuffOn = true;
 
-                chestPressure -= Config.ConfigBalance.ChestPressureLowSpeed * reverser
+                chestPressure -= 1 * reverser
                         * (1 - 4 * speedPercent);
                 // System.out.println("Chuff");
                 // System.out.println(".");
@@ -216,7 +216,7 @@ public class LocomotiveSteam extends Locomotive {
         }
 
         if (slipping) {
-            chestPressure -= Config.ConfigBalance.ChestPressureSlip * Math.abs(simulateWheelSlip());
+            chestPressure -= 1 * Math.abs(simulateWheelSlip());
         }
         if (getChestPressure() < 0) {
             chestPressure = 0;
