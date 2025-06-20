@@ -31,7 +31,7 @@
     "piston_stroke": 1.0 (steam, in meters)
     "wheel_diameter": 1.0 (steam, in meters)
     "cylinder_count": 2 (steam)
-    "power_multiplier": 1.0 (steam)
+    "power_multiplier": 1.0 (steam, we recommend 1.3 for mixed locomotives, 1.2 for high speed locomotives and 1.4-1.5 for cargo locomotives)
 }
 
 ## new model component parts
