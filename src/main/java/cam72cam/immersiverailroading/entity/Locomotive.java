@@ -499,10 +499,6 @@ public abstract class Locomotive extends FreightTank {
 
     protected double simulateWheelSlip() {
         double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
-        if (this instanceof LocomotiveSteam) {
-            appliedTractiveEffort =
-                    appliedTractiveEffort / getDefinition().getPowerMultiplier();
-        }
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
 
@@ -510,7 +506,7 @@ public abstract class Locomotive extends FreightTank {
             return 0;
 
         double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
-        return Math.copySign((adhesionFactor - 1) / 2, getReverser());
+        return Math.copySign((adhesionFactor - 1) / 8, getReverser());
     }
 
     public double getTractiveEffortNewtons(final Speed speed) {
