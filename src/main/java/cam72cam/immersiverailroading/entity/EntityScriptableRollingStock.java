@@ -405,7 +405,7 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
 
                 objTable.set("coupledBack", obj.coupledBack != null ? LuaValue.valueOf(obj.coupledBack.toString()) : LuaValue.valueOf(""));
 
-                objTable.set("distanceTraveled", obj.distanceTraveled != 0 ? LuaValue.valueOf(obj.distanceTraveled) : LuaValue.valueOf(0));
+                objTable.set("distanceTraveled", obj.distanceTraveledReal != 0 ? LuaValue.valueOf(obj.distanceTraveledReal) : LuaValue.valueOf(0));
                 LuaTable controlPosition = LuaValue.tableOf();
 
                 obj.controlPositions.forEach((key, pair) -> {
