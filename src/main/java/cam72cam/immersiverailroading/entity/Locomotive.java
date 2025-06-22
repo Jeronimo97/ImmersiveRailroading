@@ -505,6 +505,12 @@ public abstract class Locomotive extends FreightTank{
             }
         }
 	}
+	
+	@Override
+	public Speed getCurrentSpeed() {
+	    return slipping ? Speed.fromMinecraft((super.getCurrentSpeed().minecraft()
+	            + simulateWheelSlip())) : super.getCurrentSpeed();
+	}
 
 	/** Force applied between the wheels and the rails */
 	public abstract double getAppliedTractiveEffort(Speed speed);
@@ -513,13 +519,13 @@ public abstract class Locomotive extends FreightTank{
     protected final double getStaticTractiveEffort() {
         return getDefinition().getScriptedStartingTractionNewtons(gauge, this)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
-                        getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
+                        super.getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier
                 * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 1);
     }
 	
     protected double simulateWheelSlip() {
-        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
         double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
 
@@ -527,7 +533,7 @@ public abstract class Locomotive extends FreightTank{
             return 0;
 
         double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
-        return Math.copySign((adhesionFactor - 1) / 2, getReverser());
+        return Math.copySign((adhesionFactor - 1) / 8, getReverser());
     }
 	
     public double getTractiveEffortNewtons(final Speed speed) {

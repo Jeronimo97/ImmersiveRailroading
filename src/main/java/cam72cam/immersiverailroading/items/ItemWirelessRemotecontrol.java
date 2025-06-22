@@ -54,6 +54,9 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 
 	@Override
 	public void onClickAir(Player player, World world, Hand hand) {
+        if (!world.isClient) {
+            return;
+        }
 		ItemStack stack = player.getHeldItem(Hand.SECONDARY);
 		Data data = new Data(stack);
 		

@@ -73,7 +73,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
         pistonStroke = properties.getValue("piston_stroke").asDouble(0.66);
         wheelDiameter = properties.getValue("wheel_diameter").asDouble(1.4);
         cylinderCount = properties.getValue("cylinder_count").asInteger(2);
-        powerMultiplier = properties.getValue("power_multiplier").asDouble(1.3);
+        powerMultiplier = properties.getValue("power_multiplier").asDouble(2);
 
         List<DataBlock> quilling = sounds.getBlocks("quilling");
         if (quilling != null) {

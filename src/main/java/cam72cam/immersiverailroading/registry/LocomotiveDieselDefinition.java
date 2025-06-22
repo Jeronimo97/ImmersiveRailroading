@@ -43,7 +43,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         if (!isCabCar()) {
             fuelCapacity_l = properties.getValue("fuel_capacity_l").asInteger() * internal_inv_scale * Config.ConfigBalance.DieselLocomotiveTankMultiplier;
             fuelEfficiency = properties.getValue("fuel_efficiency_%").asInteger();
-            hasDynamicTractionControl = properties.getValue("dynamic_traction_control").asBoolean();
+            hasDynamicTractionControl = properties.getValue("dynamic_traction_control").asBoolean(true);
         } else {
             fuelCapacity_l = 0;
         }
