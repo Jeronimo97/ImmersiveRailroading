@@ -286,7 +286,7 @@ public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovem
             distanceTraveled += (float) this.currentSpeed.minecraft() * getTickSkew();
             distanceTraveled = distanceTraveled % 32000;// Wrap around to prevent double float issues
         }
-        distanceTraveledReal += (float) this.currentSpeed.minecraft() * getTickSkew();
+        distanceTraveledReal += (float) Math.abs(this.currentSpeed.minecraft()) * getTickSkew();
         distanceTraveledReal = distanceTraveledReal % 32000;
 
         this.setPosition(currentPos.position);
