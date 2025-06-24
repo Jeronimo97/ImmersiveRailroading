@@ -33,7 +33,7 @@
               "x": 82,
               "y": 54,
               "image": "immersiverailroading:gui/fbg/fbg_train_brake.png",
-              "invert": true,
+              "invert": false,
               "translate": {
                 "x": 0,
                 "y": -31
