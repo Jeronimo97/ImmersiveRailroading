@@ -132,7 +132,7 @@ public class LocomotiveSteam extends Locomotive {
 
         double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
         double expansionPressure = getChestPressure() / expansion * (1 + Math.log(expansion));
-        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
+        double backPressure = expansionPressure * Math.log(1 + 2.67 * Math.abs(speedPercent(speed))
                 * Math.abs(reverser) * (getDefinition().getCylinderCount() == 3 ? 1.15 : 1));
         double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
         
