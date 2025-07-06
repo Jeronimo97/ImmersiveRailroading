@@ -198,6 +198,11 @@ public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovem
 
     @Override
     public void onDrag(Control<?> control, double newValue) {
+        switch (control.part.type) {
+            case HAND_BRAKE_X:
+                setHandBrake(getControlPosition(control));
+                break;
+        }
         super.onDrag(control, newValue);
     }
 

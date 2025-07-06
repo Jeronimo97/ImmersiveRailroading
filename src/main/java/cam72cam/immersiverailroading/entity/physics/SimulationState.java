@@ -170,7 +170,7 @@ public class SimulationState {
                 this.independentBrake = ((Locomotive) stock).getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
             if (stock instanceof LocomotiveDiesel) {
-                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() * 150000;
+                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier();
             } else {
                 this.dynamicBrakeNewtons = 0;
             }
@@ -461,7 +461,7 @@ public class SimulationState {
         config.brakeCylinderPressure = Math.max(Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
                 1 - config.trainBrakePressure :
                     (1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
-        double brakeAdhesionNewtons = config.designAdhesionNewtons * Math.min(1, config.brakeCylinderPressure);
+        double brakeAdhesionNewtons = config.designAdhesionNewtons * config.brakeCylinderPressure;
         double handBrakeNewtons = config.handBrakeNewtons;
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
         
