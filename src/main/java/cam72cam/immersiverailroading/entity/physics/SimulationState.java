@@ -182,9 +182,6 @@ public class SimulationState {
             this.brakeCylinderPressure = stock.getBrakeCylinderPressure();
 
             this.rollingResistanceCoefficient = stock.getDefinition().rollingResistanceCoefficient;
-            
-            System.out.println("Masse: " + designMassKg);
-            System.out.println("Bremskraft: " + designAdhesionNewtons);
         }
 
         @Override
@@ -480,8 +477,6 @@ public class SimulationState {
         
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
-        
-        System.out.println("final: " + brakeAdhesionNewtons);
 
         return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons
                 + directResistance + startingFriction + handBrakeNewtons + dynamicBrakeNewtons;
