@@ -312,7 +312,9 @@ public abstract class Locomotive extends FreightTank{
 	@Override
 	public void onDragRelease(Control<?> control) {
 		super.onDragRelease(control);
-		if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.TRAIN_BRAKE_X) {
+		if (!getDefinition().isLinearBrakeControl()
+		        && (control.part.type == ModelComponentType.TRAIN_BRAKE_X
+		        || control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X)) {
 			setControlPosition(control, 0.5f);
 		}
 	}
@@ -324,6 +326,7 @@ public abstract class Locomotive extends FreightTank{
 			case REVERSER_X:
 				return 0.5f;
 			case TRAIN_BRAKE_X:
+			case INDEPENDENT_BRAKE_X:
 				return getDefinition().isLinearBrakeControl() ? 0 : 0.5f;
 			default:
 				return super.defaultControlPosition(control);
