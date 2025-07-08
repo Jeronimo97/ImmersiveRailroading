@@ -207,36 +207,10 @@ public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovem
     }
 
     @Override
-    public void onDragRelease(Control<?> control) {
-        super.onDragRelease(control);
-        if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
-            setControlPosition(control, 0.5f);
-        }
-    }
-
-    @Override
-    protected float defaultControlPosition(Control<?> control) {
-        switch (control.part.type) {
-            case INDEPENDENT_BRAKE_X:
-                return getDefinition().isLinearBrakeControl() ? 0 : 0.5f;
-            default:
-                return super.defaultControlPosition(control);
-        }
-    }
-
-    @Override
     public void onTick() {
         super.onTick();
 
         if (getWorld().isServer) {
-            if (getDefinition().hasHandBrake()) {
-                for (Control<?> control : getDefinition().getModel().getControls()) {
-                    if (control.part.type == ModelComponentType.HAND_BRAKE_X) {
-                        setHandBrake(Math.max(0, Math.min(1, getHandBrake() + (getControlPosition(control) - 0.5f / 8))));
-                    }
-                }
-            }
-
             SimulationState state = getCurrentState();
             if (state != null) {
                 this.brakeCylinderPressure = state.config.brakeCylinderPressure;
