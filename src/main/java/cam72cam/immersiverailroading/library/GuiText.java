@@ -44,6 +44,8 @@ public enum GuiText {
 	TRACK_PLACE_BLUEPRINT_TRUE("track.place_blueprint_true"),
 	TRACK_PLACE_BLUEPRINT_FALSE("track.place_blueprint_false"),
 
+	UNIT_COUNT("unit.count"),
+
 	LOCO_WORKS("loco.works"),
 	LOCO_HORSE_POWER("loco.horse_power"),
 	LOCO_TRACTION("loco.tractive_effort"),

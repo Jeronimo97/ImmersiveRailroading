@@ -9,6 +9,8 @@ import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
+import cam72cam.immersiverailroading.util.DataBlock;
+import cam72cam.immersiverailroading.util.ObservableMap;
 import cam72cam.mod.entity.*;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.entity.custom.*;
@@ -23,15 +25,18 @@ import cam72cam.mod.sound.SoundCategory;
 import cam72cam.mod.text.PlayerMessage;
 import cam72cam.mod.util.SingleCache;
 import org.apache.commons.lang3.tuple.Pair;
+import org.luaj.vm2.LuaValue;
 import util.Matrix4;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class EntityRollingStock extends CustomEntity implements ITickable, IClickable, IKillable, ControlPositionEventHandler {
+public class EntityRollingStock extends CustomEntity implements ITickable, IClickable, IKillable {
 	@TagField("defID")
     protected String defID;
 	@TagField("gauge")
@@ -275,7 +280,18 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 
 	@TagSync
 	@TagField(value="controlPositions", mapper = ControlPositionMapper.class)
-	protected Map<String, Pair<Boolean, Float>> controlPositions = new HashMap<>();
+	protected Map<String, Pair<Boolean, Float>> controlPositions = new ObservableMap<String, Pair<Boolean, Float>>() {
+		@Override
+		public void onChange(String key, Pair<Boolean, Float> oldValue, Pair<Boolean, Float> newValue) {
+			if (newValue == null) {
+				return;
+			}
+
+			if ((oldValue == null || !oldValue.getRight().equals(newValue.getRight())) && EntityRollingStock.this instanceof EntityScriptableRollingStock) {
+				((EntityScriptableRollingStock) EntityRollingStock.this).triggerEvent("onControlGroupChange", LuaValue.valueOf(key), LuaValue.valueOf(newValue.getRight()));
+			}
+		}
+	};
 
 	public void onDragStart(Control<?> control) {
 		setControlPressed(control, true);
@@ -290,7 +306,8 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 		setControlPressed(control, false);
 
 		if (control.toggle) {
-			setControlPosition(control, Math.abs(getControlPosition(control) - 1));
+			float controlPos = getControlPosition(control);
+			setControlPosition(control, Math.abs(controlPos - 1));
 		}
 		if (control.press) {
 			setControlPosition(control, 0);
@@ -315,7 +332,6 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 
 	public void setControlPressed(Control<?> control, boolean pressed) {
 		controlPositions.put(control.controlGroup, Pair.of(pressed, getControlPosition(control)));
-
 	}
 
 	public float getControlPosition(Control<?> control) {
@@ -328,8 +344,7 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 
 	public void setControlPosition(Control<?> control, float val) {
 		val = Math.min(1, Math.max(0, val));
-		handleControlPositionEvent(control, val, controlPositions, getControlPressed(control));
-
+		controlPositions.put(control.controlGroup, Pair.of(getControlPressed(control), val));
 	}
 
 	public void setControlPosition(String control, float val) {

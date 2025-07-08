@@ -14,7 +14,7 @@ public abstract class ArrowSelector {
     Button down;
     int max;
     int min;
-    int currentVal;
+    float currentVal;
 
     /**
      * Standard constructor
@@ -71,15 +71,71 @@ public abstract class ArrowSelector {
     }
 
     /**
+     * Alternative constructor supporting floating point precision
+     * @param currentFloat Starting value of the ArrowSelector
+     * @param minValue Minimal value of the ArrowSelector
+     * @param maxValue Maximal value of the ArrowSelector
+     * @param increment Value of which this Selector should be incremented
+     */
+
+    public ArrowSelector(IScreenBuilder screen, int xOff, int yOff, int width, int height, float currentFloat, int minValue, int maxValue, float increment) {
+        this.min = minValue;
+        this.max = maxValue;
+        this.currentVal = currentFloat;
+
+        textField = new Button(screen, xOff, yOff, width, height, String.valueOf(currentFloat)) {
+            @Override
+            public void onClick(Player.Hand hand) {
+                /* */
+            }
+        };
+
+        textField.setEnabled(false);
+        textField.setTextColor(0xFFFFFF);
+
+        int buttonOff = xOff + width - height / 2;
+
+        up = new Button(screen, buttonOff, yOff, height / 2, height / 2, "▲") {
+            @Override
+            public void onClick(Player.Hand hand) {
+                if (ArrowSelector.this.currentVal < ArrowSelector.this.max) {
+                    // Maybe implement step variable?
+                    ArrowSelector.this.currentVal += increment;
+                    ArrowSelector.this.textField.setText(String.valueOf(ArrowSelector.this.currentVal));
+                } else if (ArrowSelector.this.currentVal == ArrowSelector.this.max) {
+                    ArrowSelector.this.currentVal = ArrowSelector.this.min;
+                    ArrowSelector.this.textField.setText(String.valueOf(ArrowSelector.this.currentVal));
+                }
+                ArrowSelector.this.onUpdate(ArrowSelector.this.currentVal);
+            }
+        };
+
+        down = new Button(screen, buttonOff, yOff + height / 2, height / 2, height / 2, "▼") {
+            @Override
+            public void onClick(Player.Hand hand) {
+                if (ArrowSelector.this.currentVal > ArrowSelector.this.min) {
+                    // Maybe implement step variable?
+                    ArrowSelector.this.currentVal -= increment;
+                    ArrowSelector.this.textField.setText(String.valueOf(ArrowSelector.this.currentVal));
+                } else if (ArrowSelector.this.currentVal == ArrowSelector.this.min) {
+                    ArrowSelector.this.currentVal = ArrowSelector.this.max;
+                    ArrowSelector.this.textField.setText(String.valueOf(ArrowSelector.this.currentVal));
+                }
+                ArrowSelector.this.onUpdate(ArrowSelector.this.currentVal);
+            }
+        };
+    }
+
+    /**
      * Method called when the value is updated
      */
-    public abstract void onUpdate(int val);
+    public abstract void onUpdate(float val);
 
     /**
      * Update the value of the ArrowSelector
      * @param val New value
      */
-    public void updateVal(int val) {
+    public void updateVal(float val) {
         this.currentVal = val;
         this.textField.setText(String.valueOf(val));
     }

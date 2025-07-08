@@ -34,8 +34,6 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -91,7 +89,7 @@ public abstract class EntityRollingStockDefinition {
     private float interiorLightLevel;
     private boolean hasHandBrake;
     private boolean hasPressureBrake;
-    private final Map<ModelComponentType, List<ModelComponent>> renderComponents;
+    private final EnumMap<ModelComponentType, List<ModelComponent>> renderComponents;
     private final List<ItemComponentType> itemComponents;
     private final Function<EntityBuildableRollingStock, float[][]> heightmap;
     private final Map<String, LightDefinition> lights = new HashMap<>();
@@ -347,11 +345,10 @@ public abstract class EntityRollingStockDefinition {
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
 
-        // Not quite sure if it's necessary to load the mesh on another thread
-        this.mesh = Executors.newCachedThreadPool().submit(() -> Mesh.loadMesh(this.model)).get();
+        this.mesh = Mesh.loadMesh(this.model);
         this.navMesh = new NavMesh(this.mesh);
 
-        this.renderComponents = new HashMap<>();
+        this.renderComponents = new EnumMap<>(ModelComponentType.class);
         for (ModelComponent component : model.allComponents) {
             renderComponents.computeIfAbsent(component.type, v -> new ArrayList<>())
                     .add(0, component);
@@ -393,7 +390,7 @@ public abstract class EntityRollingStockDefinition {
 
         this.heightmap = initHeightmap();
 
-        textFields = parseTextFields(transformData(data).getBlocks("textFields"));
+        textFields = parseTextFields(transformData(data).getBlocks("text_fields"));
     }
 
     public final EntityRollingStock spawn(World world, Vec3d pos, float yaw, Gauge gauge, String texture) {
@@ -873,6 +870,13 @@ public abstract class EntityRollingStockDefinition {
         return tips;
     }
 
+    public List<String> getModelerTooltip() {
+        List<String> tips = new ArrayList<>();
+        tips.add(GuiText.MODELER_TOOLTIP.toString(modelerName));
+        tips.add(GuiText.PACK_TOOLTIP.toString(packName));
+        return tips;
+    }
+
     protected StockModel<?, ?> createModel() throws Exception {
         return new StockModel<>(this);
     }
@@ -949,6 +953,8 @@ public abstract class EntityRollingStockDefinition {
 
                         Optional.ofNullable(config.getValue("unique").asBoolean()).ifPresent(defaults::setUnique);
                         Optional.ofNullable(config.getValue("numberPlate").asBoolean()).ifPresent(defaults::setNumberPlate);
+                        Optional.ofNullable(config.getValue("verticalAlign").asString()).ifPresent(defaults::setVerticalAlign);
+                        Optional.ofNullable(config.getValue("scale").asFloat()).ifPresent(defaults::setScale);
                     }
             );
 

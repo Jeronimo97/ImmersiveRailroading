@@ -44,6 +44,8 @@ public class TextFieldGui implements IScreen {
     private Button gapButton;
     private Button gapUp;
     private Button global;
+    private Button verticalAlign;
+    private ArrowSelector scale;
 
     @Override
     public void init(IScreenBuilder screen) {
@@ -138,12 +140,23 @@ public class TextFieldGui implements IScreen {
             }
         };
 
+        yTop += spacingHeight;
+
+        verticalAlign = new Button(screen, xTop + 60, yTop, width - 145, height, textField.getVerticalAlignAsString()) {
+            @Override
+            public void onClick(Player.Hand hand) {
+                cam72cam.immersiverailroading.textUtil.TextField.VerticalAlign next = textField.getVerticalAlign().next();
+                textField.setVerticalAlign(next);
+                this.setText(next.toString());
+            }
+        };
+
         yTop += spacingHeight + 1;
 
         gap = new ArrowSelector(screen, xTop + 60, yTop, width - 145, height, textField.getGap(), 0, 15) {
             @Override
-            public void onUpdate(int val) {
-                textField.setGap(val);
+            public void onUpdate(float val) {
+                textField.setGap((int) val);
             }
         };
 
@@ -151,8 +164,17 @@ public class TextFieldGui implements IScreen {
 
         offset = new ArrowSelector(screen, xTop + 60, yTop, width - 145, height, textField.getGap(), 0, 15) {
             @Override
-            public void onUpdate(int val) {
-                textField.setOffset(val);
+            public void onUpdate(float val) {
+                textField.setOffset((int) val);
+            }
+        };
+
+        yTop += spacingHeight + 1;
+
+        scale = new ArrowSelector(screen, xTop + 60, yTop, width - 145, height, textField.getScale(), 0, 8, 0.5f) {
+            @Override
+            public void onUpdate(float val) {
+                textField.setScale(val);
             }
         };
 
@@ -165,6 +187,7 @@ public class TextFieldGui implements IScreen {
                 this.setText(String.valueOf(textField.getGlobal()));
             }
         };
+
 
         Slider zoom_slider = new Slider(screen, xTop + width + 15, (int) (GUIHelpers.getScreenHeight()*0.75 - height), "Zoom: ", 0.1, 3, 1, true) {
             @Override
@@ -232,9 +255,11 @@ public class TextFieldGui implements IScreen {
         fullbright.setText(String.valueOf(textField.getFullBright()));
         gap.updateVal(textField.getGap());
         offset.updateVal(textField.getOffset());
+        scale.updateVal(textField.getScale());
         fontButton.setEnabled(textField.getAvailableFonts() != null);
         global.setText(String.valueOf(textField.getGlobal()));
         alignButton.setText(textField.getAlign().toString());
+        verticalAlign.setText(textField.getVerticalAlignAsString());
 
         fontSelector.setVisible(false);
         objectSelector.setVisible(false);
@@ -275,10 +300,14 @@ public class TextFieldGui implements IScreen {
         GUIHelpers.drawString("Color:", xTop, yTop, 0xFFFFFF);
         yTop += height;
         GUIHelpers.drawString("Align:", xTop, yTop, 0xFFFFFF);
+        yTop += height;
+        GUIHelpers.drawString("Vert Align:", xTop, yTop, 0xFFFFFF);
         yTop += height + 1;
         GUIHelpers.drawString("Gap:", xTop, yTop, 0xFFFFFF);
         yTop += height + 1;
         GUIHelpers.drawString("Spacing:", xTop, yTop, 0xFFFFFF);
+        yTop += height + 1;
+        GUIHelpers.drawString("Scale:", xTop, yTop, 0xFFFFFF);
         yTop += height;
         GUIHelpers.drawString("Global:", xTop, yTop, 0xFFFFFF);
 

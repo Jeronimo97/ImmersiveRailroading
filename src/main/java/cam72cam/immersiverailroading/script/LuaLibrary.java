@@ -248,60 +248,58 @@ public class LuaLibrary {
     @SuppressWarnings("All")
     private LuaTable initFunctions(LuaTable object){
         for(Map.Entry<String, Object[]> func : functions.entrySet()){
-            object.set(func.getKey(), new LuaFunction() {
+            object.set(func.getKey(), new VarArgFunction() {
                 @Override
-                public LuaValue call() {
-                    if(func.getValue()[0] instanceof Supplier){
-                        return ((Supplier<LuaValue>) func.getValue()[0]).get();
-                    } else if(func.getValue()[0] != null){
-                        ((Runnable)func.getValue()[0]).run();
-                    }
-                    return NIL;
-                }
-
-                @Override
-                public LuaValue call(LuaValue arg) {
-                    if(func.getValue()[1] instanceof Function){
-                        return ((Function<LuaValue, LuaValue>) func.getValue()[1]).apply(arg);
-                    } else if(func.getValue()[1] != null){
-                        ((Consumer<LuaValue>)func.getValue()[1]).accept(arg);
-                    }
-                    return NIL;
-                }
-
-                @Override
-                public LuaValue call(LuaValue arg1, LuaValue arg2) {
-                    if(func.getValue()[2] instanceof BiFunction){
-                        return ((BiFunction<LuaValue, LuaValue, LuaValue>) func.getValue()[2]).apply(arg1, arg2);
-                    } else if(func.getValue()[2] != null){
-                        ((BiConsumer<LuaValue, LuaValue>)func.getValue()[2]).accept(arg1, arg2);
-                    }
-                    return NIL;
-                }
-
-                @Override
-                public LuaValue call(LuaValue arg1, LuaValue arg2, LuaValue arg3) {
-                    if(func.getValue()[3] instanceof TriFunction){
-                        return ((TriFunction<LuaValue, LuaValue, LuaValue, LuaValue>) func.getValue()[3]).apply(arg1, arg2, arg3);
-                    } else if(func.getValue()[3] != null){
-                        ((TriConsumer<LuaValue, LuaValue, LuaValue>)func.getValue()[3]).accept(arg1, arg2, arg3);
+                public Varargs invoke(Varargs args) {
+                    try {
+                        int nargs = args.narg();
+                        switch (nargs) {
+                            case 0:
+                                if (func.getValue()[0] instanceof Supplier) {
+                                    return ((Supplier<LuaValue>) func.getValue()[0]).get();
+                                } else if (func.getValue()[0] instanceof Runnable) {
+                                    ((Runnable) func.getValue()[0]).run();
+                                    return NIL;
+                                }
+                            case 1:
+                                if (func.getValue()[1] instanceof Function) {
+                                    return ((Function<LuaValue, LuaValue>) func.getValue()[1]).apply(args.arg(1));
+                                } else if (func.getValue()[1] instanceof Consumer) {
+                                    ((Consumer<LuaValue>) func.getValue()[1]).accept(args.arg(1));
+                                    return NIL;
+                                }
+                            case 2:
+                                if (func.getValue()[2] instanceof BiFunction) {
+                                    return ((BiFunction<LuaValue, LuaValue, LuaValue>) func.getValue()[2])
+                                            .apply(args.arg(1), args.arg(2));
+                                } else if (func.getValue()[2] instanceof BiConsumer) {
+                                    ((BiConsumer<LuaValue, LuaValue>) func.getValue()[2])
+                                            .accept(args.arg(1), args.arg(2));
+                                    return NIL;
+                                }
+                            case 3:
+                                if (func.getValue()[3] instanceof TriFunction) {
+                                    return ((TriFunction<LuaValue, LuaValue, LuaValue, LuaValue>) func.getValue()[3])
+                                            .apply(args.arg(1), args.arg(2), args.arg(3));
+                                } else if (func.getValue()[3] instanceof TriConsumer) {
+                                    ((TriConsumer<LuaValue, LuaValue, LuaValue>) func.getValue()[3])
+                                            .accept(args.arg(1), args.arg(2), args.arg(3));
+                                    return NIL;
+                                }
+                            default:
+                                if (func.getValue()[4] instanceof Function) {
+                                    return ((Function<Varargs, Varargs>) func.getValue()[4]).apply(args);
+                                } else if (func.getValue()[4] instanceof Consumer) {
+                                    ((Consumer<Varargs>) func.getValue()[4]).accept(args);
+                                    return NIL;
+                                }
+                        }
+                    } catch (Exception e) {
+                        ModCore.error("Error invoking LuaFunction: " + e.getMessage());
                     }
                     return NIL;
                 }
             });
-            if (func.getValue()[4] != null) {
-                object.set(func.getKey(), new VarArgFunction() {
-                    @Override
-                    public Varargs invoke(Varargs varargs) {
-                        if (func.getValue()[4] instanceof Function) {
-                            return ((Function<Varargs, Varargs>) func.getValue()[4]).apply(varargs);
-                        } else if (func.getValue()[4] != null) {
-                            ((Consumer<Varargs>) func.getValue()[4]).accept(varargs);
-                        }
-                        return NIL;
-                    }
-                });
-            }
         }
         return object;
     }

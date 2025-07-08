@@ -21,6 +21,7 @@ import cam72cam.immersiverailroading.render.item.*;
 import cam72cam.immersiverailroading.render.multiblock.MBBlueprintRender;
 import cam72cam.immersiverailroading.render.multiblock.TileMultiblockRender;
 import cam72cam.immersiverailroading.render.rail.RailPreviewRender;
+import cam72cam.immersiverailroading.script.SoundConfig;
 import cam72cam.immersiverailroading.textUtil.TextField;
 import cam72cam.immersiverailroading.thirdparty.CompatLoader;
 import cam72cam.immersiverailroading.tile.*;
@@ -92,6 +93,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(TileRailBase.AugmentPacket::new, PacketDirection.ClientToServer);
 				Packet.register(TextField.PacketSyncTextField::new, PacketDirection.ServerToClient);
 				Packet.register(TextField.PacketSyncTextFieldServer::new, PacketDirection.ClientToServer);
+				Packet.register(SoundConfig.SoundPacket::new, PacketDirection.ServerToClient);
 
 				ServerChronoState.register();
 
@@ -142,6 +144,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				ItemRender.register(IRItems.ITEM_TRACK_BLUEPRINT, new TrackBlueprintItemModel());
 				ItemRender.register(IRItems.ITEM_ROLLING_STOCK_COMPONENT, new StockItemComponentModel());
 				ItemRender.register(IRItems.ITEM_ROLLING_STOCK, new StockItemModel());
+				ItemRender.register(IRItems.ITEM_MULTIPLE_UNIT, new StockItemModel());
 				ItemRender.register(IRItems.ITEM_LARGE_WRENCH, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/wrench/wrench.obj"), new Vec3d(0.5, 0, 0.5), 2));
 				ItemRender.register(IRItems.ITEM_CONDUCTOR_WHISTLE, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/whistle.obj"), new Vec3d(0.5, 0.75, 0.5), 0.1f));
 				ItemRender.register(IRItems.ITEM_GOLDEN_SPIKE, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/goldenspike/goldenspike.obj"), new Vec3d(0.5, 0.5, 0.5), 0.1f));

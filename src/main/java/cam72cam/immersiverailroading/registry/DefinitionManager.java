@@ -9,6 +9,7 @@ import cam72cam.immersiverailroading.model.TrackModel;
 import cam72cam.immersiverailroading.util.JSON;
 import cam72cam.mod.gui.Progress;
 import cam72cam.mod.resource.Identifier;
+import com.sun.management.OperatingSystemMXBean;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ public class DefinitionManager {
     private static Map<String, EntityRollingStockDefinition> definitions;
     private static Map<String, TrackDefinition> tracks;
     private static final Map<String, StockLoader> stockLoaders;
+    private static Map<String, UnitDefinition> units;
 
     static {
         stockLoaders = new LinkedHashMap<>();
@@ -46,6 +48,7 @@ public class DefinitionManager {
         stockLoaders.put("freight", CarFreightDefinition::new);
         stockLoaders.put("tank", CarTankDefinition::new);
         stockLoaders.put("hand_car", HandCarDefinition::new);
+        stockLoaders.put("multiple_unit", UnitDefinition::new);
     }
 
     private static void initGauges() throws IOException {
@@ -124,7 +127,7 @@ public class DefinitionManager {
         }
         ImmersiveRailroading.info("Detected %sMB of memory free", maxMemory/1024/1024);
         try {
-            com.sun.management.OperatingSystemMXBean os = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            OperatingSystemMXBean os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             maxMemory = Math.min(os.getFreePhysicalMemorySize() + runtime.totalMemory(), maxMemory);
             ImmersiveRailroading.info("Adjusted to %sMB of memory free", maxMemory/1024/1024);
         } catch (UnsatisfiedLinkError | Exception ex) {
@@ -157,6 +160,10 @@ public class DefinitionManager {
         } catch (Exception e) {
             throw new RuntimeException("Unable to load tracks, do you have a broken pack?", e);
         }
+
+        // Initialize unit definitions after all other stock is loaded
+        units.forEach((s, u) -> u.initDefinitions());
+
     }
 
     private static void initModels() throws IOException {
@@ -210,7 +217,7 @@ public class DefinitionManager {
 
         Progress.Bar bar = Progress.push("Loading Models", definitionIDMap.size());
 
-        Map<String, EntityRollingStockDefinition> loaded = getStockLoadingStream(definitionIDMap.entrySet()).map(tuple -> {
+        Map<String, Object> loaded = getStockLoadingStream(definitionIDMap.entrySet()).map(tuple -> {
             String defID = tuple.getKey();
             String defType = tuple.getValue();
 
@@ -233,7 +240,7 @@ public class DefinitionManager {
                     block.getValueMap().put("pack", definitionIDPacks.get(defID));
                 }
 
-                EntityRollingStockDefinition stockDefinition = stockLoaders.get(defType).apply(defID, block);
+                Object definition = stockLoaders.get(defType).apply(defID, block);
 
                 Runtime runtime = Runtime.getRuntime();
                 if (runtime.freeMemory() < runtime.maxMemory() * 0.25) {
@@ -241,7 +248,11 @@ public class DefinitionManager {
                     System.gc();
                 }
 
-                return Pair.of(stockDefinition.defID, stockDefinition);
+                if (definition instanceof UnitDefinition) {
+                    return Pair.of(((UnitDefinition) definition).defId, definition);
+                }
+
+                return Pair.of(((EntityRollingStockDefinition) definition).defID, definition);
             } catch (Exception e) {
                 ImmersiveRailroading.error("Error loading model %s of type %s", defID, defType);
                 ImmersiveRailroading.catching(e);
@@ -255,7 +266,15 @@ public class DefinitionManager {
         }).filter(Objects::nonNull).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
 
         definitions = new LinkedHashMap<>();
-        definitionIDMap.keySet().stream().filter(loaded::containsKey).forEach(x -> definitions.put(x, loaded.get(x)));
+        units = new LinkedHashMap<>();
+        definitionIDMap.keySet().stream().filter(loaded::containsKey).forEach(x -> {
+            Object def = loaded.get(x);
+            if (def instanceof EntityRollingStockDefinition) {
+                definitions.put(x, ((EntityRollingStockDefinition) def));
+            } else if (def instanceof UnitDefinition) {
+                units.put(x, (UnitDefinition) def);
+            }
+        });
 
         Progress.pop(bar);
     }
@@ -364,6 +383,14 @@ public class DefinitionManager {
         return definitions.get(defID);
     }
 
+    public static Collection<UnitDefinition> getUnits() {
+        return units.values();
+    }
+
+    public static UnitDefinition getUnit(String name) {
+        return units.get(name);
+    }
+
     public static Collection<EntityRollingStockDefinition> getDefinitions() {
         return definitions.values();
     }
@@ -394,7 +421,7 @@ public class DefinitionManager {
 
     @FunctionalInterface
     private interface StockLoader {
-        EntityRollingStockDefinition apply(String defID, DataBlock data) throws Exception;
+        Object apply(String defID, DataBlock data) throws Exception;
     }
 
 }

@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.textUtil;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
 import cam72cam.immersiverailroading.entity.EntityScriptableRollingStock;
 import cam72cam.immersiverailroading.floor.Mesh;
@@ -14,10 +15,7 @@ import cam72cam.mod.render.opengl.RenderContext;
 import cam72cam.mod.render.opengl.RenderState;
 import cam72cam.mod.render.opengl.VBO;
 import cam72cam.mod.resource.Identifier;
-import cam72cam.mod.serialization.SerializationException;
-import cam72cam.mod.serialization.TagCompound;
-import cam72cam.mod.serialization.TagField;
-import cam72cam.mod.serialization.TagMapper;
+import cam72cam.mod.serialization.*;
 import cam72cam.mod.util.With;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL11;
@@ -35,29 +33,47 @@ import java.util.stream.IntStream;
  * @author poizzy
  */
 public class TextField {
+    @TagField(typeHint = Align.class)
     private Align align = Align.LEFT;
     private Font font = FontLoader.getOrCreateFont(FontLoader.DEFAULT);
+    @TagField(mapper = GroupInfo.GroupMapper.class)
     private GroupInfo group;
+    @TagField(value = "font", mapper = IdentifierMapper.class)
     private Identifier lastFont = FontLoader.DEFAULT;
+    @TagField(mapper = IdentifierListMapper.class)
     private List<Identifier> availableFonts;
+    @TagField(mapper = StringListMapper.class)
     private List<String> linked;
+    @TagField(mapper = StringListMapper.class)
     private List<String> filter;
+    @TagField(mapper = RGBA.TagMapper.class)
     private RGBA color = RGBA.fromHex("#ffffff");
+    @TagField
     private String object;
+    @TagField
     private String text = "";
-    private String lastText = "";
-    private String readout;
     private VBO buffer;
     private VertexBuffer currentVBO = new VertexBuffer(0, false);
     private VertexBuffer lastVBO = new VertexBuffer(0, false);
+    @TagField
     private boolean fullbright = false;
+    @TagField
     private boolean global = false;
+    @TagField
     private boolean selectable = true;
+    @TagField
     private boolean numberPlate = false;
+    @TagField
     private boolean unique = false;
     private float radius = 0;
+    @TagField
     private int gap = 1;
+    @TagField
     private int offset = 0;
+    @TagField
+    private float scale = 1;
+    @TagField(typeHint = VerticalAlign.class)
+    private VerticalAlign verticalAlign = VerticalAlign.CENTER;
 
     @SuppressWarnings("unused")
     public static TextField createTextField(Mesh.Group group, int resolutionX, int resolutionY) {
@@ -77,6 +93,17 @@ public class TextField {
     }
 
     private TextField(){}
+
+    private TextField(TagCompound tag) {
+        Identifier lastFont = new Identifier(tag.getString("font"));
+        this.font = FontLoader.getOrCreateFont(lastFont);
+
+        try {
+            TagSerializer.deserialize(tag, this);
+        } catch (SerializationException e) {
+            ImmersiveRailroading.catching(e);
+        }
+    }
 
     /**
      * Set the text of the given instance of TextField
@@ -248,6 +275,31 @@ public class TextField {
     }
 
     /**
+     * Set the scale of the textField
+     * @param scale Scale
+     * @return Instance of TextField
+     */
+    public TextField setScale(float scale) {
+        this.scale = scale;
+        return this;
+    }
+
+    /**
+     * Set the vertical Alignment of the text
+     * @param align "TOP", "CENTER" or "BOTTOM"
+     * @return Instance of TextField
+     */
+    public TextField setVerticalAlign(String align) {
+        this.verticalAlign = VerticalAlign.valueOf(align.toUpperCase());
+        return this;
+    }
+
+    public TextField setVerticalAlign(VerticalAlign align) {
+        this.verticalAlign = align;
+        return this;
+    }
+
+    /**
      * Set if the textField should be unique to the stock.
      * @param unique Is this textField unique?
      * @return Instance of TextField
@@ -303,6 +355,20 @@ public class TextField {
      */
     public Align getAlign() {
         return this.align;
+    }
+
+    /**
+     * @return Current vertical alignment as String
+     */
+    public String getVerticalAlignAsString() {
+        return this.verticalAlign.toString();
+    }
+
+    /**
+     * @return Current vertical alignment
+     */
+    public VerticalAlign getVerticalAlign() {
+        return this.verticalAlign;
     }
 
     /**
@@ -373,6 +439,10 @@ public class TextField {
      */
     public boolean getNumberPlate() {
         return this.numberPlate;
+    }
+
+    public float getScale() {
+        return this.scale;
     }
 
     /**
@@ -586,6 +656,9 @@ public class TextField {
         int[] lineHeights = new int[lines.length];
         int totalVertexCount = 0;
 
+        double pixelSizeX = group.pixelSizeX * this.scale;
+        double pixelSizeY = group.pixelSizeY * this.scale;
+
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             int lineWidth = 0;
@@ -630,13 +703,24 @@ public class TextField {
         float[] buffer = vbo.data;
         int stride = vbo.stride;
 
-        double textfieldHeight = group.bitangent.length() / group.pixelSizeY;
+        double textfieldHeight = group.bitangent.length() / pixelSizeY;
 
-        double verticalOffset = 0.5 * (textfieldHeight - totalTextHeight);
-        Vec3d baseYOffset = layoutBitangent.scale(verticalOffset * group.pixelSizeY);
+        float alignMultpl;
+
+        switch (verticalAlign) {
+            case TOP: alignMultpl = 0f; break;
+            case BOTTOM: alignMultpl = 1f; break;
+            default:
+            case CENTER: alignMultpl = 0.5f; break;
+        }
+
+        double verticalOffset = alignMultpl * (textfieldHeight - totalTextHeight);
+        Vec3d baseYOffset = layoutBitangent.scale(verticalOffset * pixelSizeY);
         Vec3d lineCursor = group.origin.add(baseYOffset);
 
         Vec3d normal = group.normal;
+
+        int bufferIndex = 0;
 
         for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
             String line = lines[lineIndex];
@@ -656,14 +740,12 @@ public class TextField {
                     alignOffset = 0.0f;
             }
 
-            Vec3d xOffset = layoutTangent.scale((group.resolutionX - lineWidth) * group.pixelSizeX * alignOffset);
+            Vec3d xOffset = layoutTangent.scale((group.resolutionX * this.scale - lineWidth) * pixelSizeX * alignOffset);
 
             Vec3d cursor = lineCursor.add(xOffset);
 
             RGBA currentColor = this.color;
             int charIndex = 0;
-
-            int bufferIndex = 0;
 
             while (charIndex < line.length()) {
                 char c = line.charAt(charIndex);
@@ -675,8 +757,8 @@ public class TextField {
                     continue;
                 }
 
-                double charWidth = font.getCharWidthPx(c) * group.pixelSizeX;
-                double charHeight = font.getCharHeightPx(c) * group.pixelSizeY;
+                double charWidth = font.getCharWidthPx(c) * pixelSizeX;
+                double charHeight = font.getCharHeightPx(c) * pixelSizeY;
 
                 Pair<Vec2f, Vec2f> uvs = font.getUV(c);
 
@@ -720,12 +802,12 @@ public class TextField {
                     bufferIndex++;
                 }
 
-                cursor = cursor.add(layoutTangent.scale(charWidth + gap * group.pixelSizeX));
+                cursor = cursor.add(layoutTangent.scale(charWidth + gap * pixelSizeX));
                 charIndex++;
             }
 
             if (lineIndex < lines.length -1) {
-                double advance = (lineHeight + offset) * group.pixelSizeY;
+                double advance = (lineHeight + offset) * pixelSizeY;
                 lineCursor = lineCursor.add(layoutBitangent.scale(advance));
             }
         }
@@ -776,16 +858,35 @@ public class TextField {
         public String toString() {
             return String.format("#%02X%02X%02X", (int) (this.r * 255f), (int) (this.g * 255f), (int) (this.b * 255f));
         }
+
+        public static class TagMapper implements cam72cam.mod.serialization.TagMapper<RGBA> {
+
+            @Override
+            public TagAccessor<RGBA> apply(Class<RGBA> type, String fieldName, TagField tag) throws SerializationException {
+                return new TagAccessor<>(
+                        (d, o) -> d.setString(fieldName, o.toString()),
+                        d -> RGBA.fromHex(d.getString(fieldName))
+                );
+            }
+        }
     }
 
     public static class GroupInfo {
+        @TagField
         public Vec3d origin;
+        @TagField
         public Vec3d tangent;
+        @TagField
         public Vec3d bitangent;
+        @TagField
         public Vec3d normal;
+        @TagField
         double pixelSizeX;
+        @TagField
         double pixelSizeY;
+        @TagField
         int resolutionX;
+        @TagField
         boolean flippedNormal = false;
 
         public GroupInfo() {
@@ -800,6 +901,14 @@ public class TextField {
             this.pixelSizeY = pixelSizeY;
             this.resolutionX = resolutionX;
             this.flippedNormal = flippedNormal;
+        }
+
+        private GroupInfo(TagCompound compound) {
+            try {
+                TagSerializer.deserialize(compound, this);
+            } catch (SerializationException e) {
+                ImmersiveRailroading.catching(e);
+            }
         }
 
         public static GroupInfo initGroup(Mesh.Group group, int resX, int resY) {
@@ -858,6 +967,27 @@ public class TextField {
 
             return info;
         }
+
+        private TagCompound toTag() {
+            TagCompound tag = new TagCompound();
+            try {
+                TagSerializer.serialize(tag, this);
+            } catch (SerializationException e) {
+                ImmersiveRailroading.catching(e);
+            }
+            return tag;
+        }
+
+        public static class GroupMapper implements TagMapper<GroupInfo> {
+
+            @Override
+            public TagAccessor<GroupInfo> apply(Class<GroupInfo> type, String fieldName, TagField tag) throws SerializationException {
+                return new TagAccessor<>(
+                        (d, o) -> d.set(fieldName, o.toTag()),
+                        d -> new GroupInfo(d.get(fieldName))
+                );
+            }
+        }
     }
 
     public enum Align {
@@ -872,66 +1002,78 @@ public class TextField {
         }
     }
 
-    // Ohh man I hate this...
+    public enum VerticalAlign {
+        TOP,
+        CENTER,
+        BOTTOM;
+
+        private static final VerticalAlign[] vals = values();
+
+        public VerticalAlign next() {
+            return vals[(this.ordinal() + 1) % values().length];
+        }
+    }
+
+    private TagCompound toTag() {
+        TagCompound tag = new TagCompound();
+        try {
+            TagSerializer.serialize(tag, this);
+        } catch (SerializationException e) {
+            ImmersiveRailroading.catching(e);
+        }
+        return tag;
+    }
+
     public static class TextFieldMapMapper implements TagMapper<Map<String, TextField>> {
 
         @Override
         public TagAccessor<Map<String, TextField>> apply(Class<Map<String, TextField>> type, String fieldName, TagField tag) throws SerializationException {
             return new TagAccessor<>(
-                    (d, o) -> d.setMap(fieldName, o, k -> k, v -> new TagCompound()
-                                    .setString("font", v.lastFont.toString())
-                            .setString("color", v.color.toString())
-                            .setBoolean("fullbright", v.fullbright)
-                            .setEnum("align", v.align)
-                            .setInteger("gap", v.gap)
-                            .setString("text", v.text)
-                            .setString("name", v.object)
-                            .setList("availableFonts", v.availableFonts, i -> new TagCompound().setString("identifier", i.toString()))
-                            .setList("linked", v.linked, l -> new TagCompound().setString("l", l))
-                            .setList("filter", v.filter, f -> new TagCompound().setString("f", f))
-                            .setBoolean("global", v.global)
-                            .setBoolean("unique", v.unique)
-                            .setBoolean("numberPlate", v.numberPlate)
-                            .setBoolean("selectable", v.selectable)
-                            .set("group", new TagCompound()
-                                    .setVec3d("origin", v.group.origin)
-                                    .setVec3d("tangent", v.group.tangent)
-                                    .setVec3d("bitangent", v.group.bitangent)
-                                    .setVec3d("normal", v.group.normal)
-                                    .setDouble("pixelSizeX", v.group.pixelSizeX)
-                                    .setDouble("pixelSizeY", v.group.pixelSizeY)
-                                    .setInteger("resX", v.group.resolutionX)
-                                    .setBoolean("flippedNormal", v.group.flippedNormal))),
-                    (d) -> d.getMap(fieldName, k -> k, v -> {
-                        TagCompound g = v.get("group");
-                                TextField.GroupInfo group = new TextField.GroupInfo(
-                                        g.getVec3d("origin"),
-                                        g.getVec3d("tangent"),
-                                        g.getVec3d("bitangent"),
-                                        g.getVec3d("normal"),
-                                        g.getDouble("pixelSizeX"),
-                                        g.getDouble("pixelSizeY"),
-                                        g.getInteger("resX"),
-                                        g.getBoolean("flippedNormal")
-                                );
-                                return TextField.createTextField(group, v.getString("name"), t -> {
-                                            t.setFont(new Identifier(v.getString("font")))
-                                                    .setColor(v.getString("color"))
-                                                    .setFullBright(v.getBoolean("fullbright"))
-                                                    .setAlign(v.getEnum("align", Align.class).toString())
-                                                    .setGap(v.getInteger("gap"))
-                                                    .setText(v.getString("text"))
-                                                    .setGlobal(v.getBoolean("global"))
-                                                    .setUnique(v.getBoolean("unique"))
-                                                    .setNumberPlate(v.getBoolean("numberPlate"))
-                                                    .setSelectable(v.getBoolean("selectable"));
-                                            Optional.ofNullable(v.getList("availableFonts", i -> new Identifier(i.getString("identifier")))).ifPresent(t::setAvailableFont);
-                                            Optional.ofNullable(v.getList("linked", i -> i.getString("l"))).ifPresent(t::setLinked);
-                                            Optional.ofNullable(v.getList("filter", f -> f.getString("f"))).ifPresent(t::setFilter);
-                                        }
-                                );
-                            }
-                    )
+                    (d, o) -> d.setMap(fieldName, o, k -> k, TextField::toTag),
+                    (d) -> d.getMap(fieldName, k -> k, TextField::new)
+            );
+        }
+    }
+
+    public static class StringListMapper implements TagMapper<List<String>> {
+
+        @Override
+        public TagAccessor<List<String>> apply(Class<List<String>> type, String fieldName, TagField tag) throws SerializationException {
+            return new TagAccessor<List<String>>(
+                    (d, o) -> d.setList(fieldName, o, s -> new TagCompound().setString("s", s)),
+                    d -> d.getList(fieldName, l -> l.getString("s"))
+            ) {
+                @Override
+                public boolean applyIfMissing() {
+                    return true;
+                }
+            };
+        }
+    }
+
+    public static class IdentifierListMapper implements TagMapper<List<Identifier>> {
+
+        @Override
+        public TagAccessor<List<Identifier>> apply(Class<List<Identifier>> type, String fieldName, TagField tag) throws SerializationException {
+            return new TagAccessor<List<Identifier>>(
+                    (d, o) -> d.setList(fieldName, o, s -> new TagCompound().setString("s", s.toString())),
+                    d -> d.getList(fieldName, l -> new Identifier(l.getString("s")))
+            ) {
+                @Override
+                public boolean applyIfMissing() {
+                    return true;
+                }
+            };
+        }
+    }
+
+    public static class IdentifierMapper implements TagMapper<Identifier> {
+
+        @Override
+        public TagAccessor<Identifier> apply(Class<Identifier> type, String fieldName, TagField tag) throws SerializationException {
+            return new TagAccessor<>(
+                    (d, o) -> d.setString(fieldName, o.toString()),
+                    d -> new Identifier(d.getString(fieldName))
             );
         }
     }
@@ -970,7 +1112,7 @@ public class TextField {
 
 
                     if (t.getGlobal()) {
-                        s.mapTrain(s, false, next -> ((EntityScriptableRollingStock) next).textFields.put(n, t));
+                        s.mapTrain(s, false, next -> ((EntityScriptableRollingStock) next).setTextField(n, t));
                     }
                 });
 
@@ -1006,7 +1148,7 @@ public class TextField {
                                 EntityScriptableRollingStock nextStock = (EntityScriptableRollingStock) next;
                                 if (!t.equals(nextStock.textFields.get(n))) {
                                     t.createVBO();
-                                    nextStock.textFields.put(n, t);
+                                    nextStock.setTextField(n, t);
                                 }
                             });
                         }

@@ -13,6 +13,8 @@ import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.model.part.TrackFollower.TrackFollowers;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
+import cam72cam.immersiverailroading.script.ServerSideSound;
+import cam72cam.immersiverailroading.script.SoundConfig;
 import cam72cam.immersiverailroading.textUtil.TextField;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
@@ -21,9 +23,7 @@ import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
 import util.Matrix4;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -47,6 +47,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     protected final List<Control<ENTITY>> controls;
     protected final List<Readout<ENTITY>> gauges;
     protected final List<Seat<ENTITY>> seats;
+    protected final Map<String, ServerSideSound<ENTITY>> serverSideSounds = new HashMap<>();
 
     protected List<LightFlare<ENTITY>> headlights;
 
@@ -237,6 +238,16 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         return true;
     }
 
+    public ServerSideSound<ENTITY> getServerSideSound(SoundConfig config) {
+        return serverSideSounds.get(config.location);
+    }
+
+    public void createServerSideSound(SoundConfig config, EntityRollingStock stock) {
+        ServerSideSound<ENTITY> sound = new ServerSideSound<>();
+        sound.setConfig((ENTITY) stock, config);
+        sound.createSound((ENTITY) stock);
+        this.serverSideSounds.put(config.location, sound);
+    }
 
     public final void onClientTick(EntityMoveableRollingStock stock) {
         effects((ENTITY) stock);
@@ -264,6 +275,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
         flangeSound.effects(stock);
         sway.effects(stock);
+
+        serverSideSounds.forEach((n, s) -> s.effects(stock));
     }
 
     public final void onClientRemoved(EntityMoveableRollingStock stock) {
@@ -281,6 +294,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         slidingSound.removed(stock);
         flangeSound.removed(stock);
         sway.removed(stock);
+
+        serverSideSounds.forEach((n, s) -> s.removed(stock));
     }
 
     private int lod_level = LOD_LARGE;
