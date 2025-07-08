@@ -182,6 +182,9 @@ public class SimulationState {
             this.brakeCylinderPressure = stock.getBrakeCylinderPressure();
 
             this.rollingResistanceCoefficient = stock.getDefinition().rollingResistanceCoefficient;
+            
+            System.out.println("Masse: " + designMassKg);
+            System.out.println("Bremskraft: " + designAdhesionNewtons);
         }
 
         @Override
@@ -463,7 +466,7 @@ public class SimulationState {
                     (1 - config.trainBrakePressure) / 0.3f, 1), config.independentBrake);
         double brakeAdhesionNewtons = config.designAdhesionNewtons * config.brakeCylinderPressure;
         double handBrakeNewtons = config.handBrakeNewtons;
-        double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
+        double dynamicBrakeNewtons = config.dynamicBrakeNewtons * Config.ConfigBalance.brakeMultiplier;
         
         this.sliding = false;
         if (brakeAdhesionNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
@@ -477,6 +480,8 @@ public class SimulationState {
         
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
+        
+        System.out.println("final: " + brakeAdhesionNewtons);
 
         return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons
                 + directResistance + startingFriction + handBrakeNewtons + dynamicBrakeNewtons;
