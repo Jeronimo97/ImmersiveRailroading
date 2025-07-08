@@ -310,6 +310,16 @@ public class LocomotiveDiesel extends Locomotive {
 	public float getRelativeRPM() {
 		return relativeRPM;
 	}
+	
+	@Override
+	public void onDrag(Control<?> component, double newValue) {
+	    super.onDrag(component, newValue);
+	    switch (component.part.type) {
+	        case DYNAMIC_BRAKE_X:
+	            setDynamicBrake(getControlPosition(component));
+	            break;
+	    }
+	}
 
 	@Override
 	public void onDragRelease(Control<?> component) {
@@ -326,12 +336,27 @@ public class LocomotiveDiesel extends Locomotive {
 	}
 	
 	@Override
+	public boolean playerCanDrag(Player player, Control<?> control) {
+	    switch (control.part.type) {
+	        case DYNAMIC_BRAKE_X:
+	            return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
+	    }
+	    return super.playerCanDrag(player, control);
+	}
+	
+	@Override
     protected void copySettings(final EntityRollingStock stock, final boolean direction) {
         if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).getDefinition().muliUnitCapable) {
             ((LocomotiveDiesel) stock).setRealDynamicBrake(this.getDynamicBrake());
         }
         super.copySettings(stock, direction);
     }
+	
+	@Override
+	public void setTrainBrake(float newTrainBrake) {
+	    super.setTrainBrake(newTrainBrake);
+	    setRealDynamicBrake(newTrainBrake);
+	}
 	
 	public float getDynamicBrake() {
         return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
