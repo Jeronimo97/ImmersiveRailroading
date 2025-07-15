@@ -495,7 +495,7 @@ public abstract class Locomotive extends FreightTank{
             sandingKeyTimeout--;
         }
         isSanding = false;
-        sandingKey = sandingKey || isSanding();
+        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
         if (sandingKey) {
             ItemStack stack = this.cargoItems.get(2);
             if (sandTime == 0) {
