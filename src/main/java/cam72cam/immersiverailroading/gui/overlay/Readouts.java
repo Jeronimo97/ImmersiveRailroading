@@ -36,7 +36,8 @@ public enum Readouts {
     CHEST_PRESSURE,
     HAND_BRAKE,
     BRAKE_CYLINDER_PRESSURE,
-    DYNAMIC_BRAKE
+    DYNAMIC_BRAKE,
+    ROLLING_STOCK_PITCH,
     ;
 
     public float getValue(EntityRollingStock stock) {
@@ -125,6 +126,9 @@ public enum Readouts {
             case DYNAMIC_BRAKE:
                 return (float) (stock instanceof LocomotiveDiesel ?
                         ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
+            case ROLLING_STOCK_PITCH:
+                System.out.println("Pitch: " + stock.getRotationPitch());
+                return stock.getRotationPitch();
         }
         return 0;
     }
