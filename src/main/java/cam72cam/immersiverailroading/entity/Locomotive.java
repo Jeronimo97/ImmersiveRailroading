@@ -408,12 +408,28 @@ public abstract class Locomotive extends FreightTank{
 		if (passenger instanceof Player && !((Player) passenger).hasPermission(Permissions.BOARD_LOCOMOTIVE)) {
 			return false;
 		}
-		return super.canFitPassenger(passenger);
-	}
+        // TODO DEBUG
+        System.out.println("Board " + passenger.internal.getName() + " (" + passenger.getUUID() + " ) into " 
+                 + this.defID + " (" + this.getUUID() + ")");
+        System.out.println("Loco Pos:" + this.getPosition().x + ", " + this.getPosition().y + ", "
+                + this.getPosition().z);
+        System.out.println("Player Pos:" + passenger.getPosition().x + ", "
+                + passenger.getPosition().y + ", " + passenger.getPosition().z);
+        return super.canFitPassenger(passenger);
+    }
 
-	@Override
-	public void onTick() {
-		super.onTick();
+    @Override
+    public void onTick() {
+        // TODO DEBUG
+        if (Double.isFinite(this.getPosition().x)) {
+            System.out.println("Dist Trav: " + distanceTraveled);
+            System.out.println("Real Dist Trav: " + distanceTraveledReal);
+            System.out.println("Applied Force: " + getAppliedTractiveEffort(getCurrentSpeed()));
+            System.out.println("Applied Super Force: " + getAppliedTractiveEffort(super.getCurrentSpeed()));
+            System.out.println("Throttle: " + getThrottle());
+            System.out.println("Speed: " + getCurrentSpeed().metric());
+        }
+        super.onTick();
 		
 		if (getWorld().isServer) {
 			sync.setInterval(5);
