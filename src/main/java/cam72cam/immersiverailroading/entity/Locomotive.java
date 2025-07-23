@@ -421,13 +421,16 @@ public abstract class Locomotive extends FreightTank{
     @Override
     public void onTick() {
         // TODO DEBUG
-        if (Double.isFinite(this.getPosition().x)) {
-            System.out.println("Dist Trav: " + distanceTraveled);
-            System.out.println("Real Dist Trav: " + distanceTraveledReal);
-            System.out.println("Applied Force: " + getAppliedTractiveEffort(getCurrentSpeed()));
-            System.out.println("Applied Super Force: " + getAppliedTractiveEffort(super.getCurrentSpeed()));
-            System.out.println("Throttle: " + getThrottle());
-            System.out.println("Speed: " + getCurrentSpeed().metric());
+        if (Double.isInfinite(this.getPosition().x) || Double.isNaN(this.getPosition().x)) {
+            System.out.println("Rolling Stock: " + this.defID + " (" + this.getUUID() + ")");
+            System.out.println("Loco Pos:" + this.getPosition().x + ", " + this.getPosition().y + ", "
+                    + this.getPosition().z);
+            System.out.println("Dist Trav: " + this.distanceTraveled);
+            System.out.println("Real Dist Trav: " + this.distanceTraveledReal);
+            System.out.println("Applied Force: " + this.getAppliedTractiveEffort(this.getCurrentSpeed()));
+            System.out.println("Applied Super Force: " + this.getAppliedTractiveEffort(super.getCurrentSpeed()));
+            System.out.println("Throttle: " + this.getThrottle());
+            System.out.println("Speed: " + this.getCurrentSpeed().metric());
         }
         super.onTick();
 		
