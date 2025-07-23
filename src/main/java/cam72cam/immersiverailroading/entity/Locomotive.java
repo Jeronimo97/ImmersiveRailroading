@@ -421,7 +421,7 @@ public abstract class Locomotive extends FreightTank{
     @Override
     public void onTick() {
         // TODO DEBUG
-        if (Double.isInfinite(this.getPosition().x) || Double.isNaN(this.getPosition().x)) {
+        if (Double.isInfinite(this.getPosition().x) || Double.isNaN(this.getPosition().x) || this.getThrottle() != 0) {
             System.out.println("Rolling Stock: " + this.defID + " (" + this.getUUID() + ")");
             System.out.println("Loco Pos:" + this.getPosition().x + ", " + this.getPosition().y + ", "
                     + this.getPosition().z);
