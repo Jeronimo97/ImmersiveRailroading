@@ -408,30 +408,11 @@ public abstract class Locomotive extends FreightTank{
 		if (passenger instanceof Player && !((Player) passenger).hasPermission(Permissions.BOARD_LOCOMOTIVE)) {
 			return false;
 		}
-        // TODO DEBUG
-        System.out.println("Board " + passenger.internal.getName() + " (" + passenger.getUUID() + " ) into " 
-                 + this.defID + " (" + this.getUUID() + ")");
-        System.out.println("Loco Pos:" + this.getPosition().x + ", " + this.getPosition().y + ", "
-                + this.getPosition().z);
-        System.out.println("Player Pos:" + passenger.getPosition().x + ", "
-                + passenger.getPosition().y + ", " + passenger.getPosition().z);
         return super.canFitPassenger(passenger);
     }
 
     @Override
     public void onTick() {
-        // TODO DEBUG
-        if (Double.isInfinite(this.getPosition().x) || Double.isNaN(this.getPosition().x) || this.getThrottle() != 0) {
-            System.out.println("Rolling Stock: " + this.defID + " (" + this.getUUID() + ")");
-            System.out.println("Loco Pos:" + this.getPosition().x + ", " + this.getPosition().y + ", "
-                    + this.getPosition().z);
-            System.out.println("Dist Trav: " + this.distanceTraveled);
-            System.out.println("Real Dist Trav: " + this.distanceTraveledReal);
-            System.out.println("Applied Force: " + this.getAppliedTractiveEffort(this.getCurrentSpeed()));
-            System.out.println("Applied Super Force: " + this.getAppliedTractiveEffort(super.getCurrentSpeed()));
-            System.out.println("Throttle: " + this.getThrottle());
-            System.out.println("Speed: " + this.getCurrentSpeed().metric());
-        }
         super.onTick();
 		
 		if (getWorld().isServer) {
@@ -458,7 +439,7 @@ public abstract class Locomotive extends FreightTank{
 				bellKeyTimeout--;
 			}
 			
-			if (deadMansSwitch && !this.getCurrentSpeed().isZero()) {
+			if (deadMansSwitch && !getCurrentSpeed().isZero()) {
 				boolean hasDriver = this.getPassengers().stream().anyMatch(Entity::isPlayer);
 				if (!hasDriver) {
 					this.setThrottle(0);
@@ -538,17 +519,18 @@ public abstract class Locomotive extends FreightTank{
 	public abstract double getAppliedTractiveEffort(Speed speed);
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
-    protected final double getStaticTractiveEffort() {
+    protected final double getStaticTractiveEffort(Speed speed) {
         return getDefinition().getScriptedStartingTractionNewtons(gauge, this)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
-                        super.getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
+                        speed.metric())) * Config.ConfigBalance.slopeMultiplier)
                 * Config.ConfigBalance.tractionMultiplier
                 * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 1);
     }
 	
     protected double simulateWheelSlip() {
-        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
-        double staticTractiveEffort = getStaticTractiveEffort();
+        Speed speed = super.getCurrentSpeed();
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(speed));
+        double staticTractiveEffort = getStaticTractiveEffort(speed);
         slipping = appliedTractiveEffort > staticTractiveEffort;
 
         if (cogging || !slipping)
@@ -558,7 +540,7 @@ public abstract class Locomotive extends FreightTank{
         return Math.copySign((adhesionFactor - 1) / 8, getReverser());
     }
 	
-    public double getTractiveEffortNewtons(final Speed speed) {
+    public double getTractiveEffortNewtons(Speed speed) {
         if (!this.isBuilt()
                 || Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()
                         && this.getDefinition().isSpeedLimiter())
@@ -572,8 +554,8 @@ public abstract class Locomotive extends FreightTank{
         return appliedTractiveEffort;
     }
     
-    public double speedPercent(final Speed speed) {
-        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
+    public double speedPercent(Speed speed) {
+        return Math.abs(speed.metric() / getDefinition().getMaxSpeed(gauge).metric());
     }
 
 	@Override
@@ -600,8 +582,8 @@ public abstract class Locomotive extends FreightTank{
 		if (stock instanceof Locomotive && ((Locomotive)stock).getDefinition().muliUnitCapable) {
 			((Locomotive) stock).setRealThrottle(this.getThrottle());
 			((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
-			((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
 		}
+		((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
 	}
 
 	@Override
@@ -726,9 +708,7 @@ public abstract class Locomotive extends FreightTank{
 
 	public void setTrainBrake(float newTrainBrake) {
 		setRealTrainBrake(newTrainBrake);
-		if (this.getDefinition().muliUnitCapable) {
-			this.mapTrain(this, true, false, this::copySettings);
-		}
+		this.mapTrain(this, true, false, this::copySettings);
 	}
 	private void setRealTrainBrake(float newTrainBrake) {
 		newTrainBrake = Math.min(1, Math.max(0, newTrainBrake));

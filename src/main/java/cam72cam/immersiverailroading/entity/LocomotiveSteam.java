@@ -132,7 +132,7 @@ public class LocomotiveSteam extends Locomotive {
 
         double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
         double expansionPressure = getChestPressure() / expansion * (1 + Math.log(expansion));
-        double backPressure = expansionPressure * Math.log(1 + 2.67 * Math.abs(speedPercent(speed))
+        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
                 * Math.abs(reverser) * (getDefinition().getCylinderCount() == 3 ? 1.15 : 1));
         double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
         
@@ -146,7 +146,7 @@ public class LocomotiveSteam extends Locomotive {
                 * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
-        if (getWorld().isClient && appliedTraction > getStaticTractiveEffort()) {
+        if (getWorld().isClient && appliedTraction > getStaticTractiveEffort(speed)) {
             appliedTraction *= 1.1;
         }
 
@@ -169,7 +169,7 @@ public class LocomotiveSteam extends Locomotive {
         if (reverser == 0)
             return;
         Speed speed = super.getCurrentSpeed();
-        double speedPercent = Math.abs(speedPercent(speed));
+        double speedPercent = speedPercent(speed);
         double throttle = getThrottle();
 
         if (getChestPressure() < getMaxChestPressure()) {

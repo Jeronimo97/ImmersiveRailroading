@@ -180,7 +180,7 @@ public class LocomotiveDiesel extends Locomotive {
 
 	@Override
 	public void setThrottle(float newThrottle) {
-		int notches = getDefinition().getThrottleNotches();
+		int notches = getDefinition().getThrottleNotches() * 2;
 		if (newThrottle > getThrottle()) {
 			super.setThrottle((float) (Math.ceil(newThrottle * notches) / notches));
 		} else {
@@ -202,7 +202,7 @@ public class LocomotiveDiesel extends Locomotive {
 			double maxPowerAtSpeed = maxPower_W * efficiency / Math.max(1, Math.abs(speed.metersPerSecond()));
 			double applied = maxPowerAtSpeed * relativeRPM * getReverser();
 			if (getDefinition().hasDynamicTractionControl) {
-				double max = getStaticTractiveEffort();
+				double max = getStaticTractiveEffort(speed);
 				if (Math.abs(applied) > max) {
 					return Math.copySign(max, applied) * 0.95;
 				}
