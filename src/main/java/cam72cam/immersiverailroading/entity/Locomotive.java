@@ -1,7 +1,5 @@
 package cam72cam.immersiverailroading.entity;
 
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.STEEL;
-
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
@@ -579,11 +577,14 @@ public abstract class Locomotive extends FreightTank{
 	 */
 
 	protected void copySettings(EntityRollingStock stock, boolean direction) {
-		if (stock instanceof Locomotive && ((Locomotive)stock).getDefinition().muliUnitCapable) {
-			((Locomotive) stock).setRealThrottle(this.getThrottle());
-			((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
+		if (stock instanceof Locomotive) {
+		    ((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
+		    if (((Locomotive)stock).getDefinition().muliUnitCapable) {
+		        ((Locomotive) stock).setRealThrottle(this.getThrottle());
+		        ((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
+		    }
 		}
-		((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
+		    
 	}
 
 	@Override
