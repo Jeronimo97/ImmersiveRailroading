@@ -200,12 +200,54 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
 
     @LuaFunction(module = "IR", name = "setIndependentBrake")
     public void setIndependentBrakeLua(LuaValue value) {
-        setIndependentBrake(value.tofloat());
+        /* */
     }
 
     @LuaFunction(module = "IR", name = "getIndependentBrake")
     public LuaValue getIndependentBrakeLua() {
-        return LuaValue.valueOf(getIndependentBrake());
+        if (this instanceof Locomotive) {
+            float indBrake = ((Locomotive) this).getIndependentBrake();
+            return LuaValue.valueOf(indBrake);
+        }
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR", name = "setDynamicBrake")
+    public void setDynamicBrakeLua(LuaValue value) {
+        /* */
+    }
+
+    @LuaFunction(module = "IR", name = "getDynamicBrake")
+    public LuaValue getDynamicBrakeLua() {
+        if (this instanceof LocomotiveDiesel) {
+            float dynBrake = ((LocomotiveDiesel) this).getDynamicBrake();
+            return LuaValue.valueOf(dynBrake);
+        }
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR", name = "setHandBrake")
+    public void setHandBrakeLua(LuaValue value) {
+        setHandBrake(value.tofloat());
+    }
+
+    @LuaFunction(module = "IR", name = "getHandBrake")
+    public LuaValue getHandBrakeLua() {
+        return LuaValue.valueOf(getHandBrake());
+    }
+    
+    @LuaFunction(module = "IR", name = "setSanding")
+    public void setSandingLua(LuaValue value) {
+        /* */
+    }
+
+    @LuaFunction(module = "IR", name = "isSanding")
+    public LuaValue isSandingLua() {
+        if (this instanceof Locomotive) {
+            boolean sanding = ((Locomotive) this).isSanding();
+            return LuaValue.valueOf(sanding);
+        }
+        return LuaValue.valueOf(false);
     }
 
     @LuaFunction(module = "IR")
@@ -505,6 +547,15 @@ public abstract class EntityScriptableRollingStock extends EntityCoupleableRolli
             return LuaValue.valueOf(pressure);
         }
 
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR", name = "getChestPressure")
+    public LuaValue getChestPressureLua() {
+        if (this instanceof LocomotiveSteam) {
+            float pressure = ((LocomotiveSteam) this).getChestPressurePercent();
+            return LuaValue.valueOf(pressure);
+        }
         return LuaValue.valueOf(0);
     }
 

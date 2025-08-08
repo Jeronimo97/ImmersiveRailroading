@@ -372,6 +372,11 @@ public class LocomotiveDiesel extends Locomotive {
     public float getDynamicBrakeMultiplier() {
         return getDefinition().getDynamicBrake();
     }
+    
+    @Override
+    public void setDynamicBrakeLua(LuaValue val) {
+        setDynamicBrake(val.tofloat());
+    }
 
     public void setDynamicBrake(final float newDynamicBrakePos) {
         setRealDynamicBrake(newDynamicBrakePos);

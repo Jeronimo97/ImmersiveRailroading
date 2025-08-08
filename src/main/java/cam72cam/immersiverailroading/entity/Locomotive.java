@@ -91,6 +91,10 @@ public abstract class Locomotive extends FreightTank{
 	@TagSync
 	@TagField("localHorsepower")
 	public double localHorsepower = -1;
+	
+	   @TagSync
+	    @TagField("localPowerMultiplier")
+	    public double localPowerMultiplier = -1;
 
 	/*
 	 * 
@@ -789,6 +793,8 @@ public abstract class Locomotive extends FreightTank{
 				return LuaValue.valueOf(this.localHorsepower == -1 ? getDefinition().getHorsepower() : this.localHorsepower);
 			case "traction":
 				return LuaValue.valueOf(this.localTraction == -1 ? getDefinition().getTraction() : this.localTraction);
+			case "power_multiplier":
+			    return LuaValue.valueOf(this.localPowerMultiplier == -1 ? this.getDefinition().getPowerMultiplier() : this.localPowerMultiplier);
 			default:
 				return LuaValue.valueOf(0);
 		}
@@ -808,6 +814,9 @@ public abstract class Locomotive extends FreightTank{
 			case "horsepower":
 				this.localHorsepower = newValue;
 				break;
+			case "power_multiplier":
+			    this.localPowerMultiplier = newValue;
+			    break;
 		}
 	}
 	
@@ -816,5 +825,14 @@ public abstract class Locomotive extends FreightTank{
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
         return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+    }
+    
+    @Override
+    public void setSandingLua(LuaValue val) {
+        setSanding(val.toboolean());
+    }
+    
+    public void setSanding(boolean sanding) {
+        sandingKey = sanding;
     }
 }
