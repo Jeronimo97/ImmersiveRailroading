@@ -1,4 +1,4 @@
-package cam72cam.immersiverailroading.script;
+package cam72cam.immersiverailroading.script.sound;
 
 import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;

@@ -1112,7 +1112,11 @@ public class TextField {
 
 
                     if (t.getGlobal()) {
-                        s.mapTrain(s, false, next -> ((EntityScriptableRollingStock) next).setTextField(n, t));
+                        s.mapTrain(s, false, next -> {
+                            if (next.getDefinition().getMesh().getGroup(n) != null) {
+                                ((EntityScriptableRollingStock) next).textFields.put(n, t);
+                            }
+                        });
                     }
                 });
 
@@ -1148,7 +1152,9 @@ public class TextField {
                                 EntityScriptableRollingStock nextStock = (EntityScriptableRollingStock) next;
                                 if (!t.equals(nextStock.textFields.get(n))) {
                                     t.createVBO();
-                                    nextStock.setTextField(n, t);
+                                    if (nextStock.getDefinition().getMesh().getGroup(n) != null) {
+                                        nextStock.textFields.put(n, t);
+                                    }
                                 }
                             });
                         }

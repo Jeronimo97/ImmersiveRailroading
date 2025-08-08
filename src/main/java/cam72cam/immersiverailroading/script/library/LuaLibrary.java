@@ -1,4 +1,4 @@
-package cam72cam.immersiverailroading.script;
+package cam72cam.immersiverailroading.script.library;
 
 import cam72cam.mod.ModCore;
 import org.luaj.vm2.*;

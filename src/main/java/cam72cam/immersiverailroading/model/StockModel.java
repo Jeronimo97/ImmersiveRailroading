@@ -13,9 +13,8 @@ import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.model.part.TrackFollower.TrackFollowers;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
-import cam72cam.immersiverailroading.script.ServerSideSound;
-import cam72cam.immersiverailroading.script.SoundConfig;
-import cam72cam.immersiverailroading.textUtil.TextField;
+import cam72cam.immersiverailroading.script.sound.ServerSideSound;
+import cam72cam.immersiverailroading.script.sound.SoundConfig;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
@@ -25,8 +24,6 @@ import util.Matrix4;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.lwjgl.opengl.GL11.*;
 
 public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> extends OBJModel {
     private final DEFINITION def;

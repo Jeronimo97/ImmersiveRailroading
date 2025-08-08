@@ -26,8 +26,12 @@ public class FontLoader {
      */
     static {
         Identifier jsonLocation = new Identifier(ImmersiveRailroading.MODID, "textures/font/ascii.json");
-        Font font = loadFont(DEFAULT, jsonLocation);
-        fonts.put(DEFAULT, font);
+        try {
+            Font font = loadFont(DEFAULT, jsonLocation);
+            fonts.put(DEFAULT, font);
+        } catch (Exception ignore) {
+            // Probably Server side *_*
+        }
     }
 
     /**
@@ -84,7 +88,8 @@ public class FontLoader {
             return new Font(height, width, image, glyphs);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            ModCore.error("An error occurred while loading font %s, maybe file does not exist. Error %s", font, e.getMessage());
+            return null;
         }
     }
 }

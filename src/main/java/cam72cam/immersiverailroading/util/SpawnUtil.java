@@ -126,7 +126,8 @@ public class SpawnUtil {
 					}
 				}
 
-                scriptable.addAllTextFields(def.textFields);
+				scriptable.textFields.putAll(def.textFields);
+				new TextField.PacketSyncTextField(scriptable, scriptable.textFields).sendToObserving(scriptable);
 			}
 
 
@@ -257,7 +258,8 @@ public class SpawnUtil {
 						}
 					});
 
-					scriptable.addAllTextFields(def.textFields);
+					scriptable.textFields.putAll(def.textFields);
+					new TextField.PacketSyncTextField(scriptable, scriptable.textFields).sendToObserving(scriptable);
 				}
 
 				Vec3d length = VecUtil.fromWrongYaw(def.getCouplerPosition(isFlipped ? CouplerType.BACK : CouplerType.FRONT, stock.gauge), originalRot);
