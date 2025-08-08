@@ -37,7 +37,7 @@ jobs:
       env:
         MAVENCI_PASS: ${{ secrets.MAVENCI_PASS }}
       run: ./gradlew publish
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Immersive Railroading ${{matrix.branch}}
         path: build/libs/ImmersiveRailroading-${{matrix.branch}}-*
