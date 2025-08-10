@@ -13,6 +13,7 @@ import cam72cam.mod.model.obj.VertexBuffer;
 import cam72cam.mod.net.Packet;
 import cam72cam.mod.render.opengl.RenderContext;
 import cam72cam.mod.render.opengl.RenderState;
+import cam72cam.mod.render.opengl.Texture;
 import cam72cam.mod.render.opengl.VBO;
 import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.*;
@@ -591,7 +592,7 @@ public class TextField {
             }
 
             buffer = new VBO(() -> this.currentVBO, s -> {
-                s.texture(this.font.texture).lightmap(this.fullbright ? 1 : 0, 1);
+                s.texture(Texture.wrap(this.font.texture)).lightmap(this.fullbright ? 1 : 0, 1);
                 if (finalAnim != null) {
                     s.model_view().multiply(finalAnim);
                 }

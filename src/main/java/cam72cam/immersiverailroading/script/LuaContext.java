@@ -1,8 +1,7 @@
 package cam72cam.immersiverailroading.script;
 
 import cam72cam.immersiverailroading.script.library.LuaLibrary;
-import cam72cam.immersiverailroading.script.modules.MarkupLibrary;
-import cam72cam.immersiverailroading.script.modules.ScriptVectorUtil;
+import cam72cam.immersiverailroading.script.modules.MarkupModule;
 import cam72cam.mod.ModCore;
 import cam72cam.mod.resource.Identifier;
 import org.luaj.vm2.*;
@@ -40,10 +39,6 @@ public class LuaContext {
         os.set("difftime", env.get("os").get("difftime"));
 
         env.set("os", os);
-
-        MarkupLibrary.register(env);
-        // TODO convert ScriptVectorUtil to new implementation!
-        ScriptVectorUtil.VecUtil.setInGlobals(env);
 
         return env;
     }
@@ -155,6 +150,10 @@ public class LuaContext {
                 ModCore.error("Package %s does not exist in the directory %s", module, new File(origin.getPath()).getPath());
             }
         }
+    }
+
+    public void registerLibrary(LuaModule library) {
+        initializeFunctions(library, globals);
     }
 
     public void refreshSerialization(Map<String, LuaValue> tagFields) {

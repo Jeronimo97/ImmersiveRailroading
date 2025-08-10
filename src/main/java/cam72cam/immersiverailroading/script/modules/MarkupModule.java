@@ -1,13 +1,12 @@
 package cam72cam.immersiverailroading.script.modules;
 
-import cam72cam.immersiverailroading.script.LuaContext;
 import cam72cam.immersiverailroading.script.LuaFunction;
+import cam72cam.immersiverailroading.script.LuaModule;
 import cam72cam.immersiverailroading.script.library.LuaLibrary;
 import cam72cam.immersiverailroading.util.CAML;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.util.JSON;
 import cam72cam.mod.resource.Identifier;
-import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -17,13 +16,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class MarkupLibrary {
-    private MarkupLibrary() {}
-
-    public static void register(Globals env) {
-        MarkupLibrary instance = new MarkupLibrary();
-        LuaContext context = LuaContext.create(instance, env);
-    }
+public class MarkupModule implements LuaModule {
+    public MarkupModule() {}
 
     @LuaFunction(module = "Markup")
     private LuaValue read(LuaValue fileIdentifier) {

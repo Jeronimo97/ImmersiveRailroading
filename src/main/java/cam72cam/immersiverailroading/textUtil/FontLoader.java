@@ -21,18 +21,7 @@ public class FontLoader {
     public static final Map<Identifier, Font> fonts = new HashMap<>();
     public static final Identifier DEFAULT = new Identifier("minecraft", "textures/font/ascii.png");
 
-    /*
-      Static block to load the default font (minecraft Ascii font)
-     */
-    static {
-        Identifier jsonLocation = new Identifier(ImmersiveRailroading.MODID, "textures/font/ascii.json");
-        try {
-            Font font = loadFont(DEFAULT, jsonLocation);
-            fonts.put(DEFAULT, font);
-        } catch (Exception ignore) {
-            // Probably Server side *_*
-        }
-    }
+    private FontLoader() {}
 
     /**
      * Get or create a font from an Identifier
@@ -41,7 +30,16 @@ public class FontLoader {
      * @see Font
      */
     public static Font getOrCreateFont(Identifier font) {
+        if (!fonts.containsKey(DEFAULT)) {
+            initDefaultFont();
+        }
         return fonts.computeIfAbsent(font, i -> loadFont(i, null));
+    }
+
+    private static void initDefaultFont() {
+        Identifier jsonLocation = new Identifier(ImmersiveRailroading.MODID, "textures/font/ascii.json");
+        Font font = loadFont(DEFAULT, jsonLocation);
+        fonts.put(DEFAULT, font);
     }
 
     /**
@@ -83,9 +81,7 @@ public class FontLoader {
                 }
             }
 
-            Texture image = Texture.wrap(font);
-
-            return new Font(height, width, image, glyphs);
+            return new Font(height, width, font, glyphs);
 
         } catch (IOException e) {
             ModCore.error("An error occurred while loading font %s, maybe file does not exist. Error %s", font, e.getMessage());

@@ -143,6 +143,7 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 	}
 
 	public void setTexture(String variant) {
+		Map<String, String> names = getDefinition().textureNames;
 		if (getDefinition().textureNames.containsKey(variant)) {
 			this.texture = variant;
 		}

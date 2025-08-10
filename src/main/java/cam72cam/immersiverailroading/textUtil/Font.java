@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.textUtil;
 
 import cam72cam.mod.model.obj.Vec2f;
 import cam72cam.mod.render.opengl.Texture;
+import cam72cam.mod.resource.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Map;
@@ -19,14 +20,14 @@ public class Font {
 
     public int textureHeight;
     public int textureWidth;
-    public Texture texture;
+    public Identifier texture;
     public Map<Character, Glyph> glyphs;
 
     /**
      * Constructor for the struct used by the loader
      * @see FontLoader
      */
-    public Font(int textureHeight, int textureWidth, Texture texture, Map<Character, Glyph> glyphs) {
+    public Font(int textureHeight, int textureWidth, Identifier texture, Map<Character, Glyph> glyphs) {
         this.textureHeight = textureHeight;
         this.textureWidth = textureWidth;
         this.texture = texture;

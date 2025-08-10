@@ -499,11 +499,11 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 		return getWorld().getEntity(uuid, EntityCoupleableRollingStock.class);
 	}
 
-	protected void triggerEvent(String eventName, LuaValue... args) {
+	public void triggerEvent(String eventName, LuaValue... args) {
 		triggerEvent(eventName, LuaValue.varargsOf(args));
 	}
 
-	protected void triggerEvent(String eventName, Varargs args) {
+	public void triggerEvent(String eventName, Varargs args) {
 		List<LuaValue> callBacks = ((EntityScriptableRollingStock) this).luaEventCallbacks.get(eventName);
 		if (callBacks != null) {
 			for (LuaValue callback : callBacks) {
