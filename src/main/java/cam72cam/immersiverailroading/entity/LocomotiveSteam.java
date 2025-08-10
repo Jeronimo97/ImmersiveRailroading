@@ -21,7 +21,6 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.serialization.TagMapper;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -139,17 +138,17 @@ public class LocomotiveSteam extends Locomotive {
         if (pressurePercent <= 0)
             return 0;
 
-        double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
+        double appliedTraction = 98911 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
                 * getDefinition().getPistonStroke(gauge) * 1.02
                 * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7))
-                * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge))
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
         if (getWorld().isClient && appliedTraction > getStaticTractiveEffort(speed)) {
             appliedTraction *= 1.1;
+            appliedTraction *= 2.5f;
         }
-
         return appliedTraction * Math.copySign(1, reverser);
     }
 	
@@ -166,52 +165,53 @@ public class LocomotiveSteam extends Locomotive {
     
     private void chestPressureCalc() {
         double reverser = Math.abs(getReverser());
-        if (reverser == 0)
-            return;
-        Speed speed = super.getCurrentSpeed();
         double speedPercent = speedPercent(speed);
         double throttle = getThrottle();
 
         if (getChestPressure() < getMaxChestPressure()) {
             chestPressure += 0.06
-                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
-                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
-                    * throttle * (1 + Math.max(speedPercent, 0.01f));
+        double speedPercent = speedPercent(super.getCurrentSpeed()); 
+
+        chestPressure += 0.06
+                * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
+                        : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
+                * getThrottle() * (1 + Math.max(speedPercent, 0.01f));
+
+        if (getChestPressure() > getMaxChestPressure()) {
+            chestPressure = getMaxChestPressure();
         }
 
         if (cylinderDrainsEnabled()) {
             chestPressure -= 0.07;
         }
 
-        double factor = (float) (0.015 * chestPressure
-                * reverser * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge));
-        chestPressure -= (float) factor;
+        float factor = (float) ((0.015 * chestPressure
+                * reverser * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge)) + 0.001f);
+        chestPressure -= factor < 0 ? 0 : (float) factor;
 
         if ((speedPercent * getDefinition().getMaxSpeed(gauge).metric()) < getDefinition()
                 .getWheelDiameter(gauge) / (0.035 * getDefinition().getCylinderCount())) {
             boolean isEndStroke = isEndStroke(0, 0.25);
             if (!chuffOn && isEndStroke) {
                 chuffOn = true;
-
-                chestPressure -= 1 * reverser * (1 - 4 * speedPercent);
+                float factor2 = (float) (1 * reverser * (1 - 4 * speedPercent));
+                chestPressure -= factor2 < 0 ? 0 : factor2;
             } else {
                 if (!isEndStroke) {
                     chuffOn = false;
-                    if (getChestPressure() < getMaxChestPressure())
-                        chestPressure += throttle * (1 - speedPercent) * 0.2;
                 }
             }
         }
 
         if (slipping) {
-            chestPressure -= 1 * Math.abs(simulateWheelSlip());
+            chestPressure -= Math.abs(simulateWheelSlip());
         }
         if (getChestPressure() < 0) {
             chestPressure = 0;
         }
     }
 
-    public boolean isEndStroke(final double offset, final double pos) {
+    private boolean isEndStroke(final double offset, final double pos) {
         double percent = angle(distanceTraveled / gauge.scale(), offset);
         double pistonPos = pos;
         float delta = 0.125f;
@@ -219,7 +219,7 @@ public class LocomotiveSteam extends Locomotive {
                 || Math.abs(percent - pistonPos + 1) < delta;
     }
 
-    public float angle(final double distance, final double offset) {
+    private float angle(final double distance, final double offset) {
         double circumference = getDefinition().getWheelDiameter(gauge) * Math.PI
                 / (2 * getDefinition().getCylinderCount());
         double relDist = distance % circumference;
