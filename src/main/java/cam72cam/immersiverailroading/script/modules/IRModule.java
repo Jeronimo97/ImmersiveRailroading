@@ -131,12 +131,60 @@ public class IRModule implements LuaModule {
 
     @LuaFunction(module = "IR")
     public void setIndependentBrake(LuaValue value) {
-        stock.setIndependentBrake(value.tofloat());
+        if (stock instanceof Locomotive) {
+            ((Locomotive) stock).setIndependentBrake(value.tofloat());
+        }
     }
 
-    @LuaFunction(module = "IR", name = "getIndependentBrake")
-    public LuaValue getIndependentBrakeLua() {
-        return LuaValue.valueOf(stock.getIndependentBrake());
+    @LuaFunction(module = "IR")
+    public LuaValue getIndependentBrake() {
+        if (stock instanceof Locomotive) {
+            float indBrake = ((Locomotive) stock).getIndependentBrake();
+            return LuaValue.valueOf(indBrake);
+        }
+        return (LuaValue.valueOf(0));
+    }
+    
+    @LuaFunction(module = "IR")
+    public void setDynamicBrake(LuaValue value) {
+        if (stock instanceof LocomotiveDiesel) {
+            ((LocomotiveDiesel) stock).setDynamicBrake(value.tofloat());
+        }
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue getDynamicBrake() {
+        if (stock instanceof LocomotiveDiesel) {
+            float dynBrake = ((LocomotiveDiesel) stock).getDynamicBrake();
+            return LuaValue.valueOf(dynBrake);
+        }
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR")
+    public void setHandBrake(LuaValue value) {
+        stock.setHandBrake(value.tofloat());
+    }
+
+    @LuaFunction(module = "IR")
+    public LuaValue getHandBrake() {
+        return LuaValue.valueOf(stock.getHandBrake());
+    }
+    
+    @LuaFunction(module = "IR")
+    public void setSanding(LuaValue value) {
+        if (stock instanceof Locomotive) {
+            ((Locomotive) stock).setSanding(value.toboolean());
+        }
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue isSanding() {
+        if (stock instanceof Locomotive) {
+            boolean sanding = ((Locomotive) stock).isSanding();
+            return LuaValue.valueOf(sanding);
+        }
+        return LuaValue.valueOf(false);
     }
 
     @LuaFunction(module = "IR")
@@ -438,6 +486,15 @@ public class IRModule implements LuaModule {
             return LuaValue.valueOf(pressure);
         }
 
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue getChestPressure() {
+        if (stock instanceof LocomotiveSteam) {
+            float pressure = ((LocomotiveSteam) stock).getChestPressurePercent();
+            return LuaValue.valueOf(pressure);
+        }
         return LuaValue.valueOf(0);
     }
 
