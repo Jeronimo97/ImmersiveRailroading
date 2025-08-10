@@ -146,7 +146,6 @@ public class LocomotiveSteam extends Locomotive {
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
         if (getWorld().isClient && appliedTraction > getStaticTractiveEffort(speed)) {
-            appliedTraction *= 1.1;
             appliedTraction *= 2.5f;
         }
         return appliedTraction * Math.copySign(1, reverser);
@@ -165,11 +164,6 @@ public class LocomotiveSteam extends Locomotive {
     
     private void chestPressureCalc() {
         double reverser = Math.abs(getReverser());
-        double speedPercent = speedPercent(speed);
-        double throttle = getThrottle();
-
-        if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure += 0.06
         double speedPercent = speedPercent(super.getCurrentSpeed()); 
 
         chestPressure += 0.06
