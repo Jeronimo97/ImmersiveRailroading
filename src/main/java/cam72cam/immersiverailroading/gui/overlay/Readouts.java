@@ -127,7 +127,6 @@ public enum Readouts {
                 return (float) (stock instanceof LocomotiveDiesel ?
                         ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
             case ROLLING_STOCK_PITCH:
-                System.out.println("Pitch: " + stock.getRotationPitch());
                 return stock.getRotationPitch();
         }
         return 0;
