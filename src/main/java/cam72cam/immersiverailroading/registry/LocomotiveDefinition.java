@@ -66,10 +66,12 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
             muliUnitCapable = true;
             factorOfAdhesion = 0;
         } else {
-            power = properties.getValue("horsepower").asInteger() * internal_inv_scale;
-            traction = properties.getValue("tractive_effort_lbf").asInteger() * internal_inv_scale;
+            double powerKW = Math.ceil(properties.getValue("horsepower_kw").asDouble(0) * 1.341 * internal_inv_scale);
+            power = powerKW != 0 ? powerKW : Math.ceil(properties.getValue("horsepower").asInteger() * internal_inv_scale);
+            double tractionN = Math.ceil(properties.getValue("tractive_effort_n").asDouble(0) / 4.44822 * internal_inv_scale);
+            traction = tractionN != 0 ? tractionN : Math.ceil(properties.getValue("tractive_effort_lbf").asInteger() * internal_inv_scale);
             factorOfAdhesion = properties.getValue("factor_of_adhesion").asDouble(4);
-            maxSpeed = Speed.fromMetric(properties.getValue("max_speed_kmh").asDouble() * internal_inv_scale);
+            maxSpeed = Speed.fromMetric(Math.ceil(properties.getValue("max_speed_kmh").asDouble() * internal_inv_scale));
             muliUnitCapable = properties.getValue("multi_unit_capable").asBoolean();
         }
         isLinkedBrakeThrottle = properties.getValue("isLinkedBrakeThrottle").asBoolean();
