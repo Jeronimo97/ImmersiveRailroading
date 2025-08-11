@@ -12,10 +12,11 @@
 		"max_speed_kmh": 130,
 		"valve_gear": "stephenson",
 		"weight_kg": 71803,
-		"piston_diameter": 0.55,
-		"piston_stroke": 0.64,
-		"wheel_diameter": 1.6,
-		"cylinder_count": 4
+		"piston_diameter": 0.50,
+		"piston_stroke": 0.66,
+		"wheel_diameter": 1.7,
+		"cylinder_count": 2,
+		"power_multiplier": 1.72
 	},
 	"firebox": {
 		"slots": 10,

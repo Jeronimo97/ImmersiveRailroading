@@ -6,17 +6,18 @@
 	"darken_model": "0.03",
 	"model_gauge_m": 2.17,
 	"properties": {
-		"max_psi": 100,
+		"max_psi": 50,
 		"water_capacity_l": 10000, 
 		"horsepower": 200,
-		"tractive_effort_lbf": 5000,
+		"tractive_effort_lbf": 2585,
 		"max_speed_kmh": 100,
 		"valve_gear": "hidden",
-		"weight_kg": 21772,
+		"weight_kg": 24600,
 		"piston_diameter": 0.406,
 		"piston_stroke": 0.508,
 		"wheel_diameter": 2.134,
-		"cylinder_count": 2
+		"cylinder_count": 2,
+		"power_multiplier": 2.1
 	},
 	"firebox": {
 		"slots": 6,

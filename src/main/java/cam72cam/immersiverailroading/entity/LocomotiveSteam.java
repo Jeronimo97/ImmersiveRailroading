@@ -138,11 +138,11 @@ public class LocomotiveSteam extends Locomotive {
         if (pressurePercent <= 0)
             return 0;
 
-        double appliedTraction = 98911 * getDefinition().getCylinderCount()
+        double appliedTraction = 50445 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
-                * getDefinition().getPistonStroke(gauge) * 1.02
+                * getDefinition().getPistonStroke(gauge)
                 * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7))
-                * getMaxChestPressure() / (2 * getDefinition().getWheelDiameter(gauge))
+                * getMaxChestPressure() / getDefinition().getWheelDiameter(gauge)
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
         if (getWorld().isClient && appliedTraction > getStaticTractiveEffort(speed)) {
