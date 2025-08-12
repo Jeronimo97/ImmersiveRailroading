@@ -1,7 +1,5 @@
 package cam72cam.immersiverailroading.script;
 
-import cam72cam.immersiverailroading.script.library.LuaLibrary;
-import cam72cam.immersiverailroading.script.modules.MarkupModule;
 import cam72cam.mod.ModCore;
 import cam72cam.mod.resource.Identifier;
 import org.luaj.vm2.*;
@@ -18,7 +16,8 @@ import java.util.*;
 
 public class LuaContext {
     private final Globals globals;
-    private Map<String, LuaValue> serialization;
+    private Map<String, LuaValue> backingMap;
+    private LuaTable tagFieldTable;
 
     private static Globals sandBoxedGlobals() {
         Globals env = new Globals();
@@ -101,7 +100,7 @@ public class LuaContext {
                     }
 
                     if (hasReturn) {
-                        return (LuaValue) invokeMethod(object, method, (Object[]) args);
+                        return (Varargs) invokeMethod(object, method, (Object[]) args);
                     } else {
                         invokeMethod(object, method, (Object[]) args);
                         return NIL;
@@ -118,8 +117,9 @@ public class LuaContext {
     }
 
     private void initializeSerialization() {
-        serialization = new HashMap<>();
-        globals.set("_TagField", createTagField(serialization));
+        backingMap = new HashMap<>();
+        tagFieldTable = createTagField(backingMap);
+        globals.set("_TagField", tagFieldTable);
     }
 
     @SuppressWarnings("unused")
@@ -157,15 +157,15 @@ public class LuaContext {
     }
 
     public void refreshSerialization(Map<String, LuaValue> tagFields) {
-        for (Map.Entry<String, LuaValue> entry : serialization.entrySet()) {
+        for (Map.Entry<String, LuaValue> entry : backingMap.entrySet()) {
             tagFields.putIfAbsent(entry.getKey(), entry.getValue());
         }
 
-        globals.set("_TagField", createTagField(tagFields));
-        LuaTable tagField = (LuaTable) globals.get("_TagField");
+        backingMap = tagFields;
+        tagFieldTable.setmetatable(buildMeta(backingMap));
 
         for (Map.Entry<String, LuaValue> entry : tagFields.entrySet()) {
-            tagField.set(entry.getKey(), entry.getValue());
+            tagFieldTable.set(entry.getKey(), entry.getValue());
         }
     }
 
@@ -201,19 +201,31 @@ public class LuaContext {
         return null;
     }
 
-    private static LuaTable createTagField(Map<String, LuaValue> tagFields) {
-        LuaTable table = LuaValue.tableOf();
-        LuaTable meta = LuaLibrary.create()
-                .addFunctionWithReturn("__index", (self, key) -> tagFields.getOrDefault(key.tojstring(), LuaValue.NIL))
-                .addFunctionWithReturn("__newindex", (self, key, value) -> {
-                    if (value.isboolean() || value.isnumber() || value.isstring()) {
-                        tagFields.put(key.tojstring(), value);
-                    }
-                    return LuaValue.NIL;
-                })
-                .getAsTable();
+    private LuaTable buildMeta(Map<String, LuaValue> map) {
+        LuaTable meta = new LuaTable();
 
-        table.setmetatable(meta);
-        return table;
+        meta.set("__index", new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue self, LuaValue key) {
+                LuaValue v = map.get(key.tojstring());
+                return v != null ? v : LuaValue.NIL;
+            }
+        });
+
+        meta.set("__newindex", new ThreeArgFunction() {
+            @Override
+            public LuaValue call(LuaValue self, LuaValue key, LuaValue value) {
+                map.put(key.tojstring(), value);
+                return LuaValue.NIL;
+            }
+        });
+
+        return meta;
+    }
+
+    private LuaTable createTagField(Map<String, LuaValue> tagFields) {
+        LuaTable t = LuaValue.tableOf();
+        t.setmetatable(buildMeta(tagFields));
+        return t;
     }
 }
