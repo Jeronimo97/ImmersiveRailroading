@@ -149,7 +149,7 @@ public class CastingGUI implements IScreen {
 			}
 		}
 
-		builder.drawImage(CASTING_GUI_TEXTURE, -100, 0, 200, 100);
+		builder.drawImage(CASTING_GUI_TEXTURE, -100, 0, 200, 100, 1);
 
 		builder.drawTank(- 95, 3, 57, 60, Fluid.LAVA, (float) fluidPercent, false, 0x99fb7e15);
 		builder.drawTank(- 29, 67, 126, 30, Fluid.LAVA, progress/cost, false, 0x998c1919);
