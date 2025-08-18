@@ -10,8 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      VERSION: '0.0.0'
     strategy:
       matrix:
         # branch: [1.7.10-forge, 1.10.2-forge, 1.11.2-forge, 1.12.2-forge, 1.14.4-forge, 1.15.2-forge, 1.16.5-forge, 1.17.1-forge, 1.18.2-forge, 1.19.4-forge, 1.20.1-forge]
@@ -74,18 +72,11 @@ jobs:
           name: Immersive Railroading ${{matrix.branch}}
           path: build/libs/ImmersiveRailroading-${{matrix.branch}}-*
 
-      - name: Create Git Tag
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
-          git tag v${{ env.VERSION }}
-          git push origin v${{ env.VERSION }}
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
           draft: false
           prerelease: false
         env:
@@ -94,8 +85,8 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
           files: build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
