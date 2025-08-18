@@ -12,10 +12,9 @@ import cam72cam.immersiverailroading.Config.ConfigDebug;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.UnitDefinition;
-import cam72cam.immersiverailroading.textUtil.TextField;
+import cam72cam.immersiverailroading.textfield.TextFieldConfig;
 import cam72cam.mod.entity.Player;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
-import cam72cam.mod.text.PlayerMessage;
 import cam72cam.mod.util.DegreeFuncs;
 import cam72cam.mod.world.World;
 import cam72cam.mod.item.ClickResult;
@@ -95,39 +94,29 @@ public class SpawnUtil {
 
 				String number = null;
 
-				// Wow is this ugly...
-                for (Map.Entry<String, TextField> entry : def.textFields.entrySet()) {
-					String n = entry.getKey();
-					TextField t = entry.getValue();
-					if (t.getAvailableFonts() != null) {
-						t.setFont(t.getAvailableFonts().get(0));
+                for (TextFieldConfig config : def.textFields.values()) {
+
+					config.setStock(stock);
+
+					if (config.getAvailableFonts() != null) {
+						config.setFont(config.getAvailableFonts().get(0));
 					}
 
 
-					if (t.getNumberPlate()) {
+					if (config.isNumberPlate()) {
 
-						List<String> filter = t.getFilterAsList().stream().filter(s -> !def.inputs.containsValue(Collections.singletonMap(t.getObject(), s))).collect(Collectors.toList());
+						List<String> filter = config.getFilterAsList().stream().filter(s -> !def.inputs.containsValue(Collections.singletonMap(config.getObject(), s))).collect(Collectors.toList());
 						if (number == null) {
 							Random random = new Random();
 							number = filter.get(random.nextInt(filter.size()));
 						}
 
-						t.setText(number);
-						def.inputs.put(stock.getUUID(), Collections.singletonMap(t.getObject(), number));
+						config.setText(number);
+						def.inputs.put(stock.getUUID(), Collections.singletonMap(config.getObject(), number));
 					}
 
-					if (t.getLinked() != null) {
-						t.getLinked().forEach(l -> {
-							TextField field = def.textFields.get(l);
-							if (field != null) {
-								field.setText(t.getText());
-							}
-						});
-					}
+					scriptable.initTextField(config);
 				}
-
-				scriptable.textFields.putAll(def.textFields);
-				new TextField.PacketSyncTextField(scriptable, scriptable.textFields).sendToObserving(scriptable);
 			}
 
 
@@ -232,34 +221,31 @@ public class SpawnUtil {
 				if (stock instanceof EntityScriptableRollingStock && !def.textFields.isEmpty()) {
 					EntityScriptableRollingStock scriptable  = (EntityScriptableRollingStock) stock;
 
-					// Wow is this ugly...
-					def.textFields.forEach((n, t) -> {
-						if (t.getAvailableFonts() != null) {
-							t.setFont(t.getAvailableFonts().get(0));
+					String number = null;
+
+					for (TextFieldConfig config : def.textFields.values()) {
+
+						config.setStock(stock);
+
+						if (config.getAvailableFonts() != null) {
+							config.setFont(config.getAvailableFonts().get(0));
 						}
 
 
-						if (t.getNumberPlate()) {
-							List<String> filter = t.getFilterAsList().stream().filter(s -> !def.inputs.containsValue(Collections.singletonMap(t.getObject(), s))).collect(Collectors.toList());
-							Random random = new Random();
+						if (config.isNumberPlate()) {
 
-							String text = filter.get(random.nextInt(filter.size()));
-							t.setText(text);
-							def.inputs.put(stock.getUUID(), Collections.singletonMap(t.getObject(), text));
-
-							if (t.getLinked() != null) {
-								t.getLinked().forEach(l -> {
-									TextField field = def.textFields.get(l);
-									if (field != null) {
-										field.setText(text);
-									}
-								});
+							List<String> filter = config.getFilterAsList().stream().filter(s -> !def.inputs.containsValue(Collections.singletonMap(config.getObject(), s))).collect(Collectors.toList());
+							if (number == null) {
+								Random random = new Random();
+								number = filter.get(random.nextInt(filter.size()));
 							}
-						}
-					});
 
-					scriptable.textFields.putAll(def.textFields);
-					new TextField.PacketSyncTextField(scriptable, scriptable.textFields).sendToObserving(scriptable);
+							config.setText(number);
+							def.inputs.put(stock.getUUID(), Collections.singletonMap(config.getObject(), number));
+						}
+
+						scriptable.initTextField(config);
+					}
 				}
 
 				Vec3d length = VecUtil.fromWrongYaw(def.getCouplerPosition(isFlipped ? CouplerType.BACK : CouplerType.FRONT, stock.gauge), originalRot);

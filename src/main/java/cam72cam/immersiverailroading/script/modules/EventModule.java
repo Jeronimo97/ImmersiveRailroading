@@ -4,6 +4,7 @@ import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock;
 import cam72cam.immersiverailroading.entity.EntityScriptableRollingStock;
 import cam72cam.immersiverailroading.script.LuaFunction;
 import cam72cam.immersiverailroading.script.LuaModule;
+import cam72cam.immersiverailroading.script.library.ILuaEvent;
 import cam72cam.mod.ModCore;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
@@ -12,16 +13,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class EventModule implements LuaModule {
-    private final EntityScriptableRollingStock stock;
+    private EntityScriptableRollingStock stock;
+    private final ILuaEvent event;
 
-    public EventModule(EntityScriptableRollingStock stock) {
-        this.stock = stock;
+    public EventModule(ILuaEvent event) {
+        this.event = event;
+        if (event instanceof EntityScriptableRollingStock) {
+            this.stock = (EntityScriptableRollingStock) event;
+        }
     }
 
     @LuaFunction(module = "Events")
     public void registerEvent(LuaValue name, LuaValue func) {
         if (func.isfunction()) {
-            stock.luaEventCallbacks.computeIfAbsent(name.tojstring(), k -> new ArrayList<>()).add(func);
+            event.getLuaEventCallbacks().computeIfAbsent(name.tojstring(), k -> new ArrayList<>()).add(func);
         } else {
             ModCore.warn("registerEvent called with non-function for event: " + name.tojstring());
         }
@@ -35,16 +40,23 @@ public class EventModule implements LuaModule {
             return;
         }
         Varargs varargs = LuaValue.varargsOf(Arrays.copyOfRange(args, 1, args.length));
-        stock.mapTrain(stock, false, stock ->  stock.triggerEvent(funcName, varargs));
+
+        if (stock != null) {
+            stock.mapTrain(stock, false, stock -> ((EntityScriptableRollingStock) stock).triggerEvent(funcName, varargs));
+        } else {
+            event.triggerEvent(funcName, varargs);
+        }
     }
 
     @LuaFunction(module = "Events")
     public void triggerCouplerEvent(LuaValue... args) {
-        String functionName = args[0].tojstring();
-        EntityCoupleableRollingStock.CouplerType coupler = EntityCoupleableRollingStock.CouplerType.valueOf(args[1].tojstring().toUpperCase());
+        if (stock != null) {
+            String functionName = args[0].tojstring();
+            EntityCoupleableRollingStock.CouplerType coupler = EntityCoupleableRollingStock.CouplerType.valueOf(args[1].tojstring().toUpperCase());
 
-        EntityScriptableRollingStock coupled = (EntityScriptableRollingStock) stock.getCoupled(coupler);
+            EntityScriptableRollingStock coupled = (EntityScriptableRollingStock) stock.getCoupled(coupler);
 
-        coupled.triggerEvent(functionName, LuaValue.varargsOf(Arrays.copyOfRange(args, 2, args.length)));
+            coupled.triggerEvent(functionName, LuaValue.varargsOf(Arrays.copyOfRange(args, 2, args.length)));
+        }
     }
 }

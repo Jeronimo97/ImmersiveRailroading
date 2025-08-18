@@ -48,6 +48,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
     protected List<LightFlare<ENTITY>> headlights;
 
+    protected TextField<ENTITY> textField = new TextField<>();
+
     private final TrackFollowers frontTrackers;
     private final TrackFollowers rearTrackers;
 
@@ -294,6 +296,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         sway.removed(stock);
 
         serverSideSounds.forEach((n, s) -> s.removed(stock));
+        textField.removed(stock);
     }
 
     private int lod_level = LOD_LARGE;
@@ -376,8 +379,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         doors.forEach(c -> c.postRender(stock, state, partialTicks));
         gauges.forEach(c -> c.postRender(stock, state, partialTicks));
         headlights.forEach(x -> x.postRender(stock, state));
-        // I don't like this, but I can't think of another way to implement the text fields into the pipeline
-        ((EntityScriptableRollingStock) stock).textFields.forEach((n, t) -> t.postRender(stock, state, animations, partialTicks));
+        textField.postRender(stock, state, this.animations, partialTicks);
     }
 
     public List<Control<ENTITY>> getControls() {

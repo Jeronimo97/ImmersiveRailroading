@@ -13,9 +13,7 @@ import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
 import cam72cam.immersiverailroading.library.Permissions;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
-import cam72cam.mod.ModCore;
 import cam72cam.mod.entity.sync.TagSync;
-import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
@@ -28,8 +26,6 @@ import cam72cam.immersiverailroading.Config.ConfigDebug;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.library.ChatText;
 import cam72cam.immersiverailroading.util.VecUtil;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
 
 public abstract class EntityCoupleableRollingStock extends EntityMoveableRollingStock {
 
@@ -497,23 +493,6 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 
 	public EntityCoupleableRollingStock findByUUID(UUID uuid) {
 		return getWorld().getEntity(uuid, EntityCoupleableRollingStock.class);
-	}
-
-	public void triggerEvent(String eventName, LuaValue... args) {
-		triggerEvent(eventName, LuaValue.varargsOf(args));
-	}
-
-	public void triggerEvent(String eventName, Varargs args) {
-		List<LuaValue> callBacks = ((EntityScriptableRollingStock) this).luaEventCallbacks.get(eventName);
-		if (callBacks != null) {
-			for (LuaValue callback : callBacks) {
-				try {
-					callback.invoke(args);
-				} catch (Exception e) {
-					ModCore.error("Lua callback for event %s failed: %s", eventName, e);
-				}
-			}
-		}
 	}
 
     @Override

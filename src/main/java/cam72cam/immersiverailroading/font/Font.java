@@ -1,7 +1,6 @@
-package cam72cam.immersiverailroading.textUtil;
+package cam72cam.immersiverailroading.font;
 
 import cam72cam.mod.model.obj.Vec2f;
-import cam72cam.mod.render.opengl.Texture;
 import cam72cam.mod.resource.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 

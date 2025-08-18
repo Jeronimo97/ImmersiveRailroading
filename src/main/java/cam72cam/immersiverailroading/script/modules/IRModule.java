@@ -10,9 +10,10 @@ import cam72cam.immersiverailroading.script.LuaFunction;
 import cam72cam.immersiverailroading.script.LuaModule;
 import cam72cam.immersiverailroading.script.library.LuaLibrary;
 import cam72cam.immersiverailroading.script.sound.SoundConfig;
-import cam72cam.immersiverailroading.textUtil.Font;
-import cam72cam.immersiverailroading.textUtil.FontLoader;
-import cam72cam.immersiverailroading.textUtil.TextField;
+import cam72cam.immersiverailroading.font.Font;
+import cam72cam.immersiverailroading.font.FontLoader;
+import cam72cam.immersiverailroading.textfield.TextFieldConfig;
+import cam72cam.immersiverailroading.textfield.library.RGBA;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.ModCore;
 import cam72cam.mod.math.Vec3d;
@@ -285,7 +286,7 @@ public class IRModule implements LuaModule {
             ModCore.info("[Lua] Found more than one TextField defined as %s, using first!", groupName);
         }
 
-        TextField textField = stock.textFields.computeIfAbsent(groupName, t -> TextField.createTextField(groupList.get(0), resX.toint(), resY.toint(), f -> f.setSelectable(false)));
+        TextFieldConfig textField = stock.textFields.computeIfAbsent(groupName, t -> new TextFieldConfig(groupName, resX.toint(), resY.toint(), f -> f.setSelectable(false).setStock(stock)));
         LuaLibrary lib = LuaLibrary.create();
 
         LuaTable[] funcHolder = new LuaTable[1];
@@ -294,13 +295,13 @@ public class IRModule implements LuaModule {
             textField.setFont(new Identifier(f.tojstring()));
             return funcHolder[0];
         }).addFunctionWithReturn("setColor", c -> {
-            textField.setColor(c.tojstring());
+            textField.setColor(RGBA.fromHex(c.tojstring()));
             return funcHolder[0];
         }).addFunctionWithReturn("setFullbright", f -> {
-            textField.setFullBright(f.toboolean());
+            textField.setFullbright(f.toboolean());
             return funcHolder[0];
         }).addFunctionWithReturn("setAlign", a -> {
-            textField.setAlign(a.tojstring());
+            textField.setAlign(TextFieldConfig.Align.valueOf(a.tojstring().toUpperCase()));
             return funcHolder[0];
         }).addFunctionWithReturn("setGap", g -> {
             textField.setGap(g.toint());
@@ -318,13 +319,13 @@ public class IRModule implements LuaModule {
             textField.setSelectable(b.toboolean());
             return funcHolder[0];
         }).addFunctionWithReturn("setVerticalAlign", a -> {
-            textField.setVerticalAlign(a.tojstring());
+            textField.setVerticalAlign(TextFieldConfig.VerticalAlign.valueOf(a.tojstring().toUpperCase()));
             return funcHolder[0];
         }).addFunctionWithReturn("setScale", s -> {
             textField.setScale(s.tofloat());
             return funcHolder[0];
         }).addFunctionWithReturn("update", () -> {
-            new TextField.PacketSyncTextField(stock, stock.textFields).sendToObserving(stock);
+//            new TextFieldClientPacket(stock, textField).sendToObserving(stock);
             return funcHolder[0];
         });
 

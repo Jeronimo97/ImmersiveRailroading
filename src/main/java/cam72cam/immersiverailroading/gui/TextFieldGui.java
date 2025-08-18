@@ -5,7 +5,10 @@ import cam72cam.immersiverailroading.floor.Mesh;
 import cam72cam.immersiverailroading.gui.components.ArrowSelector;
 import cam72cam.immersiverailroading.gui.components.DynamicListSelector;
 import cam72cam.immersiverailroading.model.StockModel;
-import cam72cam.immersiverailroading.textUtil.FontLoader;
+import cam72cam.immersiverailroading.font.FontLoader;
+import cam72cam.immersiverailroading.textfield.TextFieldConfig;
+import cam72cam.immersiverailroading.textfield.library.RGBA;
+import cam72cam.immersiverailroading.textfield.library.TextFieldPacket;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
@@ -26,12 +29,12 @@ public class TextFieldGui implements IScreen {
     private TextField input;
     private TextField color;
     private DynamicListSelector<Identifier> fontSelector;
-    private DynamicListSelector<cam72cam.immersiverailroading.textUtil.TextField> objectSelector;
+    private DynamicListSelector<TextFieldConfig> objectSelector;
     private Button alignButton;
     private Button font;
     private ArrowSelector gap;
     private ArrowSelector offset;
-    private cam72cam.immersiverailroading.textUtil.TextField textField;
+    private TextFieldConfig textField;
     private String currentObject;
     private EntityScriptableRollingStock stock;
     private Button objectButton;
@@ -64,13 +67,13 @@ public class TextFieldGui implements IScreen {
         if (textField == null) {
             List<String> keys = new ArrayList<>(stock.textFields.keySet());
             for (String current : keys) {
-                cam72cam.immersiverailroading.textUtil.TextField temp = stock.textFields.get(current);
+                TextFieldConfig temp = stock.textFields.get(current);
 
-                if (temp.getAvailableFonts() != null || temp.getFontIdent() != null) {
+                if (temp.getAvailableFonts() != null || temp.getFont() != null) {
                     textField = temp;
                     currentObject = current;
 
-                    selectedFont = textField.getFontIdent();
+                    selectedFont = textField.getFont();
                     break;
                 }
             }
@@ -116,25 +119,25 @@ public class TextFieldGui implements IScreen {
 
         yTop += spacingHeight;
 
-        fullbright = new Button(screen, xTop + 60, yTop, width - 145, height, String.valueOf(textField.getFullBright())) {
+        fullbright = new Button(screen, xTop + 60, yTop, width - 145, height, String.valueOf(textField.isFullbright())) {
             @Override
             public void onClick(Player.Hand hand) {
-                textField.setFullBright(!textField.getFullBright());
-                this.setText(String.valueOf(textField.getFullBright()));
+                textField.setFullbright(!textField.isFullbright());
+                this.setText(String.valueOf(textField.isFullbright()));
             }
         };
 
         yTop += spacingHeight;
 
         color = new TextField(screen, xTop + 62, yTop, width - 149, height);
-        color.setText(textField.getColorAsHex());
+        color.setText(textField.getColor().toString());
 
         yTop += spacingHeight;
 
-        alignButton = new Button(screen, xTop + 60, yTop, width - 145, height, textField.getAlignAsString()) {
+        alignButton = new Button(screen, xTop + 60, yTop, width - 145, height, textField.getAlign().toString()) {
             @Override
             public void onClick(Player.Hand hand) {
-                cam72cam.immersiverailroading.textUtil.TextField.Align next = textField.getAlign().next();
+                TextFieldConfig.Align next = textField.getAlign().next();
                 textField.setAlign(next);
                 this.setText(next.toString());
             }
@@ -142,10 +145,10 @@ public class TextFieldGui implements IScreen {
 
         yTop += spacingHeight;
 
-        verticalAlign = new Button(screen, xTop + 60, yTop, width - 145, height, textField.getVerticalAlignAsString()) {
+        verticalAlign = new Button(screen, xTop + 60, yTop, width - 145, height, textField.getVerticalAlign().toString()) {
             @Override
             public void onClick(Player.Hand hand) {
-                cam72cam.immersiverailroading.textUtil.TextField.VerticalAlign next = textField.getVerticalAlign().next();
+                TextFieldConfig.VerticalAlign next = textField.getVerticalAlign().next();
                 textField.setVerticalAlign(next);
                 this.setText(next.toString());
             }
@@ -180,11 +183,11 @@ public class TextFieldGui implements IScreen {
 
         yTop += spacingHeight;
 
-        global = new Button(screen, xTop + 60, yTop, width - 145, height, String.valueOf(textField.getGlobal())) {
+        global = new Button(screen, xTop + 60, yTop, width - 145, height, String.valueOf(textField.isGlobal())) {
             @Override
             public void onClick(Player.Hand hand) {
-                textField.setGlobal(!textField.getGlobal());
-                this.setText(String.valueOf(textField.getGlobal()));
+                textField.setGlobal(!textField.isGlobal());
+                this.setText(String.valueOf(textField.isGlobal()));
             }
         };
 
@@ -211,7 +214,7 @@ public class TextFieldGui implements IScreen {
             }
         };
 
-        objectSelector = new DynamicListSelector<cam72cam.immersiverailroading.textUtil.TextField>(screen,
+        objectSelector = new DynamicListSelector<TextFieldConfig>(screen,
                 width + 15,
                 250,
                 height,
@@ -220,16 +223,16 @@ public class TextFieldGui implements IScreen {
                                 t.getValue().isSelectable())
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (u, v) -> u, LinkedHashMap::new))) {
             @Override
-            public void onClick(cam72cam.immersiverailroading.textUtil.TextField option) {
+            public void onClick(TextFieldConfig option) {
                 TextFieldGui.this.update(option);
             }
         };
     }
 
 
-    private void update(cam72cam.immersiverailroading.textUtil.TextField newSelection) {
+    private void update(TextFieldConfig newSelection) {
         textField = newSelection;
-        selectedFont = textField.getFontIdent();
+        selectedFont = textField.getFont();
 
         availableFonts = textField.getAvailableFonts() != null ? textField.getAvailableFonts() : new ArrayList<>();
 
@@ -238,7 +241,7 @@ public class TextFieldGui implements IScreen {
         }
 
         if (textField.getAvailableFonts() != null) {
-            fontSelector.update(textField.getFontIdent(), textField.getAvailableFonts().stream().collect(Collectors.toMap(i -> new File(i.getPath()).getName(), g -> g, (u, v) -> u, LinkedHashMap::new)));
+            fontSelector.update(textField.getFont(), textField.getAvailableFonts().stream().collect(Collectors.toMap(i -> new File(i.getPath()).getName(), g -> g, (u, v) -> u, LinkedHashMap::new)));
         }
         fontButton.setText(new File(selectedFont.getPath()).getName());
 
@@ -251,15 +254,15 @@ public class TextFieldGui implements IScreen {
         objectButton.setText(currentObject);
         input.setText(textField.getText());
         input.setValidator(textField.getFilter(stock));
-        color.setText(textField.getColorAsHex());
-        fullbright.setText(String.valueOf(textField.getFullBright()));
+        color.setText(textField.getColor().toString());
+        fullbright.setText(String.valueOf(textField.isFullbright()));
         gap.updateVal(textField.getGap());
         offset.updateVal(textField.getOffset());
         scale.updateVal(textField.getScale());
         fontButton.setEnabled(textField.getAvailableFonts() != null);
-        global.setText(String.valueOf(textField.getGlobal()));
+        global.setText(String.valueOf(textField.isGlobal()));
         alignButton.setText(textField.getAlign().toString());
-        verticalAlign.setText(textField.getVerticalAlignAsString());
+        verticalAlign.setText(textField.getVerticalAlign().toString());
 
         fontSelector.setVisible(false);
         objectSelector.setVisible(false);
@@ -272,11 +275,11 @@ public class TextFieldGui implements IScreen {
 
     @Override
     public void onClose() {
-        if (textField.getUnique()) {
+        if (textField.isUnique()) {
             stock.getDefinition().inputs.put(stock.getUUID(), Collections.singletonMap(textField.getObject(), textField.getText()));
         }
 
-        new cam72cam.immersiverailroading.textUtil.TextField.PacketSyncTextFieldServer(stock, stock.textFields).sendToServer();
+        new TextFieldPacket(stock, textField).sendToServer();
     }
 
     @Override
@@ -315,15 +318,14 @@ public class TextFieldGui implements IScreen {
         textField.setText(currentText);
         textField.setFont(selectedFont);
         if (color.getText().matches("^#([A-Fa-f0-9]{6})$")) {
-            textField.setColor(color.getText());
+            textField.setColor(RGBA.fromHex(color.getText()));
         }
 
-        stock.textFields.put(currentObject, textField);
+        // stock.textFields.put(currentObject, textField);
 
-
-        // Not quite sure if I should keep it at refreshing every 60 frames (Maybe every 30 frames?)
         if (frame >= REFRESH) {
-            stock.textFields.forEach((k, v) -> v.createVBO());
+            textField.markDirty(true);
+            stock.initTextField(textField);
             frame = 0;
         }
 

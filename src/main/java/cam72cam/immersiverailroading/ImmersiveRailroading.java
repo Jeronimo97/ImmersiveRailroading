@@ -22,7 +22,8 @@ import cam72cam.immersiverailroading.render.multiblock.MBBlueprintRender;
 import cam72cam.immersiverailroading.render.multiblock.TileMultiblockRender;
 import cam72cam.immersiverailroading.render.rail.RailPreviewRender;
 import cam72cam.immersiverailroading.script.sound.SoundConfig;
-import cam72cam.immersiverailroading.textUtil.TextField;
+import cam72cam.immersiverailroading.textfield.library.TextFieldClientPacket;
+import cam72cam.immersiverailroading.textfield.library.TextFieldPacket;
 import cam72cam.immersiverailroading.thirdparty.CompatLoader;
 import cam72cam.immersiverailroading.tile.*;
 import cam72cam.immersiverailroading.util.IRFuzzy;
@@ -91,8 +92,8 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(GuiBuilder.ControlChangePacket::new, PacketDirection.ClientToServer);
 				Packet.register(ItemPaintBrush.PaintBrushPacket::new, PacketDirection.ClientToServer);
 				Packet.register(TileRailBase.AugmentPacket::new, PacketDirection.ClientToServer);
-				Packet.register(TextField.PacketSyncTextField::new, PacketDirection.ServerToClient);
-				Packet.register(TextField.PacketSyncTextFieldServer::new, PacketDirection.ClientToServer);
+				Packet.register(TextFieldPacket::new, PacketDirection.ClientToServer);
+				Packet.register(TextFieldClientPacket::new, PacketDirection.ServerToClient);
 				Packet.register(SoundConfig.SoundPacket::new, PacketDirection.ServerToClient);
 
 				ServerChronoState.register();

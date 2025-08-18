@@ -66,7 +66,7 @@ public class LuaContext {
             parent = parent.getSuperclass();
         }
 
-        Map<String, LuaTable> modules = new HashMap<>();
+        Map<String, LuaValue> modules = new HashMap<>();
 
         for (Method method : methods) {
             method.setAccessible(true);
@@ -80,7 +80,7 @@ public class LuaContext {
             String functionName = tag.name().isEmpty() ? method.getName() : tag.name();
             String module = tag.module();
 
-            LuaTable functions = modules.getOrDefault(module, new LuaTable());
+            LuaTable functions = (LuaTable) modules.getOrDefault(module, new LuaTable());
 
             Class<?> returnType = method.getReturnType();
             if (!(Varargs.class.isAssignableFrom(returnType) || returnType.equals(void.class))) {
@@ -89,7 +89,7 @@ public class LuaContext {
 
             boolean hasReturn = !returnType.equals(void.class);
 
-            functions.set(LuaValue.valueOf(functionName), new VarArgFunction() {
+            LuaValue func = new VarArgFunction() {
                 @Override
                 public Varargs invoke(Varargs varargs) {
                     int narg = varargs.narg();
@@ -106,12 +106,17 @@ public class LuaContext {
                         return NIL;
                     }
                 }
-            });
+            };
 
-            modules.put(module, functions);
+            if (module.isEmpty()) {
+                modules.put(functionName, func);
+            } else {
+                functions.set(LuaValue.valueOf(functionName), func);
+                modules.put(module, functions);
+            }
         }
 
-        for (Map.Entry<String, LuaTable> functions : modules.entrySet()) {
+        for (Map.Entry<String, LuaValue> functions : modules.entrySet()) {
             globals.set(functions.getKey(), functions.getValue());
         }
     }
@@ -129,10 +134,11 @@ public class LuaContext {
 
     public void loadScript(Identifier path) {
         try (InputStream inputStream = path.getResourceStream()) {
-            LuaValue chunk = globals.load(inputStream, "ImmersiveRailroading", "t", globals);
+            String fileName = new File(path.getPath()).getName();
+            LuaValue chunk = globals.load(inputStream, fileName, "t", globals);
             chunk.call();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ModCore.catching(e, "An error occurred while loading script %s", path.getPath());
         }
     }
 
@@ -144,7 +150,7 @@ public class LuaContext {
             String name = module.replace(".lua", "");
 
             try (InputStream inputStream = origin.getRelative(module).getResourceStream()) {
-                LuaValue chunk = globals.load(inputStream, name, "bt", globals);
+                LuaValue chunk = globals.load(inputStream, name, "t", globals);
                 preloadTable.set(name, chunk);
             } catch (Exception e) {
                 ModCore.error("Package %s does not exist in the directory %s", module, new File(origin.getPath()).getPath());

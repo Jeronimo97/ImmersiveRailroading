@@ -8,6 +8,7 @@ item.immersiverailroading:item_augment.ITEM_LOADER.name=Item Loader
 item.immersiverailroading:item_augment.ITEM_UNLOADER.name=Item Unloader
 item.immersiverailroading:item_augment.FLUID_LOADER.name=Fluid Loader
 item.immersiverailroading:item_augment.FLUID_UNLOADER.name=Fluid Unloader
+item.immersiverailroading:item_augment.LUA_SCRIPTER.name=Lua Augment
 item.immersiverailroading:item_augment.DETECTOR.name=Detector
 item.immersiverailroading:item_augment.COUPLER.name=Coupler
 item.immersiverailroading:item_augment.ACTUATOR.name=Door Actuator

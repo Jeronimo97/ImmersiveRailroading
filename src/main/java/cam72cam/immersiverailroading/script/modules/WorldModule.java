@@ -1,6 +1,5 @@
 package cam72cam.immersiverailroading.script.modules;
 
-import cam72cam.immersiverailroading.entity.EntityScriptableRollingStock;
 import cam72cam.immersiverailroading.script.LuaFunction;
 import cam72cam.immersiverailroading.script.LuaModule;
 import cam72cam.mod.item.ItemStack;
@@ -11,8 +10,8 @@ import org.luaj.vm2.LuaValue;
 public class WorldModule implements LuaModule {
     private final World world;
     
-    public WorldModule(EntityScriptableRollingStock stock) {
-        this.world = stock.getWorld();
+    public WorldModule(World world) {
+        this.world = world;
     }
 
     @LuaFunction(module = "World")

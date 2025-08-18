@@ -1,8 +1,7 @@
-package cam72cam.immersiverailroading.textUtil;
+package cam72cam.immersiverailroading.font;
 
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.mod.ModCore;
-import cam72cam.mod.render.opengl.Texture;
 import cam72cam.mod.resource.Identifier;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.Gson;

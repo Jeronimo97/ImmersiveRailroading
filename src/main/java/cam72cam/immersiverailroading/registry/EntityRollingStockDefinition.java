@@ -7,8 +7,9 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
 import cam72cam.immersiverailroading.floor.Mesh;
 import cam72cam.immersiverailroading.floor.NavMesh;
-import cam72cam.immersiverailroading.textUtil.FontLoader;
-import cam72cam.immersiverailroading.textUtil.TextField;
+import cam72cam.immersiverailroading.font.FontLoader;
+import cam72cam.immersiverailroading.textfield.TextFieldConfig;
+import cam72cam.immersiverailroading.textfield.library.RGBA;
 import cam72cam.immersiverailroading.util.*;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
@@ -114,7 +115,7 @@ public abstract class EntityRollingStockDefinition {
     public NavMesh navMesh;
 
     public List<Identifier> loadedFonts = new ArrayList<>();
-    public final Map<String, TextField> textFields;
+    public final Map<String, TextFieldConfig> textFields;
 
     // used for unique text fields to check if text field input is already assigned
     public Map<UUID, Map<String, String>> inputs = new HashMap<>();
@@ -884,28 +885,16 @@ public abstract class EntityRollingStockDefinition {
         return this.model;
     }
 
-    private Map<String, TextField> parseTextFields(List<DataBlock> textFields) {
+    private Map<String, TextFieldConfig> parseTextFields(List<DataBlock> textFields) {
         if (textFields == null) {
             return Collections.emptyMap();
         }
 
-        Map<String, TextField> list = new HashMap<>();
+        Map<String, TextFieldConfig> list = new HashMap<>();
 
         for (DataBlock textField : textFields) {
             String groupName = textField.getValue("name").asString();
             groupName = String.format("TEXTFIELD_%s", groupName);
-            List<Mesh.Group> groups = getMesh().getGroupContains(groupName);
-
-            if (groups == null) {
-                ModCore.error("No mesh found for TextField %s", groupName);
-                continue;
-            }
-
-            if (groups.size() > 1) {
-                ModCore.info("Found more than one TextField defined as %s, using first!", groupName);
-            }
-
-            Mesh.Group group = groups.get(0);
 
             DataBlock resolution = textField.getBlock("resolution");
 
@@ -913,8 +902,8 @@ public abstract class EntityRollingStockDefinition {
 
 
             String finalGroupName = groupName;
-            TextField current = TextField.createTextField(
-                    group,
+            TextFieldConfig current = new TextFieldConfig(
+                    groupName,
                     Optional.ofNullable(resolution.getValue("x").asInteger()).orElseGet(() -> {
                         ModCore.warn("Text field %s doesn't have an x-resolution defined. Using default", finalGroupName);
                         return 128;
@@ -929,10 +918,10 @@ public abstract class EntityRollingStockDefinition {
                         }
 
                         Optional.ofNullable(config.getValue("text").asString()).ifPresent(defaults::setText);
-                        Optional.ofNullable(config.getValue("color").asString()).ifPresent(defaults::setColor);
-                        Optional.ofNullable(config.getValue("fullbright").asBoolean()).ifPresent(defaults::setFullBright);
+                        Optional.ofNullable(config.getValue("color").asString()).ifPresent(c -> defaults.setColor(RGBA.fromHex(c)));
+                        Optional.ofNullable(config.getValue("fullbright").asBoolean()).ifPresent(defaults::setFullbright);
                         Optional.ofNullable(config.getValue("gap").asInteger()).ifPresent(defaults::setGap);
-                        Optional.ofNullable(config.getValue("align").asString()).ifPresent(defaults::setAlign);
+                        Optional.ofNullable(config.getValue("align").asString()).ifPresent(a -> defaults.setAlign(TextFieldConfig.Align.valueOf(a)));
                         Optional.ofNullable(config.getValue("font").asIdentifier()).ifPresent(defaults::setFont);
                         Optional.ofNullable(config.getValues("linked")).ifPresent(l -> defaults.setLinked(l.stream().map(v -> String.format("TEXTFIELD_%s", v.asString())).collect(Collectors.toList())));
                         Optional.ofNullable(config.getValue("global").asBoolean()).ifPresent(defaults::setGlobal);
@@ -943,7 +932,7 @@ public abstract class EntityRollingStockDefinition {
                             List<Identifier> availableFonts = loadedFonts.stream()
                                     .filter(identifier -> fonts.stream().anyMatch(f -> identifier.getPath().contains(f)))
                                     .collect(Collectors.toList());
-                            defaults.setAvailableFont(availableFonts);
+                            defaults.setAvailableFonts(availableFonts);
                         }
 
                         List<String> filter = Optional.ofNullable(config.getValues("filter")).orElse(Collections.emptyList()).stream().map(DataBlock.Value::asString).collect(Collectors.toList());
@@ -953,7 +942,7 @@ public abstract class EntityRollingStockDefinition {
 
                         Optional.ofNullable(config.getValue("unique").asBoolean()).ifPresent(defaults::setUnique);
                         Optional.ofNullable(config.getValue("numberPlate").asBoolean()).ifPresent(defaults::setNumberPlate);
-                        Optional.ofNullable(config.getValue("verticalAlign").asString()).ifPresent(defaults::setVerticalAlign);
+                        Optional.ofNullable(config.getValue("verticalAlign").asString()).ifPresent(v -> defaults.setVerticalAlign(TextFieldConfig.VerticalAlign.valueOf(v)));
                         Optional.ofNullable(config.getValue("scale").asFloat()).ifPresent(defaults::setScale);
                     }
             );
