@@ -79,17 +79,6 @@ jobs:
           name: Release v${{ github.run_number }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.run_number }}
-          name: Release v${{ github.run_number }}
           files: build/libs/*.jar
-          resource: Release
-          code: already_exists
-          field: tag_name
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
