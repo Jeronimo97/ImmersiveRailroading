@@ -314,9 +314,9 @@ public class Config {
 
 		@Comment("Does stock drops itself/components when player is in creative mode?")
 		public static boolean stockDropInCreativeMode = true;
-
-		public static boolean isFuelRequired(Gauge gauge) {
-		return !(!ConfigBalance.FuelRequired || (!ConfigBalance.ModelFuelRequired && gauge.isModel()));
+		}
+	
+    public static boolean isFuelRequired(Gauge gauge) {
+        return !(!ConfigBalance.FuelRequired || (!ConfigBalance.ModelFuelRequired && gauge.isModel()));
 	}
-
 }
