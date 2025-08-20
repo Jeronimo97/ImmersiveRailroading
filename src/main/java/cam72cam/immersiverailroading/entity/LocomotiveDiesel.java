@@ -121,7 +121,24 @@ public class LocomotiveDiesel extends Locomotive {
 	 */
 	@Override
 	public void handleKeyPress(Player source, KeyTypes key, boolean disableIndependentThrottle) {
-		switch (key) {
+        if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
+            float dynamicBrakeNotch = 0.04f;
+            switch (key) {
+                case DYNAMIC_BRAKE_UP:
+                    setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
+                    break;
+                case DYNAMIC_BRAKE_ZERO:
+                    setDynamicBrake(0f);
+                    break;
+                case DYNAMIC_BRAKE_DOWN:
+                    setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+	    switch (key) {
 		case START_STOP_ENGINE:
 			if (turnOnOffDelay == 0) {
 				turnOnOffDelay = 10;
@@ -141,7 +158,7 @@ public class LocomotiveDiesel extends Locomotive {
 		case THROTTLE_ZERO:
 		case THROTTLE_DOWN:
 			if (this.throttleCooldown > 0) {
-				return;
+				break;
 			}
 			throttleCooldown = 2;
 			super.handleKeyPress(source, key, disableIndependentThrottle);
@@ -149,29 +166,12 @@ public class LocomotiveDiesel extends Locomotive {
 		default:
 			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
-		
-		if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
-            float dynamicBrakeNotch = 0.04f;
-            switch (key) {
-                case DYNAMIC_BRAKE_UP:
-                    setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
-                    break;
-                case DYNAMIC_BRAKE_ZERO:
-                    setDynamicBrake(0f);
-                    break;
-                case DYNAMIC_BRAKE_DOWN:
-                    setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
-                    break;
-                default:
-                    super.handleKeyPress(source, key, disableIndependentThrottle);
-            }
-        }
 	}
-
-	@Override
-	public float getThrottleDelta() {
-		return 1F / this.getDefinition().getThrottleNotches();
-	}
+	
+    @Override
+    public float getThrottleDelta() {
+        return 1F / this.getDefinition().getThrottleNotches();
+    }
 
 	@Override
 	public boolean providesElectricalPower() {
@@ -185,7 +185,7 @@ public class LocomotiveDiesel extends Locomotive {
 
 	@Override
 	public void setThrottle(float newThrottle) {
-		int targetNotch = Math.round(newThrottle / getThrottleDelta()); // *2
+	    int targetNotch = Math.round(newThrottle / getThrottleDelta()); // *2
 		//issue #1526: when dragging or control with augment throttle glitches
 		super.setThrottle(targetNotch * getThrottleDelta());
 	}

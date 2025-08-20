@@ -610,9 +610,10 @@ public abstract class Locomotive extends FreightTank{
 			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrake())/2);
 		}
 	}
+	
 	public float getThrottleDelta() {
-		return 0.04F;
-	};
+	    return throttleDelta;
+	}
 
 	public float getReverser() {
 		return reverser;
