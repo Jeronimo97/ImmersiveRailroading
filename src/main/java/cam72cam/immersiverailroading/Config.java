@@ -115,6 +115,10 @@ public class Config {
 		@Range(min = 0, max = 10)
 		public static double tractionMultiplier = 1.0;
 		
+		@Comment("Power Multiplier: Higher numbers increase the locomotive power, lower numbers decrease the power")
+        @Range(min = 0, max = 10)
+        public static double powerMultiplier = 1.0;
+		
 		@Comment( "How heavy is a single block in Kg" )
 		@Range(min = 0, max = 100)
 		public static int blockWeight = 10;
