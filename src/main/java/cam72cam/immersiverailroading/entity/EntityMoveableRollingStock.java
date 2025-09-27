@@ -44,13 +44,18 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     public List<SimulationState> states = new ArrayList<>();
     private RealBB boundingBox;
     private float[][] heightMapCache;
+    
     @TagSync
-    @TagField("IND_BRAKE")
-    private float independentBrake = 0;
+    @TagField("HAND_BRAKE")
+    private float handBrake = 0;
 
     @TagSync
     @TagField("BRAKE_PRESSURE")
-    private float trainBrakePressure = 0;
+    private float trainBrakePressure = 1;
+    
+    @TagSync
+    @TagField("BRAKE_CYLINDER_PRESSURE")
+    private float brakeCylinderPressure = 0;
 
     @TagSync
     @TagField("SLIDING")
@@ -195,30 +200,11 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     public void onDrag(Control<?> control, double newValue) {
         super.onDrag(control, newValue);
         switch (control.part.type) {
-            case INDEPENDENT_BRAKE_X:
-                if (getDefinition().isLinearBrakeControl()) {
-                    setIndependentBrake(getControlPosition(control));
-                }
+            case HAND_BRAKE_X:
+                setHandBrake(getControlPosition(control));
                 break;
         }
-    }
-
-    @Override
-    public void onDragRelease(Control<?> control) {
-        super.onDragRelease(control);
-        if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
-            setControlPosition(control, 0.5f);
-        }
-    }
-
-    @Override
-    protected float defaultControlPosition(Control<?> control) {
-        switch (control.part.type) {
-            case INDEPENDENT_BRAKE_X:
-                return getDefinition().isLinearBrakeControl() ? 0 : 0.5f;
-            default:
-                return super.defaultControlPosition(control);
-        }
+        super.onDrag(control, newValue);
     }
 
     @Override
@@ -226,17 +212,11 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         super.onTick();
 
         if (getWorld().isServer) {
-            if (getDefinition().hasIndependentBrake()) {
-                for (Control<?> control : getDefinition().getModel().getControls()) {
-                    if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
-                        setIndependentBrake(Math.max(0, Math.min(1, getIndependentBrake() + (getControlPosition(control) - 0.5f) / 8)));
-                    }
-                }
-            }
 
             SimulationState state = getCurrentState();
             if (state != null) {
-                this.trainBrakePressure = state.brakePressure;
+                this.brakeCylinderPressure = state.config.brakeCylinderPressure;
+                this.trainBrakePressure = state.config.trainBrakePressure;
                 this.sliding = state.sliding;
 
                 if (state.collided > 0.1 && getTickCount() - lastCollision > 20) {
@@ -425,14 +405,14 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
         if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
             switch (key) {
-                case INDEPENDENT_BRAKE_UP:
-                    setIndependentBrake(getIndependentBrake() + independentBrakeNotch);
+                case HAND_BRAKE_UP:
+                    setHandBrake(getHandBrake() + independentBrakeNotch);
                     break;
-                case INDEPENDENT_BRAKE_ZERO:
-                    setIndependentBrake(0f);
+                case HAND_BRAKE_ZERO:
+                    setHandBrake(0);
                     break;
-                case INDEPENDENT_BRAKE_DOWN:
-                    setIndependentBrake(getIndependentBrake() - independentBrakeNotch);
+                case HAND_BRAKE_DOWN:
+                    setHandBrake(getHandBrake() - independentBrakeNotch);
                     break;
                 default:
                     super.handleKeyPress(source, key, disableIndependentThrottle);
@@ -442,17 +422,20 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         }
     }
 
-    public float getIndependentBrake() {
-        return getDefinition().hasIndependentBrake() ? independentBrake : 0;
+    public float getHandBrake() {
+        return getDefinition().hasHandBrake() ? handBrake : 0;
     }
-    public void setIndependentBrake(float newIndependentBrake) {
-        newIndependentBrake = Math.min(1, Math.max(0, newIndependentBrake));
-        if (this.getIndependentBrake() != newIndependentBrake && getDefinition().hasIndependentBrake()) {
-            if (getDefinition().isLinearBrakeControl()) {
-                setControlPositions(ModelComponentType.INDEPENDENT_BRAKE_X, newIndependentBrake);
-            }
-            independentBrake = newIndependentBrake;
+    
+    public void setHandBrake(float newHandBrake) {
+        newHandBrake = Math.min(1, Math.max(0, newHandBrake));
+        if (this.getHandBrake() != newHandBrake && getDefinition().hasHandBrake()) {
+            setControlPositions(ModelComponentType.HAND_BRAKE_X, newHandBrake);
+            handBrake = newHandBrake;
         }
+    }
+    
+    public float getBrakeCylinderPressure() {
+        return brakeCylinderPressure;
     }
 
     public float getBrakePressure() {
@@ -489,9 +472,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 }
             }
         }
-        double independentNewtons = getDefinition().directFrictionCoefficient * getIndependentBrake() * newtons;
-        double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakePressure() * newtons;
-        return retardedNewtons + independentNewtons + pressureNewtons;
+        double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakeCylinderPressure() * newtons;
+        return retardedNewtons + pressureNewtons;
     }
 
     public double getBrakeAdhesionEfficiency() {

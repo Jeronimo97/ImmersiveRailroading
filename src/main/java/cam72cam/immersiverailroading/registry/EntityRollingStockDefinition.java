@@ -84,7 +84,8 @@ public abstract class EntityRollingStockDefinition {
     private int maxPassengers;
     private int snowLayers;
     private float interiorLightLevel;
-    private boolean hasIndependentBrake;
+    private boolean hasHandBrake;
+    private float handBrakeCoefficient;
     private boolean hasPressureBrake;
     private final Map<ModelComponentType, List<ModelComponent>> renderComponents;
     private final List<ItemComponentType> itemComponents;
@@ -476,7 +477,7 @@ public abstract class EntityRollingStockDefinition {
         DataBlock properties = data.getBlock("properties");
         weight = properties.getValue("weight_kg").asInteger() * internal_inv_scale;
         valveGear = ValveGearConfig.get(properties, "valve_gear");
-        hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
+        hasHandBrake = properties.getValue("hand_brake").asBoolean(true);
         hasPressureBrake = properties.getValue("pressure_brake").asBoolean();
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
@@ -491,7 +492,7 @@ public abstract class EntityRollingStockDefinition {
         // https://en.wikipedia.org/wiki/Rolling_resistance#Rolling_resistance_coefficient_examples
         rollingResistanceCoefficient = properties.getValue("rolling_resistance_coefficient").asDouble();
         directFrictionCoefficient = properties.getValue("direct_friction_coefficient").asDouble();
-
+        handBrakeCoefficient = properties.getValue("handbrake_coefficient").asFloat(1);
         swayMultiplier = properties.getValue("swayMultiplier").asDouble();
         tiltMultiplier = properties.getValue("tiltMultiplier").asDouble();
 
@@ -640,8 +641,8 @@ public abstract class EntityRollingStockDefinition {
     }
 
 
-    public boolean hasIndependentBrake() {
-        return hasIndependentBrake;
+    public boolean hasHandBrake() {
+        return hasHandBrake;
     }
 
     public boolean hasPressureBrake() {
@@ -885,7 +886,7 @@ public abstract class EntityRollingStockDefinition {
     }
 
     protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
-        return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
+        return hasHandBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
 
     public GuiBuilder getOverlay() {
@@ -907,8 +908,17 @@ public abstract class EntityRollingStockDefinition {
     public double getBrakeShoeFriction() {
         return brakeCoefficient;
     }
+    
     public int getSnowLayers() {
         return snowLayers;
+    }
+    
+    public float getHandBrakeCoefficient() {
+        return handBrakeCoefficient;
+    }
+
+    public String getName() {
+        return name;
     }
 
 }

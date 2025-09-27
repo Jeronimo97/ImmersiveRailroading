@@ -33,6 +33,9 @@ public enum Readouts {
     CYLINDER_DRAIN,
     CARGO_FILL,
     ENGINE_RPM,
+    HAND_BRAKE,
+    BRAKE_CYLINDER_PRESSURE,
+    DYNAMIC_BRAKE,
     ;
 
     public float getValue(EntityRollingStock stock) {
@@ -69,9 +72,12 @@ public enum Readouts {
             case TRAIN_BRAKE_LEVER:
                 return stock.getDefinition().isLinearBrakeControl() ? TRAIN_BRAKE.getValue(stock) : lever;
             case INDEPENDENT_BRAKE:
-                return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getIndependentBrake() : 0;
+                return stock instanceof Locomotive ? ((Locomotive) stock).getIndependentBrake() : 0;
             case BRAKE_PRESSURE:
                 return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getBrakePressure() : 0;
+            case BRAKE_CYLINDER_PRESSURE:
+                return stock instanceof EntityMoveableRollingStock ?
+                    ((EntityMoveableRollingStock) stock).getBrakeCylinderPressure() : 0;
             case COUPLER_FRONT:
                 return stock instanceof EntityCoupleableRollingStock ? ((EntityCoupleableRollingStock) stock).isCouplerEngaged(CouplerType.FRONT) ? 1 : 0 : 0;
             case COUPLER_REAR:
@@ -107,6 +113,13 @@ public enum Readouts {
                 return stock instanceof Freight ? ((Freight) stock).getPercentCargoFull() / 100f : 0;
             case ENGINE_RPM:
                 return stock instanceof LocomotiveDiesel ? ((LocomotiveDiesel) stock).getRelativeRPM() : 0;
+            case HAND_BRAKE:
+                return stock instanceof EntityMoveableRollingStock
+                        ? ((EntityMoveableRollingStock) stock).getHandBrake()
+                        : 0;
+            case DYNAMIC_BRAKE:
+                return (float) (stock instanceof LocomotiveDiesel ?
+                        ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
         }
         return 0;
     }
@@ -151,8 +164,8 @@ public enum Readouts {
                 }
                 break;
             case INDEPENDENT_BRAKE:
-                if (stock instanceof EntityMoveableRollingStock) {
-                    ((EntityMoveableRollingStock) stock).setIndependentBrake(value);
+                if (stock instanceof Locomotive) {
+                    ((Locomotive) stock).setIndependentBrake(value);
                 }
                 break;
             case COUPLER_FRONT:

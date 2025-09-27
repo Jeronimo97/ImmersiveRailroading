@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.inventory.SlotFilter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
@@ -36,6 +37,10 @@ public class LocomotiveDiesel extends Locomotive {
 	@TagSync
 	@TagField("ENGINE_OVERHEATED")
 	private boolean engineOverheated = false;
+	
+	@TagSync
+    @TagField("DYNAMIC_BRAKE")
+    private float dynamicBrakePosition = 0;
 
 	private int throttleCooldown;
 	private int reverserCooldown;
@@ -43,11 +48,25 @@ public class LocomotiveDiesel extends Locomotive {
 	public LocomotiveDiesel() {
 		engineTemperature = ambientTemperature();
 	}
+	
+	@Override
+    public int getInventorySize() {
+        return 3;
+    }
 
 	@Override
 	public int getInventoryWidth() {
-		return getDefinition().isCabCar() ? 0 : 2;
+		return getDefinition().isCabCar() ? 0 : 3;
 	}
+	
+	@Override
+    protected void initContainerFilter() {
+        cargoItems.filter.clear();
+        cargoItems.filter.put(0, SlotFilter.FLUID_CONTAINER);
+        cargoItems.filter.put(1, SlotFilter.FLUID_CONTAINER);
+        cargoItems.filter.put(2, SlotFilter.SAND);
+        cargoItems.defaultFilter = SlotFilter.NONE;
+    }
 
 	public float getEngineTemperature() {
 		return engineTemperature;
@@ -100,7 +119,24 @@ public class LocomotiveDiesel extends Locomotive {
 	 */
 	@Override
 	public void handleKeyPress(Player source, KeyTypes key, boolean disableIndependentThrottle) {
-		switch(key) {
+	    if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
+            float dynamicBrakeNotch = 0.04f;
+            switch (key) {
+                case DYNAMIC_BRAKE_UP:
+                    setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
+                    break;
+                case DYNAMIC_BRAKE_ZERO:
+                    setDynamicBrake(0f);
+                    break;
+                case DYNAMIC_BRAKE_DOWN:
+                    setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
+                    break;
+                default:
+                    break;
+            }
+        }
+	    
+	    switch(key) {
 			case START_STOP_ENGINE:
 				if (turnOnOffDelay == 0) {
 					turnOnOffDelay = 10;
@@ -275,6 +311,16 @@ public class LocomotiveDiesel extends Locomotive {
 	public float getRelativeRPM() {
 		return relativeRPM;
 	}
+	
+	@Override
+    public void onDrag(Control<?> component, double newValue) {
+        super.onDrag(component, newValue);
+        switch (component.part.type) {
+            case DYNAMIC_BRAKE_X:
+                setDynamicBrake(getControlPosition(component));
+                break;
+        }
+    }
 
 	@Override
 	public void onDragRelease(Control<?> component) {
@@ -289,4 +335,59 @@ public class LocomotiveDiesel extends Locomotive {
 			setControlPositions(ModelComponentType.REVERSER_X, getReverser()/-2 + 0.5f);
 		}
 	}
+	
+	@Override
+    public boolean playerCanDrag(Player player, Control<?> control) {
+        switch (control.part.type) {
+            case DYNAMIC_BRAKE_X:
+                return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
+        }
+        return super.playerCanDrag(player, control);
+    }
+
+    @Override
+    protected void copySettings(final EntityRollingStock stock, final boolean direction) {
+        if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).getDefinition().muliUnitCapable) {
+            ((LocomotiveDiesel) stock).setRealDynamicBrake(this.getDynamicBrake());
+        }
+        super.copySettings(stock, direction);
+    }
+
+    @Override
+    public void setTrainBrake(float newTrainBrake) {
+        super.setTrainBrake(newTrainBrake);
+        setRealDynamicBrake(newTrainBrake);
+    }
+
+    public float getDynamicBrake() {
+        return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
+    }
+
+    public double getDynamicBrakeNewtons() {
+        if (!turnedOn)
+            return 0;
+        double speed = speedPercent(getCurrentSpeed());
+        return getDynamicBrake() * (speed < 0.1 ? speed / 0.1 : 1);
+    }
+
+    public float getDynamicBrakeMultiplier() {
+        return getDefinition().getDynamicBrake();
+    }
+
+    public void setDynamicBrake(final float newDynamicBrakePos) {
+        setRealDynamicBrake(newDynamicBrakePos);
+        if (this.getDefinition().muliUnitCapable) {
+            this.mapTrain(this, true, false, this::copySettings);
+        }
+    }
+
+    private void setRealDynamicBrake(float newDynamicBrakePos) {
+        newDynamicBrakePos = Math.min(1, Math.max(0, newDynamicBrakePos));
+        if (this.getDynamicBrake() != newDynamicBrakePos) {
+            if (getDefinition().isLinearBrakeControl()) {
+                setControlPositions(ModelComponentType.DYNAMIC_BRAKE_X, newDynamicBrakePos);
+            }
+            dynamicBrakePosition = newDynamicBrakePos;
+        }
+    }
 }

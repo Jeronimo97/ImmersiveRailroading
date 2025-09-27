@@ -24,6 +24,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     private int notches;
     private float enginePitchRange;
     public boolean hasDynamicTractionControl;
+    private float dynamicBrake;
 
     public LocomotiveDieselDefinition(String defID, DataBlock data) throws Exception {
         super(LocomotiveDiesel.class, defID, data);
@@ -42,14 +43,13 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         if (!isCabCar()) {
             fuelCapacity_l = properties.getValue("fuel_capacity_l").asInteger() * internal_inv_scale * Config.ConfigBalance.DieselLocomotiveTankMultiplier;
             fuelEfficiency = properties.getValue("fuel_efficiency_%").asInteger();
-            hasDynamicTractionControl = properties.getValue("dynamic_traction_control").asBoolean();
+            hasDynamicTractionControl = properties.getValue("dynamic_traction_control").asBoolean(true);
         } else {
             fuelCapacity_l = 0;
         }
         notches = properties.getValue("throttle_notches").asInteger();
-
         hornSus = properties.getValue("horn_sustained").asBoolean();
-
+        dynamicBrake = properties.getValue("dynamic_brake_factor").asFloat(0);
         DataBlock sounds = data.getBlock("sounds");
         idle = SoundDefinition.getOrDefault(sounds, "idle");
         running = SoundDefinition.getOrDefault(sounds, "running");
@@ -100,5 +100,9 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
 
     public float getEnginePitchRange() {
         return enginePitchRange;
+    }
+    
+    public float getDynamicBrake() {
+        return dynamicBrake;
     }
 }
