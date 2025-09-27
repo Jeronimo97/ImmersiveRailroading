@@ -131,6 +131,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     
     public float getDynamicBrake() {
         return dynamicBrake;
+    }
 
     public Map<Fluid, Integer> getOverriddenFuels() {
         return overriddenFuels;
