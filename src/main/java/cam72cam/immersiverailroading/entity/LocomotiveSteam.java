@@ -329,7 +329,7 @@ public class LocomotiveSteam extends Locomotive {
 			}
 			
 			// Pressure relief valve
-			int maxPSI = this.getDefinition().getMaxPSI(gauge);
+			int maxPSI = (int) this.getDefinition().getMaxPSI(gauge);
 			pressureValve = boilerPressure > maxPSI;
 			if (boilerPressure > maxPSI) {
 				waterUsed += boilerPressure - maxPSI;
