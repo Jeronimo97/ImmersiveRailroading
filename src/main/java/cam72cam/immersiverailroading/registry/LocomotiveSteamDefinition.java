@@ -63,8 +63,10 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
             tankCapacity_l = properties.getValue("water_capacity_l").asInteger() * internal_inv_scale;
             if (properties.getValue("max_psi").asInteger() != null) {
                 maxPSI = properties.getValue("max_psi").asInteger() * internal_inv_scale;
-            } else {
+            } else if (properties.getValue("max_kpa").asInteger() != null) {
                 maxPSI = properties.getValue("max_kpa").asInteger() * PressureDisplayType.kPaToPsi * internal_inv_scale;
+            } else {
+                maxPSI = properties.getValue("max_bar").asInteger() * PressureDisplayType.barToPsi * internal_inv_scale;
             }
             numSlots = Math.ceil(firebox.getValue("slots").asInteger() * internal_inv_scale);
             width = Math.ceil(firebox.getValue("width").asInteger() * internal_inv_scale);
