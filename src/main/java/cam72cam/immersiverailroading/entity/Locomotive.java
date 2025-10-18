@@ -23,8 +23,6 @@ import cam72cam.mod.world.World;
 import java.util.OptionalDouble;
 import java.util.UUID;
 
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.*;
-
 public abstract class Locomotive extends FreightTank {
 	private static final float trainBrakeNotch = 0.04f;
 
@@ -410,11 +408,25 @@ public abstract class Locomotive extends FreightTank {
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
 	protected final double getStaticTractiveEffort(Speed speed) {
-        return getDefinition().getStartingTractionNewtons(gauge)
+	    return getDefinition().getStartingTractionNewtons(gauge)
                 * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
                         speed.metric())) * Config.ConfigBalance.slopeMultiplier)
-                * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1);
+                * Config.ConfigBalance.tractionMultiplier * adhesionCoefficient();
+    }
+	
+	public float adhesionCoefficient() {
+        float adhMult = 1;
+        World world = getWorld();
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos))
+                adhMult *= 0.7f;
+            if (world.isSnowing(blockPos))
+                adhMult *= 0.35f;
+        }
+        if (slipping)
+            adhMult *= 0.5f;
+        return adhMult;
     }
 	
 	protected double simulateWheelSlip() {
@@ -600,24 +612,10 @@ public abstract class Locomotive extends FreightTank {
 	public int getBell() {
 		return bellTime;
 	}
+	
 	public void setBell(int newBell) {
 		this.bellTime = newBell;
 	}
-
-	public double slipCoefficient() {
-        double slipMult = 0.5;
-        World world = getWorld();
-        Vec3i blockPos = getBlockPosition();
-        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
-            if (world.isRaining(blockPos)) {
-                slipMult *= 0.6;
-            }
-            if (world.isSnowing(blockPos)) {
-                slipMult *= 0.4;
-            }
-        }
-        return slipMult;
-    }
 
 	public abstract boolean providesElectricalPower();
 
