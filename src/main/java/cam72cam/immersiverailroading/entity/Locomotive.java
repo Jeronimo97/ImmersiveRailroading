@@ -422,6 +422,8 @@ public abstract class Locomotive extends FreightTank {
             if (world.isSnowing(blockPos))
                 adhMult *= 0.35f;
         }
+        //if (isSanding)
+        //    adhMult *= 3;
         if (slipping)
             adhMult *= 0.5f;
         return adhMult;
