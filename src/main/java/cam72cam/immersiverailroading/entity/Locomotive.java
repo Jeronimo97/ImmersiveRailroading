@@ -407,10 +407,8 @@ public abstract class Locomotive extends FreightTank {
 	public abstract double getAppliedTractiveEffort(Speed speed);
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
-	protected final double getStaticTractiveEffort(Speed speed) {
-	    return getDefinition().getStartingTractionNewtons(gauge)
-                * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
-                        speed.metric())) * Config.ConfigBalance.slopeMultiplier)
+	protected final double getStaticTractiveEffort(Speed speed) {        
+        return getDefinition().getStartingTractionNewtons(gauge)
                 * Config.ConfigBalance.tractionMultiplier * adhesionCoefficient();
     }
 	
