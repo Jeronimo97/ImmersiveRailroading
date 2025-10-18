@@ -72,7 +72,7 @@ public enum Readouts {
             case TRAIN_BRAKE_LEVER:
                 return stock.getDefinition().isLinearBrakeControl() ? TRAIN_BRAKE.getValue(stock) : lever;
             case INDEPENDENT_BRAKE:
-                return stock instanceof Locomotive ? ((Locomotive) stock).getIndependentBrake() : 0;
+                return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getIndependentBrake() : 0;
             case BRAKE_PRESSURE:
                 return stock instanceof EntityMoveableRollingStock ? ((EntityMoveableRollingStock) stock).getBrakePressure() : 0;
             case BRAKE_CYLINDER_PRESSURE:

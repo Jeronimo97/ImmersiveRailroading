@@ -205,6 +205,11 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
             addControl(provider, ModelComponentType.HAND_BRAKE_X);
             addGauge(provider, ModelComponentType.GAUGE_HAND_BRAKE_X, Readouts.HAND_BRAKE);
         }
+        
+        if (def.hasIndependentBrake()) {
+            addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
+            addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
+        }
         addGauge(provider, ModelComponentType.GAUGE_BRAKE_PRESSURE_X, Readouts.BRAKE_PRESSURE);
         addGauge(provider, ModelComponentType.GAUGE_BRAKE_CYLINDER_PRESSURE_X, Readouts.BRAKE_CYLINDER_PRESSURE);
         addControl(provider, ModelComponentType.WINDOW_X);

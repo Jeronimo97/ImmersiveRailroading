@@ -4,7 +4,6 @@ import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
-import cam72cam.immersiverailroading.entity.Tender;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.library.Gauge;
@@ -162,8 +161,7 @@ public class SimulationState {
             float staticFriction = PhysicalMaterials.STEEL.staticFriction(PhysicalMaterials.STEEL);
             this.maximumAdhesionNewtons = massKg * staticFriction * 9.8 * stock.getBrakeAdhesionEfficiency();
             this.designAdhesionNewtons = massKg * staticFriction * 9.8 * stock.getBrakeSystemEfficiency();
-            if (stock instanceof Locomotive)
-                this.independentBrake = ((Locomotive) stock).getIndependentBrake();
+            this.independentBrake = stock.getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
             if (stock instanceof LocomotiveDiesel) {
                 this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier();
@@ -449,25 +447,26 @@ public class SimulationState {
         config.brakeCylinderPressure = Math.max(config.hasPressureBrake ? Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
                 1 - config.trainBrakePressure :
                     (1 - config.trainBrakePressure) / 0.3f, 1) : 0, config.independentBrake);
-        double brakeAdhesionNewtons = config.designAdhesionNewtons * config.brakeCylinderPressure;
-        double handBrakeNewtons = config.handBrakeNewtons;
-        double dynamicBrakeNewtons = config.dynamicBrakeNewtons * Config.ConfigBalance.brakeMultiplier;
+        double brakeCylinderNewtons = Math.max(config.designAdhesionNewtons * config.brakeCylinderPressure, config.handBrakeNewtons);
+        double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
 
         this.sliding = false;
-        if (brakeAdhesionNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
+      //TODO Add Dynamic Brake to Wheel sliding
+        if (brakeCylinderNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
             // WWWWWHHHEEEEE!!! SLIDING!!!!
             double kineticFriction = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.STEEL);
-            brakeAdhesionNewtons = config.massKg * kineticFriction;
+            brakeCylinderNewtons = config.massKg * kineticFriction;
             this.sliding = true;
         }
 
-        brakeAdhesionNewtons *= Config.ConfigBalance.brakeMultiplier;
+        brakeCylinderNewtons *= Config.ConfigBalance.brakeMultiplier;
+        dynamicBrakeNewtons *= Config.ConfigBalance.brakeMultiplier;
 
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
 
-        return rollingResistanceNewtons + blockResistanceNewtons + brakeAdhesionNewtons
-                + directResistance + startingFriction + handBrakeNewtons + dynamicBrakeNewtons;
+        return rollingResistanceNewtons + blockResistanceNewtons + brakeCylinderNewtons
+                + directResistance + startingFriction + dynamicBrakeNewtons;
     }
 
     private boolean checkTileType(TileRailBase base, TrackItems type) {

@@ -84,6 +84,7 @@ public abstract class EntityRollingStockDefinition {
     private int maxPassengers;
     private int snowLayers;
     private float interiorLightLevel;
+    private boolean hasIndependentBrake;
     private boolean hasHandBrake;
     private float handBrakeCoefficient;
     private boolean hasPressureBrake;
@@ -477,6 +478,7 @@ public abstract class EntityRollingStockDefinition {
         DataBlock properties = data.getBlock("properties");
         weight = properties.getValue("weight_kg").asInteger() * internal_inv_scale;
         valveGear = ValveGearConfig.get(properties, "valve_gear");
+        hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
         hasHandBrake = properties.getValue("hand_brake").asBoolean(true);
         hasPressureBrake = properties.getValue("pressure_brake").asBoolean();
         // Locomotives default to linear brake control
@@ -640,6 +642,9 @@ public abstract class EntityRollingStockDefinition {
         }
     }
 
+    public boolean hasIndependentBrake() {
+        return hasIndependentBrake;
+    }
 
     public boolean hasHandBrake() {
         return hasHandBrake;
@@ -886,7 +891,8 @@ public abstract class EntityRollingStockDefinition {
     }
 
     protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
-        return hasHandBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
+        // TODO HandBrake / IndBrake
+        return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
 
     public GuiBuilder getOverlay() {
