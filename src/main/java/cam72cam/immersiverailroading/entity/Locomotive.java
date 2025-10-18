@@ -533,7 +533,7 @@ public abstract class Locomotive extends FreightTank {
 	}
 
 	@Override
-	public double getBrakeSystemEfficiency() {
+	public float getBrakeSystemEfficiency() {
 		if (cogging) {
 			return 10;
 		}

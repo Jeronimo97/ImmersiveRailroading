@@ -452,7 +452,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
      * That percentage was improved over time, with the materials used (friction coefficient) helping inform our guess
      * Though, I'm going to limit it to 75% of the total possible adhesion
      */
-    public double getBrakeSystemEfficiency() {
+    public float getBrakeSystemEfficiency() {
         return getDefinition().getBrakeShoeFriction();
     }
 

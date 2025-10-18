@@ -905,7 +905,7 @@ public abstract class EntityRollingStockDefinition {
         return tiltMultiplier;
     }
 
-    public double getBrakeShoeFriction() {
+    public float getBrakeShoeFriction() {
         return brakeCoefficient;
     }
     
