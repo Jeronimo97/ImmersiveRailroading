@@ -89,10 +89,8 @@ public class BuilderTurnTable extends BuilderBase {
 		}
 
 		float angle = (float)info.tablePos - info.placementInfo.facing().getAngle();
-		data.add(new VecYawPitch(offset.x, offset.y, offset.z, -angle, 0, info.settings.length * 2, TrackModelPart.RAIL_RIGHT, TrackModelPart.RAIL_LEFT));
-		data.add(new VecYawPitch(offset.x, offset.y, offset.z, -angle, 0, info.settings.length * 2, TrackModelPart.TABLE));
-        data.add(new VecYawPitch(offset.x, offset.y, offset.z, 0, 0, info.settings.length * 2, TrackModelPart.GROUND));
-		
+		data.add(new VecYPR(offset.x, offset.y, offset.z, -angle, 0, info.settings.length * 2, 0,
+							TrackModelPart.RAIL_LEFT, TrackModelPart.RAIL_RIGHT, TrackModelPart.TABLE, TrackModelPart.GROUND));
 		return data;
 	}
 	
