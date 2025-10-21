@@ -35,6 +35,7 @@ public enum Readouts {
     ENGINE_RPM,
     CHEST_PRESSURE,
     ROLLING_STOCK_PITCH,
+    TRACTIVE_EFFORT,
     ;
 
     public float getValue(EntityRollingStock stock) {
