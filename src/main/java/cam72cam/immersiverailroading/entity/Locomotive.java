@@ -25,11 +25,10 @@ import java.util.OptionalDouble;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.*;
-
-public abstract class Locomotive extends FreightTank {
-	private static final float trainBrakeNotch = 0.04f;
-
+public abstract class Locomotive extends FreightTank{
+	private static final float throttleDelta = 0.04f;
+	private int brakeCooldown;
+	
 	@TagField("deadMansSwitch")
 	private boolean deadMansSwitch;
 	private int deadManChangeTimeout;
@@ -196,13 +195,21 @@ public abstract class Locomotive extends FreightTank {
 			}
 			break;
 		case TRAIN_BRAKE_UP:
-			setTrainBrake(getTrainBrake() + trainBrakeNotch);
+            if (brakeCooldown > 0) {
+                break;
+            }
+            brakeCooldown = 2;		    
+			setTrainBrake(getTrainBrake() + getBrakeDelta());
 			break;
 		case TRAIN_BRAKE_ZERO:
 			setTrainBrake(0f);
 			break;
 		case TRAIN_BRAKE_DOWN:
-			setTrainBrake(getTrainBrake() - trainBrakeNotch);
+            if (brakeCooldown > 0) {
+                break;
+            }
+            brakeCooldown = 2;		   
+			setTrainBrake(getTrainBrake() - getBrakeDelta());
 			break;
 		case DEAD_MANS_SWITCH:
 			if (deadManChangeTimeout == 0) { 
@@ -378,6 +385,9 @@ public abstract class Locomotive extends FreightTank {
 			if (bellKeyTimeout > 0) {
 				bellKeyTimeout--;
 			}
+		    if (brakeCooldown > 0) {
+		        brakeCooldown--;
+		    }
 			
 			if (deadMansSwitch && !this.getCurrentSpeed().isZero()) {
 				boolean hasDriver = this.getPassengers().stream().anyMatch(Entity::isPlayer);
@@ -560,8 +570,12 @@ public abstract class Locomotive extends FreightTank {
 		}
 	}
 	public float getThrottleDelta() {
-		return 0.04F;
-	};
+	    return throttleDelta;
+	}
+	
+	public float getBrakeDelta() {
+	    return 1F / getDefinition().getBrakeNotches();
+	}
 
 	public float getReverser() {
 		return reverser;

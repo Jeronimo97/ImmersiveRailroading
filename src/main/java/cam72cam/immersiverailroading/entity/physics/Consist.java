@@ -511,6 +511,7 @@ public class Consist {
                                     trainLength += s.config.length;
                                 });
                                 //System.out.println("Length: " + trainLength);
+                                //TODO Temporary until fixed values
                                 float fastBrake =   0.031f * 600 / (trainLength * 13.5f);
                                 float normalBrake = 0.008f * 600 / (trainLength * 25f);
                                 brakePressureDelta = linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.999f) ? fastBrake : normalBrake;
