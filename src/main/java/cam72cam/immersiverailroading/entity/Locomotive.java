@@ -115,27 +115,27 @@ public abstract class Locomotive extends FreightTank{
 				case REVERSER_DOWN:
 					return;
 			}
-		} else if (getDefinition().isLinkedBrakeThrottle()) {
-			switch (key) {
-				case THROTTLE_UP:
-					if (getTrainBrake() > 0) {
-						key = KeyTypes.TRAIN_BRAKE_DOWN;
-					}
-					break;
-				case THROTTLE_ZERO:
-					setTrainBrake(0);
-					break;
-				case THROTTLE_DOWN:
-					if (getThrottle() == 0) {
-						key = KeyTypes.TRAIN_BRAKE_UP;
-					}
-					break;
-				case TRAIN_BRAKE_UP:
-				case TRAIN_BRAKE_ZERO:
-				case TRAIN_BRAKE_DOWN:
-					return;
-			}
-		}
+        } else if (getDefinition().isLinkedBrakeThrottle()) {
+            switch (key) {
+                case THROTTLE_UP:
+                    if (getTrainBrake() > 0) {
+                        key = KeyTypes.TRAIN_BRAKE_DOWN;
+                    }
+                    break;
+                case THROTTLE_ZERO:
+                    setTrainBrake(0);
+                    break;
+                case THROTTLE_DOWN:
+                    if (getThrottle() == 0) {
+                        key = KeyTypes.TRAIN_BRAKE_UP;
+                    }
+                    break;
+                case TRAIN_BRAKE_UP:
+                case TRAIN_BRAKE_ZERO:
+                case TRAIN_BRAKE_DOWN:
+                    return;
+            }
+        }
 
 		boolean linkThrottleReverser = forceLinkThrottleReverser() || disableIndependentThrottle;
 
@@ -237,26 +237,9 @@ public abstract class Locomotive extends FreightTank{
                 }
             }
             break;
-        default:
-            super.handleKeyPress(source, key, disableIndependentThrottle);
-        }
-		
-		if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
-            float independentBrakeNotch = 0.04f;
-            switch (key) {
-                case INDEPENDENT_BRAKE_UP:
-                    setIndependentBrake(getIndependentBrake() + independentBrakeNotch);
-                    break;
-                case INDEPENDENT_BRAKE_ZERO:
-                    setIndependentBrake(0f);
-                    break;
-                case INDEPENDENT_BRAKE_DOWN:
-                    setIndependentBrake(getIndependentBrake() - independentBrakeNotch);
-                    break;
-                default:
-                    super.handleKeyPress(source, key, disableIndependentThrottle);
-            }
-        }
+		default:
+			super.handleKeyPress(source, key, disableIndependentThrottle);
+		}
 	}
 
 	protected boolean forceLinkThrottleReverser() {
@@ -520,9 +503,16 @@ public abstract class Locomotive extends FreightTank{
 				return Math.copySign(tractiveEffortNewtons, appliedTractiveEffort);
 			}
 		}
-
-		return appliedTractiveEffort;
+		if (slipping) {
+            appliedTractiveEffort *= 0.5;
+        }
+        return appliedTractiveEffort;
 	}
+
+    
+    public float getCurrentTractiveEffort() {
+        return (float) Math.abs((getAppliedTractiveEffort(getCurrentSpeed()) / getStaticTractiveEffort(getCurrentSpeed())));
+    }
 
 	@Override
 	public float getBrakeSystemEfficiency() {
@@ -656,7 +646,7 @@ public abstract class Locomotive extends FreightTank{
 		setRealTrainBrake(newTrainBrake);
 		this.mapTrain(this, true, false, this::copySettings);
 	}
-	public void setRealTrainBrake(float newTrainBrake) {
+	private void setRealTrainBrake(float newTrainBrake) {
 		newTrainBrake = Math.min(1, Math.max(0, newTrainBrake));
 		if (this.getTrainBrake() != newTrainBrake) {
 			if (getDefinition().isLinearBrakeControl()) {

@@ -117,6 +117,23 @@ public class LocomotiveDiesel extends Locomotive {
 	 */
 	@Override
 	public void handleKeyPress(Player source, KeyTypes key, boolean disableIndependentThrottle) {
+        if (getDefinition().isLinkedDynBrakeThrottle()) {
+            switch (key) {
+                case THROTTLE_UP:
+                    if (getDynamicBrake() > 0) {
+                        key = KeyTypes.DYNAMIC_BRAKE_DOWN;
+                    }
+                    break;
+                case THROTTLE_ZERO:
+                    setDynamicBrake(0);
+                    break;
+                case THROTTLE_DOWN:
+                    if (getThrottle() == 0) {
+                        key = KeyTypes.DYNAMIC_BRAKE_UP;
+                    }
+                    break;
+            }
+        }
 	    if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
             float dynamicBrakeNotch = 0.04f;
             switch (key) {
@@ -189,9 +206,7 @@ public class LocomotiveDiesel extends Locomotive {
 	@Override
 	public void setRealThrottle(float newThrottle) {
 	    super.setRealThrottle(newThrottle);
-	    if (this.getThrottle() != newThrottle) {
-	        setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
-	    }
+	    setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
 	}
 
 	@Override
@@ -378,14 +393,6 @@ public class LocomotiveDiesel extends Locomotive {
         super.copySettings(stock, direction);
     }
 	
-	@Override
-	public void setRealTrainBrake(float newTrainBrake) {
-	    super.setRealTrainBrake(newTrainBrake);
-	    if (this.getTrainBrake() != newTrainBrake) {
-	        setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
-	    }
-	}
-	
 	public float getDynamicBrake() {
         return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
     }
@@ -415,6 +422,7 @@ public class LocomotiveDiesel extends Locomotive {
                 setControlPositions(ModelComponentType.DYNAMIC_BRAKE_X, newDynamicBrakePos);
             }
             dynamicBrakePosition = newDynamicBrakePos;
+            setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
         }
     }
 }

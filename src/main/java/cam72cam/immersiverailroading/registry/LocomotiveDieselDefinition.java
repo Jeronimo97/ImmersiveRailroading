@@ -28,6 +28,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     private float enginePitchRange;
     public boolean hasDynamicTractionControl;
     private float dynamicBrake;
+    private boolean isLinkedDynBrakeThrottle;
 
     public LocomotiveDieselDefinition(String defID, DataBlock data) throws Exception {
         super(LocomotiveDiesel.class, defID, data);
@@ -77,6 +78,8 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         notches = properties.getValue("throttle_notches").asInteger();
         hornSus = properties.getValue("horn_sustained").asBoolean();
         dynamicBrake = properties.getValue("dynamic_brake_factor").asFloat(0);
+        isLinkedDynBrakeThrottle = properties.getValue("isLinkedDynamicBrakeThrottle").asBoolean(false);
+
         DataBlock sounds = data.getBlock("sounds");
         idle = SoundDefinition.getOrDefault(sounds, "idle");
         running = SoundDefinition.getOrDefault(sounds, "running");
@@ -131,6 +134,10 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     
     public float getDynamicBrake() {
         return dynamicBrake;
+    }
+    
+    public boolean isLinkedDynBrakeThrottle() {
+        return isLinkedDynBrakeThrottle;
     }
 
     public Map<Fluid, Integer> getOverriddenFuels() {
