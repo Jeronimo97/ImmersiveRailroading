@@ -85,6 +85,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);
+        addControl(provider, ModelComponentType.THROTTLE_DYN_BRAKE_X);
         addControl(provider, ModelComponentType.THROTTLE_X);
         addControl(provider, ModelComponentType.REVERSER_X);
         addControl(provider, ModelComponentType.TRAIN_BRAKE_X);

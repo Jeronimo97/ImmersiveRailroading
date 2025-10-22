@@ -290,6 +290,7 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
             case THROTTLE_X:
             case REVERSER_X:
             case THROTTLE_BRAKE_X:
+            case THROTTLE_DYN_BRAKE_X:
             case BELL_CONTROL_X:
             case WHISTLE_CONTROL_X:
             case HORN_CONTROL_X:
@@ -339,7 +340,9 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
 
     public float getValue(EntityMoveableRollingStock stock) {
         float pos = stock.getControlPosition(this) + offset;
-        return (invert ? 1 - pos : pos) - (part.type == ModelComponentType.REVERSER_X || part.type == ModelComponentType.THROTTLE_BRAKE_X ? 0.5f : 0);
+        return (invert ? 1 - pos : pos) - (part.type == ModelComponentType.REVERSER_X
+                || part.type == ModelComponentType.THROTTLE_BRAKE_X
+                || part.type == ModelComponentType.THROTTLE_DYN_BRAKE_X ? 0.5f : 0);
     }
 
     public Vec3d transform(Vec3d point, T stock) {

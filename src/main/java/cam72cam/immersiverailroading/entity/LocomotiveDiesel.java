@@ -186,6 +186,14 @@ public class LocomotiveDiesel extends Locomotive {
 		//issue #1526: when dragging or control with augment throttle glitches
 		super.setThrottle(targetNotch * getThrottleDelta());
 	}
+	
+	@Override
+	public void setRealThrottle(float newThrottle) {
+	    super.setRealThrottle(newThrottle);
+	    if (this.getThrottle() != newThrottle) {
+	        setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
+	    }
+	}
 
 	@Override
 	public void setReverser(float newReverser) {
@@ -316,14 +324,18 @@ public class LocomotiveDiesel extends Locomotive {
 	}
 	
 	@Override
-    public void onDrag(Control<?> component, double newValue) {
-        super.onDrag(component, newValue);
-        switch (component.part.type) {
-            case DYNAMIC_BRAKE_X:
-                setDynamicBrake(getControlPosition(component));
+	public void onDrag(Control<?> component, double newValue) {
+	    super.onDrag(component, newValue);
+	    switch (component.part.type) {
+	        case DYNAMIC_BRAKE_X:
+	            setDynamicBrake(getControlPosition(component));
+	            break;
+            case THROTTLE_DYN_BRAKE_X:
+                setDynamicBrake(1 - getControlPosition(component)*2);
+                setThrottle(getControlPosition(component)*2 - 1);
                 break;
-        }
-    }
+	    }
+	}
 
 	@Override
 	public void onDragRelease(Control<?> component) {
@@ -340,29 +352,48 @@ public class LocomotiveDiesel extends Locomotive {
 	}
 	
 	@Override
-    public boolean playerCanDrag(Player player, Control<?> control) {
-        switch (control.part.type) {
-            case DYNAMIC_BRAKE_X:
-                return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
+	protected float defaultControlPosition(Control<?> control) {
+	    switch (control.part.type) {
+            case THROTTLE_DYN_BRAKE_X:
+                return 0.5f;
+            default:
+                return super.defaultControlPosition(control);
         }
-        return super.playerCanDrag(player, control);
-    }
-
-    @Override
+	}
+	
+	@Override
+	public boolean playerCanDrag(Player player, Control<?> control) {
+	    switch (control.part.type) {
+	        case DYNAMIC_BRAKE_X:
+	        case THROTTLE_DYN_BRAKE_X:
+	            return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
+	    }
+	    return super.playerCanDrag(player, control);
+	}
+	
+	@Override
     protected void copySettings(final EntityRollingStock stock, final boolean direction) {
         if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).getDefinition().muliUnitCapable) {
             ((LocomotiveDiesel) stock).setRealDynamicBrake(this.getDynamicBrake());
         }
         super.copySettings(stock, direction);
     }
-
-    @Override
-    public void setTrainBrake(float newTrainBrake) {
-        super.setTrainBrake(newTrainBrake);
-        setRealDynamicBrake(newTrainBrake);
-    }
-
-    public float getDynamicBrake() {
+	
+	@Override
+	public void setTrainBrake(float newTrainBrake) {
+	    super.setTrainBrake(newTrainBrake);
+	    setRealDynamicBrake(newTrainBrake);
+	}
+	
+	@Override
+	public void setRealTrainBrake(float newTrainBrake) {
+	    super.setRealTrainBrake(newTrainBrake);
+	    if (this.getTrainBrake() != newTrainBrake) {
+	        setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
+	    }
+	}
+	
+	public float getDynamicBrake() {
         return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
     }
 

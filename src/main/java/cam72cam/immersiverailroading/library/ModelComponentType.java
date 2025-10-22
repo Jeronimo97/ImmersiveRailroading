@@ -94,9 +94,10 @@ public enum ModelComponentType {
 	REVERSER_X("REVERSER_#ID#"),
 	TRAIN_BRAKE_X("TRAIN_BRAKE_#ID#"),
 	HAND_BRAKE_X("HAND_BRAKE_#ID#"),
-    DYNAMIC_BRAKE_X("DYNAMIC_BRAKE_#ID#"),
+	DYNAMIC_BRAKE_X("(DYNAMIC|DYN)_BRAKE_#ID#"),
 	INDEPENDENT_BRAKE_X("(INDEPENDENT|IND)_BRAKE_#ID#"),
 	THROTTLE_BRAKE_X("THROTTLE_BRAKE_#ID#"),
+	THROTTLE_DYN_BRAKE_X("THROTTLE_DYN_BRAKE_#ID#"),
 	DOOR_X("DOOR_#ID#"),
 	SEAT_X("SEAT_#ID#"),
 	WINDOW_X("WINDOW_#ID#"),
@@ -158,9 +159,11 @@ public enum ModelComponentType {
 			case TRAIN_BRAKE_X:
 			case INDEPENDENT_BRAKE_X:
 			case HAND_BRAKE_X:
+			case DYNAMIC_BRAKE_X:
 			case THROTTLE_X:
 			case REVERSER_X:
 			case THROTTLE_BRAKE_X:
+			case THROTTLE_DYN_BRAKE_X:
 			case ENGINE_START_X:
 				return TextUtil.translate("part.immersiverailroading:controls." + primary.toLowerCase(Locale.ROOT));
             default:
