@@ -891,8 +891,7 @@ public abstract class EntityRollingStockDefinition {
     }
 
     protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
-        // TODO HandBrake / IndBrake
-        return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
+        return hasIndependentBrake() || hasHandBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
 
     public GuiBuilder getOverlay() {
