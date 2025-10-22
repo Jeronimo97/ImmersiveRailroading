@@ -25,6 +25,8 @@ import java.util.OptionalDouble;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static cam72cam.immersiverailroading.library.PhysicalMaterials.*;
+
 public abstract class Locomotive extends FreightTank{
 	private static final float throttleDelta = 0.04f;
 	private int brakeCooldown;
