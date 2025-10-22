@@ -488,7 +488,7 @@ public class Consist {
             for (Particle source : consist) {
                 linked.add(source.state);
                 
-                if (source.nextLink == null || !source.nextLink.coupled || !source.state.config.hasPressureBrake) {
+                if (source.nextLink == null || !source.nextLink.coupled) {
                     // No further linked couplings
                     // Spread brake pressure
 
