@@ -29,7 +29,7 @@ public enum ChatText {
 	RADIO_NOLINK("radio.nolink"),
 	RADIO_CANT_LINK("radio.cant_link"),
 	BRUSH_NO_VARIANTS("brush.no.variants"),
-	BRUSH_NEXT("brush.next"),
+	BRUSH_NEXT_DEBUG("brush.next_debug"),
 	BRUSH_MODE_SET("brush.mode.set"),
 	SWITCH_UNLOCKED("switch_state.unlocked"),
 	SWITCH_LOCKED("switch_state.locked"),
@@ -42,7 +42,8 @@ public enum ChatText {
 	WIRELESS_REMOTECONTROL_RELINK("wireless.remotecontrol.relink"),
 	WIRELESS_REMOTECONTROL_CANTLINK("wireless.remotecontrol.cantlink"),
 	TYPEWRITER_NO_STOCK("typewriter.no_stock"),
-	EMERGENCY_ACTIVATE("emergency_activated")
+	EMERGENCY_ACTIVATE("emergency_activated"),
+	MULTIBLOCK_SELECTING("multiblock.select"),
 	;
 	
 	private String value;

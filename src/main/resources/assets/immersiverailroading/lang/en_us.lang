@@ -8,6 +8,7 @@ item.immersiverailroading:item_augment.ITEM_LOADER.name=Item Loader
 item.immersiverailroading:item_augment.ITEM_UNLOADER.name=Item Unloader
 item.immersiverailroading:item_augment.FLUID_LOADER.name=Fluid Loader
 item.immersiverailroading:item_augment.FLUID_UNLOADER.name=Fluid Unloader
+item.immersiverailroading:item_augment.LUA_SCRIPTER.name=Lua Augment
 item.immersiverailroading:item_augment.DETECTOR.name=Detector
 item.immersiverailroading:item_augment.COUPLER.name=Coupler
 item.immersiverailroading:item_augment.ACTUATOR.name=Door Actuator
@@ -20,6 +21,7 @@ item.immersiverailroading:item_golden_spike.name=Golden Spike
 item.immersiverailroading:item_radio_control_card.name=Train Radio-control Card
 item.immersiverailroading:item_switch_key.name=Switch Key
 item.immersiverailroading:item_track_exchanger.name=Track Exchanger
+item.immersiverailroading:item_typewriter.name=Typewriter
 
 item.immersiverailroading:item_wireless_remotecontrol.name=Wireless Remote Control
 
@@ -55,7 +57,7 @@ chat.immersiverailroading:radio.unlink=Card unlinked from its locomotive
 chat.immersiverailroading:radio.nolink=Card has no linked locomotive
 chat.immersiverailroading:radio.cant_link=Locomotive %s does not have radio control equipment
 chat.immersiverailroading:brush.no.variants=This stock has no livery variants
-chat.immersiverailroading:brush.next=This stock's livery has been set to %s using %s
+chat.immersiverailroading:brush.next_debug=This stock's livery has been set to %s using %s
 chat.immersiverailroading:brush.mode.set=Mode changed to: %s
 chat.immersiverailroading:brush.mode.gui=Picker Menu
 chat.immersiverailroading:brush.mode.random_single=Random (stock)
@@ -65,6 +67,7 @@ chat.immersiverailroading:switch_state.locked=Switch locked to %s
 chat.immersiverailroading:switch_state.reset=The last-locked switch has been wirelessly unlocked!
 chat.immersiverailroading:switch_state.cant_reset=You haven't locked any switches with this key!
 chat.immersiverailroading:switch_state.already_reset=The last-locked switch is already unlocked!
+chat.immersiverailroading:typewriter.no_stock=Not looking at any stock
 
 chat.immersiverailroading:wireless.remotecontrol.link=Wireless Remotecontrol linked!
 chat.immersiverailroading:wireless.remotecontrol.relink=Wireless Remotecontrol relinked!
@@ -72,9 +75,13 @@ chat.immersiverailroading:wireless.remotecontrol.unlink=Wireless Remotecontrol u
 chat.immersiverailroading:wireless.remotecontrol.cantlink=Locomotive does not have Wireless control equipment!
 chat.immersiverailroading:emergency_activated=Emergency!
 
+chat.immersiverailroading:multiblock.select=Select multiblock: %s
+
 gui.immersiverailroading:label.brake=Brake
 gui.immersiverailroading:label.throttle=Throttle
 gui.immersiverailroading:label.reverser=Reverser
+gui.immersiverailroading:slider.zoom=Zoom:
+gui.immersiverailroading:selector.page=Page %s of %s
 gui.immersiverailroading:selector.type=Type: %s
 gui.immersiverailroading:selector.gauge=Gauge: %s
 gui.immersiverailroading:selector.track=Track Style: %s
@@ -85,6 +92,8 @@ gui.immersiverailroading:selector.rail_bed_fill=Rail Bed Fill: %s
 gui.immersiverailroading:selector.position=Position: %s
 gui.immersiverailroading:selector.smoothing=Vertical Smoothing: %s
 gui.immersiverailroading:selector.direction=Direction: %s
+gui.immersiverailroading:selector.transfer_table_entry_count=Transfer Table Entries: %s
+gui.immersiverailroading:selector.transfer_table_entry_spacing=Distance Between Entries: %s
 gui.immersiverailroading:selector.place_blueprint=Place Blueprint
 gui.immersiverailroading:selector.grade_crossing=Grade Crossing
 gui.immersiverailroading:selector.plate_type=Plate Type: %s
@@ -95,12 +104,18 @@ gui.immersiverailroading:selector.alignment=Alignment: %s
 gui.immersiverailroading:selector.textfield=Text Field: %s
 gui.immersiverailroading:selector.font=Font: %s
 
-gui.immersiverailroading:slider.offset=Offset in px: %s
+gui.immersiverailroading:slider.offset=Gap in px:
 gui.immersiverailroading:slider.line_spacing=Line Spacing in px: %s
 gui.immersiverailroading:checkbox.global= Global
+gui.immersiverailroading:selector.paintbrush_random=Apply random variant
+gui.immersiverailroading:selector.paintbrush_apply_to_stock=Apply to single stock
+gui.immersiverailroading:selector.paintbrush_apply_to_train=Apply to whole train
 
 gui.immersiverailroading:item.switch_key=Right-Click a switch to cycle between: [ locked straight, locked turn, unlocked ]. Redstone is ignored when locked!
 gui.immersiverailroading:item.switch_key.data=Last locked switch: %s in %s
+
+gui.immersiverailroading:item.radio_card.linked_to=Linked to %s
+gui.immersiverailroading:item.radio_card.not_linked=Not linked to any locomotive
 
 gui.immersiverailroading:item.track_exchanger=Right-Click in air to open the selection gui. Right-Click on a track to change it's track type to the one defined in the gui
 gui.immersiverailroading:item.paint_brush.mode=Current mode: %s
@@ -120,18 +135,23 @@ gui.immersiverailroading:track.rail_bed_fill=Bed Fill:    %s
 gui.immersiverailroading:track.place_blueprint_true=Place:      Blueprint
 gui.immersiverailroading:track.place_blueprint_false=Place:      Track
 
+
+gui.immersiverailroading:unit.count=Stocks:         %s
 gui.immersiverailroading:loco.works=Works:          %s
-gui.immersiverailroading:loco.horse_power=Horse Power: %s
-gui.immersiverailroading:loco.tractive_effort=Traction       %s Newtons
+gui.immersiverailroading:loco.power=Power:          %s
+gui.immersiverailroading:loco.tractive_effort=Tractive Eff:  %s
 gui.immersiverailroading:loco.max_speed=Max Speed:    %s
 gui.immersiverailroading:stock.gauge=Gauge:          %s
 gui.immersiverailroading:stock.texture=Variant:        %s
 gui.immersiverailroading:cast.raw=Requires processing in the steam hammer before use!
 gui.immersiverailroading:stock.tank_capacity=Capacity:       %s Buckets
 gui.immersiverailroading:stock.freight_capacity=Capacity:       %s Stacks
-gui.immersiverailroading:stock.weight=Weight:          %s Kg
+gui.immersiverailroading:stock.weight=Weight:          %s kg
 gui.immersiverailroading:stock.modeler=Modeler:        %s
 gui.immersiverailroading:stock.pack=Pack:            %s
+
+gui.immersiverailroading:overlay.on=On
+gui.immersiverailroading:overlay.off=Off
 
 immersiverailroading:gauge.brunel=Brunel
 immersiverailroading:gauge.standard=Standard
@@ -149,6 +169,7 @@ track.immersiverailroading:class.crossing=Crossing
 track.immersiverailroading:class.slope=Slope
 track.immersiverailroading:class.turn=Turn
 track.immersiverailroading:class.turntable=Turn Table
+track.immersiverailroading:class.transfertable=Transfer Table
 track.immersiverailroading:class.switch=Switch
 track.immersiverailroading:class.custom=Custom Curve
 
@@ -218,6 +239,22 @@ part.immersiverailroading:component.reach_rod=Reach Rod
 part.immersiverailroading:component.walcherts_linkage=Walcherts Linkage
 part.immersiverailroading:component.valve_rod=Valve Gear Component
 
+part.immersiverailroading:controls.cylinder_drain=Cylinder Drain
+part.immersiverailroading:controls.bell=Bell
+part.immersiverailroading:controls.whistle=Whistle
+part.immersiverailroading:controls.horn=Horn
+part.immersiverailroading:controls.train_brake=Train Brake
+part.immersiverailroading:controls.independent_brake=Independent Brake
+part.immersiverailroading:controls.throttle=Throttle
+part.immersiverailroading:controls.reverser=Reverser
+part.immersiverailroading:controls.throttle_brake=Throttle Brake
+part.immersiverailroading:controls.engine_start=Engine Start
+
+multiblock.immersiverailroading:boiler_machine=Boiler Machine
+multiblock.immersiverailroading:casting=Casting Basin
+multiblock.immersiverailroading:plate_machine=Plate Machine
+multiblock.immersiverailroading:rail_machine=Rail Machine
+multiblock.immersiverailroading:steam_hammer=Steam Hammer
 
 immersiverailroading:crafting_type.casting=Casting
 immersiverailroading:crafting_type.casting_hammer=Casting,Power Hammer
@@ -231,6 +268,7 @@ itemGroup.immersiverailroading.locomotive=Immersive Railroading Locomotives
 itemGroup.immersiverailroading.stock=Immersive Railroading Stock
 itemGroup.immersiverailroading.passenger=Immersive Railroading Passenger
 itemGroup.immersiverailroading.components=Immersive Railroading Components
+itemGroup.immersiverailroading.unit=Immersive Railroading Units
 
 death.attack.immersiverailroading:casting=%s discovered that molten metal does not make a good swimming pool
 death.attack.immersiverailroading:hitByTrain=%s failed to outrun a train
@@ -279,3 +317,67 @@ ir_keys.start_stop_engine=Start/Stop engine
 ir_keys.config=Config
 ir_keys.sanding=Sanding
 ir_keys.emergency=Emergency Button
+ir_keys.increase_hand_brake=Increase Handbrake
+ir_keys.zero_hand_brake=Zero Handbrake
+ir_keys.decrease_hand_brake=Decrease Handbrake
+ir_keys.increase_dynamic_brake=Increase Dynamic Brake
+ir_keys.zero_dynamic_brake=Zero Dynamic Brake
+ir_keys.decrease_dynamic_brake=Decrease Dynamic Brake
+
+# Default pack's train name
+immersiverailroading:entity.locomotives.a1_peppercorn=A1 Peppercorn
+immersiverailroading:entity.locomotives.a5_switcher=A5 Switcher
+immersiverailroading:entity.locomotives.alco_rs1=RS-1
+immersiverailroading:entity.locomotives.big_boy=Big Boy (4000 class)
+immersiverailroading:entity.locomotives.br01=br01
+immersiverailroading:entity.locomotives.class_38=Class 38
+immersiverailroading:entity.locomotives.cooke_mogul=DSP&P Mogul
+immersiverailroading:entity.locomotives.e6_atlantic=E6 Atlantic
+immersiverailroading:entity.locomotives.emd_sd40-2=EMD SD40-2
+immersiverailroading:entity.locomotives.emd_sw1500=SW1500
+immersiverailroading:entity.locomotives.firefly=Firefly
+immersiverailroading:entity.locomotives.ge_40_ton_boxcab=Class B-B-70/70-4HM829 Boxcab
+immersiverailroading:entity.locomotives.ge_b40_8=GE B40-8
+immersiverailroading:entity.locomotives.ge_b40_8w=GE B40-8w
+immersiverailroading:entity.locomotives.ge_c44_9cw=GE C44-9CW
+immersiverailroading:entity.locomotives.iron_duke=Iron Duke
+immersiverailroading:entity.locomotives.k36=D&RGW K36
+immersiverailroading:entity.locomotives.k4_pacific=K4 Pacific
+immersiverailroading:entity.locomotives.rodgers_460=Rodgers Ten Wheeler
+immersiverailroading:entity.locomotives.skookum=Skookum 2-4-4-2
+immersiverailroading:entity.tender.a1_peppercorn_tender=A1 Peppercorn Tender
+immersiverailroading:entity.tender.a5_tender=A5 Slope Tender
+immersiverailroading:entity.tender.big_boy_tender=Big Boy (4000 class) Tender
+immersiverailroading:entity.tender.br01_tender=drg class 01 tender
+immersiverailroading:entity.tender.class_38_tender=Class 38 Tender
+immersiverailroading:entity.tender.cooke_tender=Cooke Tender
+immersiverailroading:entity.tender.e6_tender=E6 Atlantic Tender
+immersiverailroading:entity.tender.k4_tender=K4 Pacific Tender
+immersiverailroading:entity.tender.k36_tender=K36 Tender
+immersiverailroading:entity.tender.rodgers_460_tender=Rodgers Ten Wheeler Tender
+immersiverailroading:entity.tender.skookum_tender=Skookum Tender
+
+immersiverailroading:entity.hand_car.hand_car_1=Hand Car
+
+immersiverailroading:entity.passenger.b70baggage=PRR B70 Baggage
+immersiverailroading:entity.passenger.br_coach_mk1=BR Coach MK1
+immersiverailroading:entity.passenger.p70coach1=PRR P70 Coach 1
+
+immersiverailroading:entity.freight.70t_hopper_slsf=70T Hopper SLSF
+immersiverailroading:entity.freight.attx_flatcar_1=ATTX Flatcar 1
+immersiverailroading:entity.freight.boxcar_x26=Box Car X26
+immersiverailroading:entity.freight.drgw_1000class_gondola=1000 Series Gondola
+immersiverailroading:entity.freight.drgw_3000class_boxcar=3000 Series Boxcar
+immersiverailroading:entity.freight.drgw_5500class_stockcar=5500 Series Stockcar
+immersiverailroading:entity.freight.drgw_rail_and_tie_outfit=Rail & Tie Car
+immersiverailroading:entity.freight.dw_gondola=DW Gondola
+immersiverailroading:entity.freight.n5c_cabin_car=N5c Caboose
+immersiverailroading:entity.freight.prr_flatcar_1=PRR Flatcar 1
+immersiverailroading:entity.freight.russell_snow_plow=Russell Snow Plow
+immersiverailroading:entity.freight.usra_boxcar_classrr40=USRA Boxcar Class RR-40
+immersiverailroading:entity.freight.usra_hopper_55t=USRA Hopper 55T
+immersiverailroading:entity.freight.waycar=Waycar
+
+immersiverailroading:entity.tank.kamx_t=Kamx T
+immersiverailroading:entity.tank.slag_car_1=Slag Car 1
+immersiverailroading:entity.tank.tank_us2=Tank US 2

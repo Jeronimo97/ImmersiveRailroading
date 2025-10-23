@@ -7,7 +7,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import util.Matrix4;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class CubicCurve {
@@ -15,6 +14,10 @@ public class CubicCurve {
     public final Vec3d ctrl1;
     public final Vec3d ctrl2;
     public final Vec3d p2;
+
+    public double[] t;
+    public double[] len;
+    public int segment;
 
     //http://spencermortensen.com/articles/bezier-circle/
     public final static double c = 0.55191502449;
@@ -73,69 +76,123 @@ public class CubicCurve {
     }
 
     public Vec3d position(double t) {
-        Vec3d pt = Vec3d.ZERO;
-        pt = pt.add(p1.		scale(1 * Math.pow(1-t, 3) * Math.pow(t, 0)));
-        pt = pt.add(ctrl1.	scale(3 * Math.pow(1-t, 2) * Math.pow(t, 1)));
-        pt = pt.add(ctrl2.	scale(3 * Math.pow(1-t, 1) * Math.pow(t, 2)));
-        pt = pt.add(p2.		scale(1 * Math.pow(1-t, 0) * Math.pow(t, 3)));
-        return pt;
+        //Using Vec3d will cause almost 2850% performance decrease
+        double u = 1 - t;
+
+        double d1 = u * u * u;
+        double d2 = 3 * u * u * t;
+        double d3 = 3 * u * t * t;
+        double d4 = t * t * t;
+
+        double x = p1.x * d1 + ctrl1.x * d2 + ctrl2.x * d3 + p2.x * d4;
+        double y = p1.y * d1 + ctrl1.y * d2 + ctrl2.y * d3 + p2.y * d4;
+        double z = p1.z * d1 + ctrl1.z * d2 + ctrl2.z * d3 + p2.z * d4;
+        return new Vec3d(x, y, z);
+    }
+
+    public Vec3d derivative(double t){
+        //WILL CAUSE 1000%+ decrease if using Vec3d
+        double u = 1 - t;
+        double d1 = 3 * u * u;
+        double d2 = 6 * u * t;
+        double d3 = 3 * t * t;
+
+        double dx = d1 * (ctrl1.x - p1.x) + d2 * (ctrl2.x - ctrl1.x) + d3 * (p2.x - ctrl2.x);
+        double dy = d1 * (ctrl1.y - p1.y) + d2 * (ctrl2.y - ctrl1.y) + d3 * (p2.y - ctrl2.y);
+        double dz = d1 * (ctrl1.z - p1.z) + d2 * (ctrl2.z - ctrl1.z) + d3 * (p2.z - ctrl2.z);
+
+        return new Vec3d(dx, dy, dz);
+    }
+
+    public double lengthWithCache(int iterations){
+        this.segment = iterations;
+        this.t = new double[segment + 10];
+        this.len = new double[segment + 10];
+        double length = 0.0;
+        double tStep = 1.0 / (double) iterations;
+        Vec3d prevDeriv = derivative(0);
+        double prevSpeed = prevDeriv.length();
+        //Cache it
+        t[0] = 0.0;
+        len[0] = 0.0;
+
+        for (int i = 1; i <= (double) iterations; i++) {
+            double pos = i * tStep;
+            Vec3d deriv = derivative(pos);
+            double speed = deriv.length();
+
+            length += (prevSpeed + speed) * tStep / 2.0;
+            t[i] = pos;
+            len[i] = length;
+            prevSpeed = speed;
+        }
+        t[segment] = 1;//The final index
+        return length;
+    }
+
+    public double lengthInBetween(double start, double end, double iter){
+        if(start == end){
+            return 0;
+        }
+        double length = 0.0;
+        double tStep = (end - start) / iter;
+        Vec3d prevDeriv = derivative(start);
+        double prevSpeed = prevDeriv.length();
+
+        for (double i = start + tStep; i <= end; i+=tStep) {
+            Vec3d deriv = derivative(i);
+            double speed = deriv.length();
+
+            length += (prevSpeed + speed) * tStep / 2.0;
+            prevSpeed = speed;
+        }
+        return length;
     }
 
     public List<Vec3d> toList(double stepSize) {
-        List<Vec3d> res = new ArrayList<>();
-        List<Vec3d> resRev = new ArrayList<>();
-        res.add(p1);
-        if (p1.equals(p2)) {
-            return res;
+        List<Vec3d> result = new ArrayList<>();
+        result.add(p1);
+        if(p1.equals(p2)){
+            return result;
         }
 
-        resRev.add(p2);
-        double precision = 5;
+        double lastLength = 0;
+        double error = 0.001 * stepSize;
 
-        double t = 0;
-        while (t <= 0.5) {
-            for (double i = 1; i < precision; i++) {
-                Vec3d prev = res.get(res.size()-1);
+        for (int i = 0; i < segment; i++) {
+            if(len[i] - lastLength <= stepSize && len[i+1] - lastLength > stepSize){
+                double low = t[i];
+                double high = t[i+1];
+                double currentLen = len[i];
+                double mid = (low + high) / 2;
 
-                double delta = (Math.pow(10, -i));
+                for(int j = 1; j <= 7; j++){
+                    mid = (low + high) / 2;
+                    double test = lengthInBetween(low, mid, 10);
+                    if(Math.abs(currentLen + test - lastLength - stepSize) < error){
+                        break;
+                    }
 
-                for (;t < 1 + delta; t+=delta) {
-                    Vec3d pos = position(t);
-                    if (pos.distanceTo(prev) > stepSize) {
-                        // We passed it, just barely
-                        t -= delta;
+                    if(currentLen + test < lastLength + stepSize){
+                        low = mid;
+                        currentLen += test;
+                    } else if (currentLen + test > lastLength + stepSize) {
+                        high = mid;
+                    } else {
                         break;
                     }
                 }
-            }
-            res.add(position(t));
-        }
 
-        double lt = t;
-        t = 1;
-
-        while (t > lt) {
-            for (double i = 1; i < precision; i++) {
-                Vec3d prev = resRev.get(resRev.size()-1);
-
-                double delta = (Math.pow(10, -i));
-
-                for (;t > lt - delta; t-=delta) {
-                    Vec3d pos = position(t);
-                    if (pos.distanceTo(prev) > stepSize) {
-                        // We passed it, just barely
-                        t += delta;
-                        break;
-                    }
-                }
-            }
-            if (t > lt) {
-                resRev.add(position(t));
+                result.add(position(mid));
+                lastLength = currentLen + lengthInBetween(low, mid, 10);
             }
         }
-        Collections.reverse(resRev);
-        res.addAll(resRev);
-        return res;
+
+        if(len[segment] - lastLength >= 0.8 * stepSize){
+            result.add(p2);
+        }
+
+        return result;
     }
 
     public float angleStop() {

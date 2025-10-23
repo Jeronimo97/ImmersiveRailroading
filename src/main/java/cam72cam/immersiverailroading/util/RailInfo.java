@@ -44,6 +44,10 @@ public class RailInfo {
 	public RailInfo(RailSettings settings, PlacementInfo placementInfo, PlacementInfo customInfo, SwitchState switchState, SwitchState switchForced, double tablePos, boolean itemHeld) {
 		if (customInfo == null) {
 			customInfo = placementInfo;
+			//#1566: Use customInfo to adjust slope height
+			if (settings.type == TrackItems.SLOPE) {
+				customInfo = customInfo.offset(new Vec3i(0,1,0));
+			}
 		}
 
 		this.settings = settings;
@@ -72,7 +76,7 @@ public class RailInfo {
 				this.placementInfo.yaw,
 				this.placementInfo.direction,
 				this.customInfo.yaw,
-				this.customInfo.direction,
+				this.customInfo.direction
 		};
 		String id = Arrays.toString(props);
 		if (!placementInfo.placementPosition.equals(customInfo.placementPosition) || this.settings.posType != TrackPositionType.FIXED) {
@@ -86,6 +90,12 @@ public class RailInfo {
 		}
 		if (settings.type == TrackItems.TURNTABLE) {
 			id += Config.ConfigBalance.AnglePlacementSegmentation;
+		}
+		if (settings.type == TrackItems.TRANSFERTABLE) {
+			id += this.settings.transfertableEntryCount;
+			id += this.settings.transfertableEntrySpacing;
+		}
+		if (settings.type.isTable()) {
 			id += this.itemHeld;
 		}
 		return id;
@@ -184,6 +194,8 @@ public class RailInfo {
 			return new BuilderSwitch(this, world, pos);
 		case TURNTABLE:
 			return new BuilderTurnTable(this, world, pos);
+		case TRANSFERTABLE:
+			return new BuilderTransferTable(this, world, pos);
 		case CUSTOM:
 			return new BuilderCubicCurve(this, world, pos);
 		}
@@ -402,7 +414,7 @@ public class RailInfo {
 			SwitchState switchForced = SwitchState.values()[nbt.getInteger("switchForced")];
 			double tablePos = nbt.getDouble("tablePos");
 
-			RailSettings settings = new RailSettings(gauge, "default", type, length, quarters / 4F * 90, 1, TrackPositionType.FIXED, type == TrackItems.SLOPE ? TrackSmoothing.NEITHER : TrackSmoothing.BOTH , TrackDirection.NONE, railBed, cam72cam.mod.item.ItemStack.EMPTY, false, false);
+			RailSettings settings = new RailSettings(gauge, "default", type, length, quarters / 4F * 90, 1, TrackPositionType.FIXED, type == TrackItems.SLOPE ? TrackSmoothing.NEITHER : TrackSmoothing.BOTH , TrackDirection.NONE, railBed, cam72cam.mod.item.ItemStack.EMPTY, false, false, 1,  1);
 			return new RailInfo(settings, placementInfo, null, switchState, switchForced, tablePos);
 		}
 	}

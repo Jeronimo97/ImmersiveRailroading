@@ -59,29 +59,33 @@ public class PaintBrushPicker implements IScreen {
             }
         }.setVisible(true);
 
-        Slider zoom_slider = new Slider(screen, xtop + width, (int) (GUIHelpers.getScreenHeight()*0.75 - height), "Zoom: ", 0.1, 2, 1, true) {
+        Slider zoom_slider = new Slider(screen, xtop + width, (int) (GUIHelpers.getScreenHeight()*0.75 - height),
+                                        GuiText.SLIDER_ZOOM.toString(), 0.1, 2, 1, true) {
             @Override
             public void onSlider() {
                 zoom = this.getValue();
             }
         };
 
-        width = 80;
-        Button random = new Button(screen, GUIHelpers.getScreenWidth() / 2 - width, ytop, width, height, "Random") {
+        width = 100;
+        Button random = new Button(screen, GUIHelpers.getScreenWidth() / 2 - width, ytop, width, height,
+                                   GuiText.SELECTOR_PAINTBRUSH_RANDOM.toString()) {
             @Override
             public void onClick(Player.Hand hand) {
                 variant = ItemPaintBrush.nextRandomTexture(stock, variant);
             }
         };
 
-        Button apply = new Button(screen, GUIHelpers.getScreenWidth() / 2 - width, (int) (GUIHelpers.getScreenHeight()*0.75 - height*2), width, height, "Apply to Stock") {
+        Button apply = new Button(screen, GUIHelpers.getScreenWidth() / 2 - width, (int) (GUIHelpers.getScreenHeight()*0.75 - height*2),
+                                  width, height, GuiText.SELECTOR_PAINTBRUSH_TO_STOCK.toString()) {
             @Override
             public void onClick(Player.Hand hand) {
                 new ItemPaintBrush.PaintBrushPacket(stock, PaintBrushMode.GUI, variant, false).sendToServer();
                 screen.close();
             }
         };
-        Button apply_connected = new Button(screen, GUIHelpers.getScreenWidth() / 2 - width, (int) (GUIHelpers.getScreenHeight()*0.75 - height), width, height, "Apply to Train") {
+        Button apply_connected = new Button(screen, GUIHelpers.getScreenWidth() / 2 - width, (int) (GUIHelpers.getScreenHeight()*0.75 - height),
+                                            width, height, GuiText.SELECTOR_PAINTBRUSH_TO_TRAIN.toString()) {
             @Override
             public void onClick(Player.Hand hand) {
                 new ItemPaintBrush.PaintBrushPacket(stock, PaintBrushMode.GUI, variant, true).sendToServer();

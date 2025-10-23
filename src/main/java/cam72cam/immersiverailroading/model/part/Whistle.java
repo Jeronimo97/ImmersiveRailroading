@@ -123,12 +123,7 @@ public class Whistle {
         }
     }
 
-    private final ExpireableMap<UUID, SoundEffects> sounds = new ExpireableMap<UUID, SoundEffects>() {
-        @Override
-        public void onRemove(UUID key, SoundEffects value) {
-            value.terminate();
-        }
-    };
+    private final ExpireableMap<UUID, SoundEffects> sounds = new ExpireableMap<>((k, v) -> v.terminate());
 
     public void effects(EntityMoveableRollingStock stock, int hornTime, float hornPull) {
         // Particles and Sound
@@ -149,7 +144,6 @@ public class Whistle {
         Vec3d fakeMotion = stock.getVelocity();
         if (component != null && hornTime > 0) {
             Vec3d particlePos = stock.getPosition().add(VecUtil.rotateWrongYaw(component.center.scale(stock.gauge.scale()), stock.getRotationYaw() + 180));
-            particlePos = particlePos.subtract(fakeMotion);
 
             float darken = 0;
             float thickness = 1;

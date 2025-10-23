@@ -14,7 +14,6 @@ import cam72cam.immersiverailroading.library.Permissions;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
 import cam72cam.mod.entity.sync.TagSync;
-import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
@@ -101,6 +100,7 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 	@TagSync
 	@TagField("hasElectricalPower")
 	private boolean hasElectricalPower;
+	private boolean linkedToLocomotive;
 	private boolean hadElectricalPower = false;
 	private int gotElectricalPowerTick = -1;
 
@@ -187,17 +187,23 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 
 		if (this.getTickCount() % 5 == 0) {
 			hasElectricalPower = false;
-			this.mapTrain(this, false, stock ->
-					hasElectricalPower = hasElectricalPower ||
-							stock instanceof Locomotive && ((Locomotive) stock).providesElectricalPower()
+			linkedToLocomotive = false;
+			this.mapTrain(this, false, stock -> {
+							  hasElectricalPower = hasElectricalPower ||
+									  stock instanceof Locomotive && ((Locomotive) stock).providesElectricalPower();
+							  linkedToLocomotive = linkedToLocomotive || stock instanceof Locomotive;
+						  }
 			);
 		}
 
 		hadElectricalPower = hasElectricalPower();
 
 		if (this.getCurrentState() != null && !this.getCurrentState().atRest || ConfigDebug.keepStockLoaded) {
-			keepLoaded();
-		}
+			//Then exclude stocks not linked to any locomotive
+            if (!ConfigDebug.excludeStandaloneWagons || this.linkedToLocomotive) {
+                keepLoaded();
+            }
+        }
 
 		slackFrontPercent = 0;
 		slackRearPercent = 0;

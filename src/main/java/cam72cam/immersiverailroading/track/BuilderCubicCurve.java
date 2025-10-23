@@ -9,6 +9,7 @@ import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.world.World;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,7 +48,7 @@ public class BuilderCubicCurve extends BuilderIterator {
 				RailInfo subInfo = new RailInfo(info.settings.with(b -> b.type = TrackItems.CUSTOM), startPos, endPos, SwitchState.NONE, SwitchState.NONE, 0);
 
 				BuilderCubicCurve subBuilder = new BuilderCubicCurve(subInfo, world, sPos);
-				if (subBuilders.size() != 0) {
+				if (!subBuilders.isEmpty()) {
 					for (TrackBase track : subBuilder.tracks) {
 						if (track instanceof TrackRail) {
 							track.overrideParent(subBuilders.get(0).getParentPos());
@@ -61,7 +62,7 @@ public class BuilderCubicCurve extends BuilderIterator {
 		}
 	}
 
-	private HashMap<Double, List<PosStep>> cache;
+	private HashMap<Double, Pair<Double, List<VecYPR>>> cache;
 
 	public CubicCurve getCurve() {
 		Vec3d nextPos = new Vec3d(new Vec3i(VecUtil.fromYaw(info.settings.length, info.placementInfo.yaw + 45)));
@@ -98,23 +99,42 @@ public class BuilderCubicCurve extends BuilderIterator {
 	}
 
 	@Override
-    public List<PosStep> getPath(double stepSize) {
+    public List<VecYPR> getPath(double stepSize) {
+		return getPathForRender(stepSize).getRight();
+	}
+
+	@Override
+	public Pair<Double, List<VecYPR>> getPathForRender(double targetStepSize) {
 		if (cache == null) {
 			cache = new HashMap<>();
 		}
 
-		if (cache.containsKey(stepSize)) {
-			return cache.get(stepSize);
+		if (cache.containsKey(targetStepSize)) {
+			return cache.get(targetStepSize);
 		}
 
-		List<PosStep> res = new ArrayList<>();
+		List<VecYPR> res = new ArrayList<>();
 		CubicCurve curve = getCurve();
 
 		// HACK for super long curves
 		// Skip the super long calculation since it'll be overridden anyways
 		curve = curve.subsplit(200).get(0);
 
+		double length = curve.lengthWithCache(1000);
+		int count = (int) (length / targetStepSize);//Adapt the length
+		double mod = (length / targetStepSize) % 1;
+		if(mod > 0.6){
+			count += 1;
+		}
+		double stepSize = length / count;
+		if (count * 3 > 1000){//There may be over 1 pieces in the same cache section, rebuild cache
+			curve.lengthWithCache(count * 3);
+		}
+
 		List<Vec3d> points = curve.toList(stepSize);
+		if(count == 0){//Meaning stepSize must be NaN, caused by curve length == 0
+			stepSize = targetStepSize;
+		}
 		for(int i = 0; i < points.size(); i++) {
 			Vec3d p = points.get(i);
 			float yaw;
@@ -125,7 +145,7 @@ public class BuilderCubicCurve extends BuilderIterator {
 			} else if (i == points.size()-1) {
 				Vec3d next = points.get(i-1);
 				pitch = (float) Math.toDegrees(Math.atan2(next.y - p.y, next.distanceTo(p)));
-                yaw = curve.angleStop();
+				yaw = curve.angleStop();
 			} else if (i == 0) {
 				Vec3d next = points.get(i+1);
 				pitch = (float) -Math.toDegrees(Math.atan2(next.y - p.y, next.distanceTo(p)));
@@ -136,10 +156,10 @@ public class BuilderCubicCurve extends BuilderIterator {
 				pitch = (float) -Math.toDegrees(Math.atan2(next.y - prev.y, next.distanceTo(prev)));
 				yaw = VecUtil.toYaw(points.get(i+1).subtract(points.get(i-1)));
 			}
-			res.add(new PosStep(p, yaw, pitch));
+			res.add(new VecYPR(p, yaw, pitch));
 		}
-		cache.put(stepSize, res);
-		return cache.get(stepSize);
+		cache.put(targetStepSize, Pair.of(stepSize, res));
+		return cache.get(targetStepSize);
 	}
 
 	/* OVERRIDES */
@@ -235,17 +255,14 @@ public class BuilderCubicCurve extends BuilderIterator {
 	}
 
 	@Override
-	public List<VecYawPitch> getRenderData() {
+	public List<VecYPR> getRenderData() {
 		if (subBuilders == null) {
 			return super.getRenderData();
 		} else {
-			List<VecYawPitch> data = new ArrayList<>();
+			List<VecYPR> data = new ArrayList<>();
 			for (BuilderBase curve : subBuilders.subList(0, Math.min(subBuilders.size(), 3))) {
 				Vec3d offset = new Vec3d(curve.pos.subtract(pos));
-				for (VecYawPitch rd : curve.getRenderData()) {
-					rd = new VecYawPitch(rd.x + offset.x, rd.y + offset.y, rd.z + offset.z, rd.yaw, rd.pitch, rd.length);
-					data.add(rd);
-				}
+				curve.getRenderData().stream().map(rd -> rd.add(offset)).forEach(data::add);
 			}
 			return data;
 		}

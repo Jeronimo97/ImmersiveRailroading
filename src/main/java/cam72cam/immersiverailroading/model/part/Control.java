@@ -3,6 +3,7 @@ package cam72cam.immersiverailroading.model.part;
 import cam72cam.immersiverailroading.ConfigGraphics;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
+import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
 import cam72cam.immersiverailroading.model.ModelState;
@@ -19,6 +20,7 @@ import cam72cam.mod.model.obj.OBJGroup;
 import cam72cam.mod.render.GlobalRender;
 import cam72cam.mod.render.opengl.RenderState;
 import cam72cam.mod.text.TextColor;
+import cam72cam.mod.text.TextUtil;
 import cam72cam.mod.util.Axis;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -288,6 +290,7 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
             case THROTTLE_X:
             case REVERSER_X:
             case THROTTLE_BRAKE_X:
+            case THROTTLE_DYN_BRAKE_X:
             case BELL_CONTROL_X:
             case WHISTLE_CONTROL_X:
             case HORN_CONTROL_X:
@@ -295,11 +298,13 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
             case CYLINDER_DRAIN_CONTROL_X:
             case SANDING_CONTROL_X:
             case EMERGENCY_CONTROL_X:
+            case HAND_BRAKE_X:
+            case DYNAMIC_BRAKE_X:
                 if (part.type == ModelComponentType.REVERSER_X) {
                     percent *= -2;
                 }
                 if (toggle || press) {
-                    labelstate = percent == 1 ? " (On)" : " (Off)";
+                    labelstate = percent == 1 ? " ("+ GuiText.ON +")" : " ("+ GuiText.OFF +")";
                 } else {
                     labelstate = String.format(" (%d%%)", (int)(percent * 100));
                 }
@@ -309,12 +314,25 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
                     return;
                 }
                 if (toggle || press) {
-                    labelstate = percent == 1 ? " (On)" : " (Off)";
+                    labelstate = percent == 1 ? " ("+ GuiText.ON +")" : " ("+ GuiText.OFF +")";
                 } else {
                     labelstate = String.format(" (%d%%)", (int)(percent * 100));
                 }
         }
-        String str = (label != null ? label : formatLabel(part.type)) + labelstate;
+        //Try to translate label
+        String str;
+        if (this.label != null) {
+            String[] parts = stock.getDefinitionID().split("/");
+            String key1 = "label.immersiverailroading:" + parts[1] + "." + parts[2].replace(".json", "") + "." + label;
+            str = TextUtil.translate(key1);
+            if (str.equals(key1)) {
+                String key2 = "label.immersiverailroading:" + label;
+                str = TextUtil.translate(key2).equals(key2) ? label : TextUtil.translate(key2);
+            }
+        } else {
+            str = part.type.getOverlayName();
+        }
+        str += labelstate;
         if (isPressed) {
             str = TextColor.BOLD.wrap(str);
         }
@@ -323,7 +341,9 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
 
     public float getValue(EntityMoveableRollingStock stock) {
         float pos = stock.getControlPosition(this) + offset;
-        return (invert ? 1 - pos : pos) - (part.type == ModelComponentType.REVERSER_X || part.type == ModelComponentType.THROTTLE_BRAKE_X ? 0.5f : 0);
+        return (invert ? 1 - pos : pos) - (part.type == ModelComponentType.REVERSER_X
+                || part.type == ModelComponentType.THROTTLE_BRAKE_X
+                || part.type == ModelComponentType.THROTTLE_DYN_BRAKE_X ? 0.5f : 0);
     }
 
     public Vec3d transform(Vec3d point, T stock) {

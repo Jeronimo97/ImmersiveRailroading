@@ -1,5 +1,6 @@
 package cam72cam.immersiverailroading;
 
+import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.mod.config.ConfigFile.Comment;
 import cam72cam.mod.config.ConfigFile.File;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 @File("immersiverailroading.cfg")
 public class Config {
 	public static void init() {
-		if (ConfigBalance.dieselFuels.size() == 0) {
+		if (ConfigBalance.dieselFuels.isEmpty()) {
 			// BC
 			ConfigBalance.dieselFuels.put("oil", 100);
 			ConfigBalance.dieselFuels.put("oil_heavy", 70);
@@ -60,6 +61,11 @@ public class Config {
 		@Comment("Trains should break block")
 		public static boolean TrainsBreakBlocks = true;
 
+		@Comment("Which block is reserved if TrainsBreakBlocks is true")
+		public static String[] TrainsIgnoreBlocks = new String[]{
+				"littletiles:blocklittletiles"
+		};
+
 		@Comment("How hard are blocks to break by rolling stock?")
 		@Range(min = 0, max = 500)
 		public static int blockHardness = 50;
@@ -86,9 +92,9 @@ public class Config {
 		@Name("Disable Independent Throttle")
 		public static boolean disableIndependentThrottle = true;
 
-		@Comment("Old style brake control")
-		@Name("Instant Brake Pressure")
-		public static boolean instantBrakePressure = false;
+		@Comment("Change brake mode. Possible: instant (old style), default, realistic")
+		@Name("Brake Mode")
+		public static BrakeMode brakeMode = BrakeMode.DEFAULT;
 
 		@Comment("Enable coupler slack")
 		public static boolean slackEnabled = true;
@@ -190,7 +196,7 @@ public class Config {
 		public static boolean canDieselEnginesOverheat = true;
 
         public static List<ItemStack> getVillagerPayout() {
-			return Arrays.stream(villagerPayoutItems).map(f -> f.example()).collect(Collectors.toList());
+			return Arrays.stream(villagerPayoutItems).map(Fuzzy::example).collect(Collectors.toList());
 		}
 		
 		@Comment("Only select Locomotives with suitable equipment can be radio-controlled")
@@ -218,6 +224,10 @@ public class Config {
 		@Comment("Angles per tick to rotate turntables (used server side)")
 		@Range(min = 0, max = 5)
 		public static double TurnTableSpeed = 0.4;
+
+		@Comment("Meters per tick to move transfer tables (used server side)")
+		@Range(min = 0, max = 1)
+		public static double TransferTableSpeed = 0.03;
 
 		@Comment("Diesel locomotive capacity multiplier, set to 10 for old functionality")
 		@Range(min = 1, max = 10)
@@ -267,6 +277,9 @@ public class Config {
 		@Comment("Keep rolling stock loaded even when it is not moving")
 		public static boolean keepStockLoaded = true;
 
+		@Comment("Exclude unattached wagons from chunk loading when keepStockLoaded is true")
+		public static boolean excludeStandaloneWagons = false;
+
 		@Comment( "Print extra chunk loading info" )
 		public static boolean debugLog = false;
 
@@ -303,10 +316,15 @@ public class Config {
 		
 	    @Comment( "Print extra info" )
 	    public static boolean debugLogging = false;
-    }
 
-	public static boolean isFuelRequired(Gauge gauge) {
-		return !(!ConfigBalance.FuelRequired || (!ConfigBalance.ModelFuelRequired && gauge.isModel()));
+		@Comment("Render Debug lines of text fields")
+		public static boolean renderDebugLines = false;
+
+		@Comment("Does stock drops itself/components when player is in creative mode?")
+		public static boolean stockDropInCreativeMode = true;
+		}
+	
+    public static boolean isFuelRequired(Gauge gauge) {
+        return !(!ConfigBalance.FuelRequired || (!ConfigBalance.ModelFuelRequired && gauge.isModel()));
 	}
-
 }

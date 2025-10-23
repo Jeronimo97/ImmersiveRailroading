@@ -1,6 +1,6 @@
 package cam72cam.immersiverailroading.gui.components;
 
-import cam72cam.immersiverailroading.gui.TrackGui;
+import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.gui.helpers.GUIHelpers;
 import cam72cam.mod.gui.screen.Button;
@@ -34,20 +34,20 @@ public abstract class ListSelector<T> {
         this.rawOptions = rawOptions;
         this.currentValue = currentValue;
         visible = false;
+        page = 0;
 
         int xtop = -GUIHelpers.getScreenWidth() / 2 + xOff;
         int ytop = -GUIHelpers.getScreenHeight() / 4;
 
         search = new TextField(screen, xtop, ytop, width - 1, height);
 
-        pagination = new Button(screen, xtop, ytop + height, width + 1, height, "Page") {
+        pagination = new Button(screen, xtop, ytop + height, width + 1, height, "") {
             @Override
             public void onClick(Player.Hand hand) {
                 page += hand == Player.Hand.PRIMARY ? 1 : -1;
                 updateSearch(search.getText());
             }
         };
-        page = 0;
 
         pageSize = Math.max(1, GUIHelpers.getScreenHeight() / height - 2);
 
@@ -109,7 +109,7 @@ public abstract class ListSelector<T> {
             page = nPages - 1;
         }
 
-        pagination.setText(String.format("Page %s of %s", page + 1, Math.max(1, nPages)));
+        pagination.setText(GuiText.SELECTOR_PAGE.toString(page + 1, Math.max(1, nPages)));
 
         options.forEach(b -> {
             b.setText("");

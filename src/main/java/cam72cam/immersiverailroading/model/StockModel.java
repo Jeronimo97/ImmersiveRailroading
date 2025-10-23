@@ -2,10 +2,7 @@ package cam72cam.immersiverailroading.model;
 
 import cam72cam.immersiverailroading.ConfigGraphics;
 import cam72cam.immersiverailroading.ConfigSound;
-import cam72cam.immersiverailroading.entity.CarPassenger;
-import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
-import cam72cam.immersiverailroading.entity.Locomotive;
-import cam72cam.immersiverailroading.entity.RenderText;
+import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
@@ -16,6 +13,8 @@ import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.model.part.TrackFollower.TrackFollowers;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
+import cam72cam.immersiverailroading.script.sound.ServerSideSound;
+import cam72cam.immersiverailroading.script.sound.SoundConfig;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
@@ -23,12 +22,8 @@ import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
 import util.Matrix4;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.lwjgl.opengl.GL11.*;
 
 public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> extends OBJModel {
     private final DEFINITION def;
@@ -49,8 +44,11 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     protected final List<Control<ENTITY>> controls;
     protected final List<Readout<ENTITY>> gauges;
     protected final List<Seat<ENTITY>> seats;
+    protected final Map<String, ServerSideSound<ENTITY>> serverSideSounds = new HashMap<>();
 
     protected List<LightFlare<ENTITY>> headlights;
+
+    protected TextField<ENTITY> textField = new TextField<>();
 
     private final TrackFollowers frontTrackers;
     private final TrackFollowers rearTrackers;
@@ -206,16 +204,18 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         addControl(provider, ModelComponentType.COUPLER_ENGAGED_X);
 
+        if (def.hasHandBrake()) {
+            addControl(provider, ModelComponentType.HAND_BRAKE_X);
+            addGauge(provider, ModelComponentType.GAUGE_HAND_BRAKE_X, Readouts.HAND_BRAKE);
+        }
         if (def.hasIndependentBrake()) {
             addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
-        }
-        addGauge(provider, ModelComponentType.BRAKE_PRESSURE_X, Readouts.BRAKE_PRESSURE);
-        addControl(provider, ModelComponentType.WINDOW_X);
-        addControl(provider, ModelComponentType.WIDGET_X);
-
-        if (def.hasIndependentBrake()) {
             addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
         }
+        addGauge(provider, ModelComponentType.GAUGE_BRAKE_PRESSURE_X, Readouts.BRAKE_PRESSURE);
+        addGauge(provider, ModelComponentType.GAUGE_BRAKE_CYLINDER_PRESSURE_X, Readouts.BRAKE_CYLINDER_PRESSURE);
+        addControl(provider, ModelComponentType.WINDOW_X);
+        addControl(provider, ModelComponentType.WIDGET_X);
 
         addDoor(provider);
         seats.addAll(Seat.get(provider, rocking));
@@ -242,6 +242,16 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         return true;
     }
 
+    public ServerSideSound<ENTITY> getServerSideSound(SoundConfig config) {
+        return serverSideSounds.get(config.location);
+    }
+
+    public void createServerSideSound(SoundConfig config, EntityRollingStock stock) {
+        ServerSideSound<ENTITY> sound = new ServerSideSound<>();
+        sound.setConfig((ENTITY) stock, config);
+        sound.createSound((ENTITY) stock);
+        this.serverSideSounds.put(config.location, sound);
+    }
 
     public final void onClientTick(EntityMoveableRollingStock stock) {
         effects((ENTITY) stock);
@@ -269,6 +279,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
         flangeSound.effects(stock);
         sway.effects(stock);
+
+        serverSideSounds.forEach((n, s) -> s.effects(stock));
     }
 
     public final void onClientRemoved(EntityMoveableRollingStock stock) {
@@ -286,13 +298,14 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         slidingSound.removed(stock);
         flangeSound.removed(stock);
         sway.removed(stock);
+
+        serverSideSounds.forEach((n, s) -> s.removed(stock));
+        textField.removed(stock);
     }
 
     private int lod_level = LOD_LARGE;
     private int lod_tick = 0;
     public final void renderEntity(EntityMoveableRollingStock stock, RenderState state, float partialTicks) {
-        RenderText renderText = RenderText.getInstance(String.valueOf(stock.getUUID()));
-        renderText.textRender(state, animations, stock, partialTicks);
         List<ModelComponentType> available = stock.isBuilt() ? null : stock.getItemComponents()
                 .stream().flatMap(x -> x.render.stream())
                 .collect(Collectors.toList());
@@ -370,6 +383,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         doors.forEach(c -> c.postRender(stock, state, partialTicks));
         gauges.forEach(c -> c.postRender(stock, state, partialTicks));
         headlights.forEach(x -> x.postRender(stock, state));
+        textField.postRender(stock, state, this.animations, partialTicks);
     }
 
     public List<Control<ENTITY>> getControls() {

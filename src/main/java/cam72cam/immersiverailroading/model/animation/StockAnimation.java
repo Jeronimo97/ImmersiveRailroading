@@ -44,11 +44,9 @@ public class StockAnimation {
 
     public float getValue(EntityRollingStock stock) {
         float value = def.control_group != null ? stock.getControlPosition(def.control_group) : def.readout.getValue(stock);
+        value = Math.min(1, Math.max(0, (value - def.rangeMin) / (def.rangeMax - def.rangeMin)));
         value += def.offset;
-        if (def.invert) {
-            value = 1-value;
-        }
-        return value;
+        return def.invert ? 1 - value : value;
     }
 
     public float getPercent(EntityRollingStock stock, float partialTicks) {

@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.items;
 
 import cam72cam.immersiverailroading.ImmersiveRailroading;
+import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.mod.item.*;
 import cam72cam.mod.serialization.TagField;
 
@@ -34,7 +35,7 @@ public class ItemRadioCtrlCard extends CustomItem {
     @Override
     public List<String> getTooltip(ItemStack stack) {
         Data d = new Data(stack);
-        return Collections.singletonList(d.linked == null ? "Not linked to any locomotive" : "Linked to: " + d.linked);
+        return Collections.singletonList(d.linked == null ? GuiText.RADIO_CARD_NOT_LINKED.toString() : GuiText.RADIO_CARD_LINKED_TO.toString(d.linked));
     }
 
     public static class Data extends ItemDataSerializer {

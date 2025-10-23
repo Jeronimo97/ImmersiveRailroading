@@ -1,7 +1,5 @@
 package cam72cam.immersiverailroading.entity;
 
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.STEEL;
-
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
@@ -31,8 +29,8 @@ import java.util.stream.Collectors;
 
 public abstract class Locomotive extends FreightTank{
 	private static final float throttleDelta = 0.04f;
-	private static final float trainBrakeNotch = 0.04f;
-
+	private int brakeCooldown;
+	
 	@TagField("deadMansSwitch")
 	private boolean deadMansSwitch;
 	private int deadManChangeTimeout;
@@ -47,7 +45,7 @@ public abstract class Locomotive extends FreightTank{
 
 	@TagSync
 	@TagField("AIR_BRAKE")
-	private float trainBrake = 0;
+	private float trainBrakePosition = 0;
 
 	@TagSync
 	@TagField("HORN")
@@ -75,7 +73,8 @@ public abstract class Locomotive extends FreightTank{
 	
     protected int sandTime = 0;
     protected boolean isSanding = false;
-    protected boolean isSandingKey = false;
+    protected boolean sandingKey = false;
+    protected int sandingKeyTimeout = 0;
 
     protected boolean emergency = false;
     protected boolean isEmergencyKey = false;
@@ -92,6 +91,10 @@ public abstract class Locomotive extends FreightTank{
 	@TagSync
 	@TagField("localHorsepower")
 	public double localHorsepower = -1;
+	
+	   @TagSync
+	    @TagField("localPowerMultiplier")
+	    public double localPowerMultiplier = -1;
 
 	/*
 	 * 
@@ -133,27 +136,27 @@ public abstract class Locomotive extends FreightTank{
 				case REVERSER_DOWN:
 					return;
 			}
-		} else if (getDefinition().isLinkedBrakeThrottle()) {
-			switch (key) {
-				case THROTTLE_UP:
-					if (getTrainBrake() > 0) {
-						key = KeyTypes.TRAIN_BRAKE_DOWN;
-					}
-					break;
-				case THROTTLE_ZERO:
-					setTrainBrake(0);
-					break;
-				case THROTTLE_DOWN:
-					if (getThrottle() == 0) {
-						key = KeyTypes.TRAIN_BRAKE_UP;
-					}
-					break;
-				case TRAIN_BRAKE_UP:
-				case TRAIN_BRAKE_ZERO:
-				case TRAIN_BRAKE_DOWN:
-					return;
-			}
-		}
+        } else if (getDefinition().isLinkedBrakeThrottle()) {
+            switch (key) {
+                case THROTTLE_UP:
+                    if (getTrainBrake() > 0) {
+                        key = KeyTypes.TRAIN_BRAKE_DOWN;
+                    }
+                    break;
+                case THROTTLE_ZERO:
+                    setTrainBrake(0);
+                    break;
+                case THROTTLE_DOWN:
+                    if (getThrottle() == 0) {
+                        key = KeyTypes.TRAIN_BRAKE_UP;
+                    }
+                    break;
+                case TRAIN_BRAKE_UP:
+                case TRAIN_BRAKE_ZERO:
+                case TRAIN_BRAKE_DOWN:
+                    return;
+            }
+        }
 
 		boolean linkThrottleReverser = forceLinkThrottleReverser() || disableIndependentThrottle;
 
@@ -172,22 +175,22 @@ public abstract class Locomotive extends FreightTank{
 				}
             break;
 		case THROTTLE_UP:
-			setThrottle(getThrottle() + throttleDelta);
+			setThrottle(getThrottle() + getThrottleDelta());
 			break;
 		case THROTTLE_ZERO:
 			setThrottle(0f);
 			break;
 		case THROTTLE_DOWN:
-			setThrottle(getThrottle() - throttleDelta);
+			setThrottle(getThrottle() - getThrottleDelta());
 			break;
 		case REVERSER_UP:
 			if (linkThrottleReverser) {
 				float mixed = getThrottle() * (getReverser() >= 0 ? 1 : -1);
 				if (mixed < 0) {
-					setRealThrottle(-mixed - throttleDelta);
+					setRealThrottle(-mixed - getThrottleDelta());
 					setReverser(-1);
 				} else {
-					setRealThrottle(mixed + throttleDelta);
+					setRealThrottle(mixed + getThrottleDelta());
 					setReverser(1);
 				}
 			} else {
@@ -204,10 +207,10 @@ public abstract class Locomotive extends FreightTank{
 			if (linkThrottleReverser) {
 				float mixed = getThrottle() * (getReverser() >= 0 ? 1 : -1);
 				if (mixed > 0) {
-					setRealThrottle(mixed - throttleDelta);
+					setRealThrottle(mixed - getThrottleDelta());
 					setReverser(1);
 				} else {
-					setRealThrottle(-mixed + throttleDelta);
+					setRealThrottle(-mixed + getThrottleDelta());
 					setReverser(-1);
 				}
 			} else {
@@ -215,13 +218,21 @@ public abstract class Locomotive extends FreightTank{
 			}
 			break;
 		case TRAIN_BRAKE_UP:
-			setTrainBrake(getTrainBrake() + trainBrakeNotch);
+            if (brakeCooldown > 0) {
+                break;
+            }
+            brakeCooldown = 2;		    
+			setTrainBrake(getTrainBrake() + getBrakeDelta());
 			break;
 		case TRAIN_BRAKE_ZERO:
 			setTrainBrake(0f);
 			break;
 		case TRAIN_BRAKE_DOWN:
-			setTrainBrake(getTrainBrake() - trainBrakeNotch);
+            if (brakeCooldown > 0) {
+                break;
+            }
+            brakeCooldown = 2;		   
+			setTrainBrake(getTrainBrake() - getBrakeDelta());
 			break;
 		case DEAD_MANS_SWITCH:
 			if (deadManChangeTimeout == 0) { 
@@ -234,13 +245,18 @@ public abstract class Locomotive extends FreightTank{
 				this.deadManChangeTimeout = 5;
 			}
 			break;
-        case SANDING:
-            if (isSandingKey) {
-                isSandingKey = false;
-            } else {
-                isSandingKey = true;
+		case SANDING:
+            if (sandingKeyTimeout == 0) {
+                sandingKey = !sandingKey;
+                sandingKeyTimeout = 5;
+
+                List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                        .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                        .collect(Collectors.toList());
+                for (Control<?> sand : sanding) {
+                    setControlPosition(sand, sandingKey ? 1 : 0);
+                }
             }
-            setSanding(isSandingKey);
             break;
 			default:
 				super.handleKeyPress(source, key, disableIndependentThrottle);
@@ -264,7 +280,7 @@ public abstract class Locomotive extends FreightTank{
 
 
 	protected float getReverserDelta() {
-		return throttleDelta;
+		return 0.04f;
 	}
 
 	public void onDrag(Control<?> component, double newValue) {
@@ -295,7 +311,8 @@ public abstract class Locomotive extends FreightTank{
 	@Override
 	public void onDragRelease(Control<?> control) {
 		super.onDragRelease(control);
-		if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.TRAIN_BRAKE_X) {
+		if (!getDefinition().isLinearBrakeControl()
+		        && control.part.type == ModelComponentType.TRAIN_BRAKE_X) {
 			setControlPosition(control, 0.5f);
 		}
 	}
@@ -322,7 +339,6 @@ public abstract class Locomotive extends FreightTank{
 			case THROTTLE_X:
 			case REVERSER_X:
 			case TRAIN_BRAKE_X:
-			case INDEPENDENT_BRAKE_X:
 			case THROTTLE_BRAKE_X:
 			case BELL_CONTROL_X:
 			case WHISTLE_CONTROL_X:
@@ -389,12 +405,12 @@ public abstract class Locomotive extends FreightTank{
 		if (passenger instanceof Player && !((Player) passenger).hasPermission(Permissions.BOARD_LOCOMOTIVE)) {
 			return false;
 		}
-		return super.canFitPassenger(passenger);
-	}
+        return super.canFitPassenger(passenger);
+    }
 
-	@Override
-	public void onTick() {
-		super.onTick();
+    @Override
+    public void onTick() {
+        super.onTick();
 		
 		if (getWorld().isServer) {
 			sync.setInterval(5);
@@ -411,8 +427,11 @@ public abstract class Locomotive extends FreightTank{
 			if (bellKeyTimeout > 0) {
 				bellKeyTimeout--;
 			}
+		    if (brakeCooldown > 0) {
+		        brakeCooldown--;
+		    }
 			
-			if (deadMansSwitch && !this.getCurrentSpeed().isZero()) {
+			if (deadMansSwitch && !getCurrentSpeed().isZero()) {
 				boolean hasDriver = this.getPassengers().stream().anyMatch(Entity::isPlayer);
 				if (!hasDriver) {
 					this.setThrottle(0);
@@ -464,52 +483,70 @@ public abstract class Locomotive extends FreightTank{
 			}
 		}
 		
-		isSanding = false;
-        if (this.isSanding()) {
-            System.out.println("Time: " + sandTime);
-
+		if (sandingKeyTimeout > 0) {
+            sandingKeyTimeout--;
+        }
+        isSanding = false;
+        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
+        if (sandingKey) {
             ItemStack stack = this.cargoItems.get(2);
             if (sandTime == 0) {
                 stack.setCount(stack.getCount() - 1);
                 sandTime = 60 * Config.ConfigBalance.SandEfficiency;
-
-
-
             }
             if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
-
-
                 sandTime--;
                 isSanding = true;
             }
         }
+	}
+	
+	@Override
+	public Speed getCurrentSpeed() {
+	    return slipping ? Speed.fromMinecraft((super.getCurrentSpeed().minecraft()
+	            + simulateWheelSlip())) : super.getCurrentSpeed();
 	}
 
 	/** Force applied between the wheels and the rails */
 	public abstract double getAppliedTractiveEffort(Speed speed);
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
-    protected final double getStaticTractiveEffort() {
+    protected final double getStaticTractiveEffort(Speed speed) {        
         return getDefinition().getScriptedStartingTractionNewtons(gauge, this)
-                * (1 + Math.sin(-Math.copySign(Math.toRadians(getRotationPitch()),
-                        getCurrentSpeed().metric())) * Config.ConfigBalance.slopeMultiplier)
-                * Config.ConfigBalance.tractionMultiplier
-                * (slipping ? 0.5 : 1) * (isSanding ? 1.5 : 1);
+                * Config.ConfigBalance.tractionMultiplier * adhesionCoefficient();
+    }
+
+    public float adhesionCoefficient() {
+        float adhMult = 1;
+        World world = getWorld();
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos))
+                adhMult *= 0.7f;
+            if (world.isSnowing(blockPos))
+                adhMult *= 0.35f;
+        }
+        if (isSanding)
+            adhMult *= 3;
+        if (slipping)
+            adhMult *= 0.5f;
+        return adhMult;
     }
 	
     protected double simulateWheelSlip() {
-        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(getCurrentSpeed()));
-        double staticTractiveEffort = getStaticTractiveEffort();
+        Speed speed = super.getCurrentSpeed();
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(speed));
+        double staticTractiveEffort = getStaticTractiveEffort(speed);
         slipping = appliedTractiveEffort > staticTractiveEffort;
-
+        
         if (cogging || !slipping)
             return 0;
-
+        
         double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
-        return Math.copySign((adhesionFactor - 1) / 2, getReverser());
+        return Math.copySign((adhesionFactor - 1) / 8, getReverser());
     }
 	
-    public double getTractiveEffortNewtons(final Speed speed) {
+    public double getTractiveEffortNewtons(Speed speed) {
         if (!this.isBuilt()
                 || Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()
                         && this.getDefinition().isSpeedLimiter())
@@ -522,9 +559,17 @@ public abstract class Locomotive extends FreightTank{
         }
         return appliedTractiveEffort;
     }
+    
+    public float getCurrentTractiveEffort() {
+        return (float) Math.min(1, Math.abs((getAppliedTractiveEffort(getCurrentSpeed()) / getDefinition().getScriptedStartingTractionNewtons(gauge, this))));
+    }
+    
+    public double speedPercent(Speed speed) {
+        return Math.abs(speed.metric() / getDefinition().getMaxSpeed(gauge).metric());
+    }
 
 	@Override
-	public double getBrakeSystemEfficiency() {
+	public float getBrakeSystemEfficiency() {
 		if (cogging) {
 			return 10;
 		}
@@ -543,29 +588,19 @@ public abstract class Locomotive extends FreightTank{
 	 * Misc Helper functions
 	 */
 
-	private void copySettings(EntityRollingStock stock, boolean direction) {
-		if (stock instanceof Locomotive && ((Locomotive)stock).getDefinition().muliUnitCapable) {
-			((Locomotive) stock).setRealThrottle(this.getThrottle());
-			((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
-			((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
-			((Locomotive) stock).setRealIndependentBrake(this.getIndependentBrake());
+	protected void copySettings(EntityRollingStock stock, boolean direction) {
+		if (stock instanceof Locomotive) {
+		    ((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
+		    if (((Locomotive)stock).getDefinition().muliUnitCapable) {
+		        ((Locomotive) stock).setRealThrottle(this.getThrottle());
+		        ((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
+		    }
 		}
-	}
-
-	@Override
-	public LuaValue getThrottleLua() {
-		return LuaValue.valueOf(getThrottle());
+		    
 	}
 
 	public float getThrottle() {
 		return throttle;
-	}
-
-	@Override
-	public void setThrottleLua(LuaValue val) {
-		setThrottle(val.tofloat());
-//		ModCore.info("Original value: " + val);
-//		ModCore.info("Throttle_X: " + ModelComponentType.THROTTLE_X);
 	}
 
 	public void setThrottle(float newThrottle) {
@@ -574,7 +609,7 @@ public abstract class Locomotive extends FreightTank{
 			this.mapTrain(this, true, false, this::copySettings);
 		}
 	}
-	private void setRealThrottle(float newThrottle) {
+	public void setRealThrottle(float newThrottle) {
 		newThrottle = Math.min(1, Math.max(0, newThrottle));
 //		ModCore.info("Set Throttle to: " + newThrottle);
 		if (this.getThrottle() != newThrottle) {
@@ -583,19 +618,17 @@ public abstract class Locomotive extends FreightTank{
 			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrake())/2);
 		}
 	}
-
-	@Override
-	public LuaValue getReverserLua() {
-		return LuaValue.valueOf(getReverser());
+	
+	public float getThrottleDelta() {
+	    return throttleDelta;
+	}
+	
+	public float getBrakeDelta() {
+	    return 1F / getDefinition().getBrakeNotches();
 	}
 
 	public float getReverser() {
 		return reverser;
-	}
-
-	@Override
-	public void setReverserLua(LuaValue val) {
-		setReverser(val.tofloat());
 	}
 
 
@@ -658,34 +691,21 @@ public abstract class Locomotive extends FreightTank{
 		return Math.max((float)control, hornPull);
 	}
 
-	@Override
-	public LuaValue getTrainBrakeLua() {
-		return LuaValue.valueOf(getTrainBrake());
-	}
-
 	@Deprecated
 	public float getAirBrake() {
 		return getTrainBrake();
 	}
 	public float getTrainBrake() {
-		return trainBrake;
+		return trainBrakePosition;
 	}
-
-	@Override
-	public void setTrainBrakeLua(LuaValue val) {
-		setTrainBrake(val.tofloat());
-	}
-
-
+	
 	@Deprecated
 	public void setAirBrake(float value) {
 		setTrainBrake(value);
 	}
 	public void setTrainBrake(float newTrainBrake) {
 		setRealTrainBrake(newTrainBrake);
-		if (this.getDefinition().muliUnitCapable) {
-			this.mapTrain(this, true, false, this::copySettings);
-		}
+		this.mapTrain(this, true, false, this::copySettings);
 	}
 	private void setRealTrainBrake(float newTrainBrake) {
 		newTrainBrake = Math.min(1, Math.max(0, newTrainBrake));
@@ -693,27 +713,10 @@ public abstract class Locomotive extends FreightTank{
 			if (getDefinition().isLinearBrakeControl()) {
 				setControlPositions(ModelComponentType.TRAIN_BRAKE_X, newTrainBrake);
 			}
-			trainBrake = newTrainBrake;
+			trainBrakePosition = newTrainBrake;
 			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrake())/2);
 		}
 	}
-
-	@Override
-	public void setIndependentBrakeLua(LuaValue val) {
-		setIndependentBrake(val.tofloat());
-	}
-
-	@Override
-	public void setIndependentBrake(float newIndependentBrake) {
-		setRealIndependentBrake(newIndependentBrake);
-		if (this.getDefinition().muliUnitCapable) {
-			this.mapTrain(this, true, false, this::copySettings);
-		}
-	}
-	private void setRealIndependentBrake(float newIndependentBrake) {
-		super.setIndependentBrake(newIndependentBrake);
-	}
-
 
 	public int getBell() {
 		return bellTime;
@@ -721,21 +724,6 @@ public abstract class Locomotive extends FreightTank{
 	public void setBell(int newBell) {
 		this.bellTime = newBell;
 	}
-
-    public double slipCoefficient() {
-        double slipMult = 0.5;
-        World world = getWorld();
-        Vec3i blockPos = getBlockPosition();
-        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
-            if (world.isRaining(blockPos)) {
-                slipMult *= 0.6;
-            }
-            if (world.isSnowing(blockPos)) {
-                slipMult *= 0.4;
-            }
-        }
-        return slipMult;
-    }
 
 	public abstract boolean providesElectricalPower();
 
@@ -749,8 +737,7 @@ public abstract class Locomotive extends FreightTank{
 		return internal != null ? getWorld().getTemperature(getBlockPosition()) : 0f;
 	}
 
-	@Override
-	protected LuaValue getPerformance(LuaValue type) {
+	public LuaValue getPerformance(LuaValue type) {
 		String strType = type.tojstring();
 		switch (strType) {
 			case "max_speed_kmh":
@@ -759,13 +746,14 @@ public abstract class Locomotive extends FreightTank{
 				return LuaValue.valueOf(this.localHorsepower == -1 ? getDefinition().getHorsepower() : this.localHorsepower);
 			case "traction":
 				return LuaValue.valueOf(this.localTraction == -1 ? getDefinition().getTraction() : this.localTraction);
+			case "power_multiplier":
+			    return LuaValue.valueOf(this.localPowerMultiplier == -1 ? this.getDefinition().getPowerMultiplier() : this.localPowerMultiplier);
 			default:
 				return LuaValue.valueOf(0);
 		}
 	}
 
-	@Override
-	protected void setPerformance(LuaValue performanceType, LuaValue val) {
+	public void setPerformance(LuaValue performanceType, LuaValue val) {
 		String type = performanceType.tojstring();
 		double newValue = val.todouble();
 		switch (type) {
@@ -778,24 +766,21 @@ public abstract class Locomotive extends FreightTank{
 			case "horsepower":
 				this.localHorsepower = newValue;
 				break;
+			case "power_multiplier":
+			    this.localPowerMultiplier = newValue;
+			    break;
 		}
 	}
 	
-	public boolean isSanding() {
+    public boolean isSanding() {
         List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
-        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5 || isSandingKey);
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
     }
-
-    public void setSanding(final boolean enabled) {
-        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
-                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
-                .collect(Collectors.toList());
-        for (Control<?> sand : sanding) {
-            setControlPosition(sand, enabled ? 1 : 0);
-        }
- 
+    
+    public void setSanding(boolean sanding) {
+        sandingKey = sanding;
     }
     /*
     public boolean isEmergency() {

@@ -1,9 +1,12 @@
 package cam72cam.immersiverailroading.model;
 
+import cam72cam.immersiverailroading.ConfigGraphics;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.mod.render.obj.OBJRender;
+import cam72cam.mod.render.opengl.BlendMode;
+import cam72cam.mod.render.opengl.RenderState;
 import org.apache.commons.lang3.tuple.Pair;
 import util.Matrix4;
 
@@ -11,7 +14,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class ModelState {
     private final Animator animator;
@@ -225,109 +227,154 @@ public class ModelState {
         return false;
     }
 
-    // TODO check performance impact of streams
-    public void render(OBJRender.Binding vbo, EntityMoveableRollingStock stock, List<ModelComponentType> available, float partialTicks) {
-        // Get all groups that we can render from components that are available
-        List<String> groups = new ArrayList<>();
-        for (ModelComponent component : components) {
-            if (available == null) {
-                groups.addAll(component.modelIDs);
-            } else if (available.contains(component.type)) {
-                available.remove(component.type);
-                groups.addAll(component.modelIDs);
+    private static class Opacity {
+        final List<String> opaque = new ArrayList<>();
+        final List<String> transparent = new ArrayList<>();
+
+        void add(boolean isTransparent, String group) {
+            if (isTransparent) {
+                transparent.add(group);
+            } else {
+                opaque.add(group);
             }
         }
+    }
 
-        // Filter out groups that aren't currently visible
-        if (groupVisibility != null) {
-            groups = groups.stream().filter(group -> {
-                Boolean visible = groupVisibility.visible(stock, group);
-                return visible == null || visible;
-            }).collect(Collectors.toList());
+    private static final BlendMode ALPHA_BLEND = new BlendMode(BlendMode.GL_SRC_ALPHA, BlendMode.GL_ONE_MINUS_SRC_ALPHA);
+
+    private static class GroupState {
+        Matrix4 matrix = null;
+        Float blockLight = null;
+        Float skyLight = null;
+        boolean transparent = false;
+
+        boolean equals(GroupState other) {
+            return Objects.equals(this.matrix, other.matrix) &&
+                    Objects.equals(this.blockLight, other.blockLight) &&
+                    Objects.equals(this.skyLight, other.skyLight) &&
+                    this.transparent == other.transparent;
         }
 
-        Matrix4 matrix = animator != null ? animator.getMatrix(stock, partialTicks) : null;
+        void copy(GroupState other) {
+            this.matrix = other.matrix;
+            this.blockLight = other.blockLight;
+            this.skyLight = other.skyLight;
+            this.transparent = other.transparent;
+        }
 
-        Map<String, Matrix4> animatedGroups = new HashMap<>();
-        if (groupAnimator != null) {
-            for (String group : groups) {
-                Matrix4 m = groupAnimator.getMatrix(stock, group, partialTicks);
-                if (m != null) {
-                    animatedGroups.put(group, m);
+        void reset() {
+            this.matrix = null;
+            this.blockLight = null;
+            this.skyLight = null;
+            this.transparent = false;
+        }
+    }
+
+    public void render(OBJRender.Binding vbo, EntityMoveableRollingStock stock, List<ModelComponentType> available, float partialTicks) {
+        // Get all groups that we can render from components that are available
+        List<ModelComponent.ModelGroup> groups = new ArrayList<>();
+
+        for (ModelComponent component : components) {
+            if (available == null || available.remove(component.type)) {
+                // Filter out groups that aren't currently visible
+                if (groupVisibility == null) {
+                    groups.addAll(component.groups);
+                } else {
+                    for (ModelComponent.ModelGroup g : component.groups) {
+                        Boolean visible = groupVisibility.visible(stock, g.modelID);
+                        if (visible == null || visible) {
+                            groups.add(g);
+                        }
+                    }
                 }
             }
         }
+
+        // Minimize draw calls by using the same comparison as OBJRender
+        groups.sort(Comparator.comparing(a -> a.modelID));
+
+        // General matrix to apply
+        Matrix4 matrix = animator != null ? animator.getMatrix(stock, partialTicks) : null;
 
         // Required, TODO upstream checking or optional
         LightState lighting = lighter.get(stock);
         boolean fullBright = lighting.fullBright != null && lighting.fullBright;
         boolean hasInterior = lighting.hasInterior != null && lighting.hasInterior;
 
+        GroupState current = new GroupState();
+        GroupState next = new GroupState();
+        List<String> currentGroups = new ArrayList<>(groups.size());
 
-        Map<Pair<Float, Float>, List<String>> levels = new HashMap<>();
-        for (String group : groups) {
-            if (!lcgCache.containsKey(group)) {
-                Matcher matcher = lcgPattern.matcher(group);
-                lcgCache.put(group, matcher.find() ? matcher.group(1) : null);
+        Consumer<RenderState> currentModifier = state -> {
+            if (matrix != null) {
+                state.model_view().multiply(matrix);
             }
-            String lcg = lcgCache.get(group);
+            if (current.matrix != null) {
+                state.model_view().multiply(current.matrix);
+            }
+            if (current.blockLight != null && current.skyLight != null) {
+                state.lightmap(current.blockLight, current.skyLight);
+            }
+            if (current.transparent) {
+                state.blend(ALPHA_BLEND).depth_mask(false);
+            }
+        };
 
-            boolean invertGroup = linvertCache.computeIfAbsent(group, g -> hasGroupFlag(g, "LINVERT"));
-            boolean interiorGroup = interiorCache.computeIfAbsent(group, g -> hasGroupFlag(g, "INTERIOR"));
-            boolean fullbrightGroup = fullbrightCache.computeIfAbsent(group, g -> hasGroupFlag(g, "FULLBRIGHT"));
+        for (ModelComponent.ModelGroup group : groups) {
+            if (group.transparent && !ConfigGraphics.RenderSemiTransparentParts) {
+                // Don't render the group
+                continue;
+            }
 
-            Float lcgValue = lcg != null ? stock.getControlPosition(lcg) : null;
-            lcgValue = lcgValue == null ? null : invertGroup ? 1 - lcgValue : lcgValue;
-            Pair<Float, Float> key = null;
+            next.reset();
+
+            if (groupAnimator != null) {
+                next.matrix = groupAnimator.getMatrix(stock, group.modelID, partialTicks);
+            }
+
+            Float lcgValue = group.LCG != null ? stock.getControlPosition(group.LCG) : null;
+            lcgValue = lcgValue == null ? null : group.linvert ? 1 - lcgValue : lcgValue;
 
             // TODO additional null checks around lighting fields
             if (lcgValue == null || lcgValue > 0) {
-                if (fullBright && fullbrightGroup) {
-                    key = Pair.of(1f, 1f);
+                if (fullBright && group.fullbright) {
+                    next.blockLight = 1F;
+                    next.skyLight = 1F;
                 } else if (lighting.interiorLight != null) {
-                    if (!hasInterior || interiorGroup) {
+                    if (!hasInterior || group.interior) {
+                        next.blockLight = lighting.interiorLight;
+                        next.skyLight = lighting.skyLight;
                         if (lcgValue != null) {
-                            key = Pair.of(lighting.interiorLight * lcgValue, lighting.skyLight);
-                        } else {
-                            key = Pair.of(lighting.interiorLight, lighting.skyLight);
+                            next.blockLight *= lcgValue;
                         }
                     }
                 }
             }
 
-            levels.computeIfAbsent(key, p -> new ArrayList<>()).add(group);
+            next.transparent = group.transparent;
+
+            // See if we are still part of the current render group
+            if (current.equals(next)) {
+                // If so, add this group to the pile
+                currentGroups.add(group.modelID);
+                continue;
+            }
+
+            // Flush
+            if (!currentGroups.isEmpty()) {
+                vbo.draw(currentGroups, currentModifier);
+            }
+
+            // Start tracking the next set of groups
+            currentGroups.clear();
+            currentGroups.add(group.modelID);
+            current.copy(next);
         }
 
-        levels.forEach((level, litGroups) -> {
-            List<String> animated = animatedGroups.isEmpty() ? Collections.emptyList() :
-                    litGroups.stream().filter(g -> animatedGroups.containsKey(g)).collect(Collectors.toList());
-            List<String> notAnimated = animatedGroups.isEmpty() ? litGroups :
-                    litGroups.stream().filter(g -> !animatedGroups.containsKey(g)).collect(Collectors.toList());
-
-            if (!notAnimated.isEmpty()) {
-                vbo.draw(notAnimated, state -> {
-                    if (matrix != null) {
-                        state.model_view().multiply(matrix);
-                    }
-                    if (level != null) {
-                        state.lightmap(level.getKey(), level.getValue());
-                    }
-                });
-            }
-            if (!animated.isEmpty()) {
-                animated.forEach(group -> {
-                    vbo.draw(Collections.singletonList(group), state -> {
-                        if (matrix != null) {
-                            state.model_view().multiply(matrix);
-                        }
-                        state.model_view().multiply(animatedGroups.get(group));
-                        if (level != null) {
-                            state.lightmap(level.getKey(), level.getValue());
-                        }
-                    });
-                });
-            }
-        });
+        // Flush
+        if (!currentGroups.isEmpty()) {
+            vbo.draw(currentGroups, currentModifier);
+        }
 
         for (ModelState child : children) {
             child.render(vbo, stock, available, partialTicks);

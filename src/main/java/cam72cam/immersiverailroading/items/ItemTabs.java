@@ -13,6 +13,7 @@ public class ItemTabs {
 	public static CreativeTab LOCOMOTIVE_TAB;
 	public static CreativeTab STOCK_TAB;
     public static CreativeTab PASSENGER_TAB;
+	public static CreativeTab UNIT_TAB;
 	//public static CreativeTab COMPONENT_TAB;
 
 	static {
@@ -34,6 +35,13 @@ public class ItemTabs {
 		PASSENGER_TAB = new CreativeTab(ImmersiveRailroading.MODID + ".passenger", () -> {
 			List<ItemStack> items = IRItems.ITEM_ROLLING_STOCK.getItemVariants(PASSENGER_TAB);
 			if (items.size() == 0) {
+				return new ItemStack(IRItems.ITEM_LARGE_WRENCH, 1);
+			}
+			return items.get(0);
+		});
+		UNIT_TAB = new CreativeTab(ImmersiveRailroading.MODID + ".unit", () -> {
+			List<ItemStack> items = IRItems.ITEM_MULTIPLE_UNIT.getItemVariants(UNIT_TAB);
+			if (items.isEmpty()) {
 				return new ItemStack(IRItems.ITEM_LARGE_WRENCH, 1);
 			}
 			return items.get(0);

@@ -8,6 +8,7 @@ import java.util.List;
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.library.SwitchState;
 import cam72cam.immersiverailroading.library.TrackDirection;
+import cam72cam.immersiverailroading.library.TrackModelPart;
 import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
@@ -28,7 +29,11 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 		this(info, world, pos, false);
 	}
 
-	public abstract List<PosStep> getPath(double stepSize);
+	//Not sensitive to dynamic stepSize, like physics system
+	public abstract List<VecYPR> getPath(double stepSize);
+
+	//Sensitive to dynamic stepSize, return the changed stepSize as well
+	public abstract Pair<Double, List<VecYPR>> getPathForRender(double targetStepSize);
 
 	public BuilderIterator(RailInfo info, World world, Vec3i pos, boolean endOfTrack) {
 		super(info, world, pos);
@@ -49,9 +54,9 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 		double clamp = 0.17 * info.settings.gauge.scale();
 		float heightOffset = (float) ((info.placementInfo.placementPosition.y) % 1);
 
-		List<PosStep> path = getPath(0.25);
-		PosStep start = path.get(0);
-		PosStep end = path.get(path.size()-1);
+		List<VecYPR> path = getPath(0.25);
+		VecYPR start = path.get(0);
+		VecYPR end = path.get(path.size()-1);
 
 		Vec3d placeOff = new Vec3d(
 				Math.abs(MathUtil.trueModulus(info.placementInfo.placementPosition.x, 1)),
@@ -62,7 +67,7 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 		int mainZ = (int) Math.floor(path.get(path.size()/2).z+placeOff.z);
 		int flexDist = (int) Math.max(1, 3 * (0.5 + info.settings.gauge.scale()/2));
 
-		for (PosStep cur : path) {
+		for (VecYPR cur : path) {
 			Vec3d gagPos = cur;
 
 			boolean isFlex = gagPos.distanceTo(start) < flexDist || gagPos.distanceTo(end) < flexDist;
@@ -70,7 +75,7 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 			gagPos = gagPos.add(0, heightOffset, 0);
 
 			for (double q = -horiz; q <= horiz; q+=0.1) {
-				Vec3d nextUp = VecUtil.fromYaw(q, 90 + cur.yaw);
+				Vec3d nextUp = VecUtil.fromYaw(q, 90 + cur.getYaw());
 				int posX = (int)Math.floor(gagPos.x+nextUp.x+placeOff.x);
 				int posZ = (int)Math.floor(gagPos.z+nextUp.z+placeOff.z);
 				double height = 0;
@@ -120,7 +125,7 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 			} catch (SerializationException e) {
 				throw new RuntimeException("Invalid track builder", e);
 			}
-			throw new RuntimeException("Invalid track builder " + debug.toString());
+			throw new RuntimeException("Invalid track builder " + debug);
 		}
 
 		Vec3i mainPos = new Vec3i(mainX, yOffset.get(Pair.of(mainX, mainZ)), mainZ);
@@ -147,8 +152,8 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 	
 	@Override
 	public List<TrackBase> getTracksForRender() {
-		return this.tracks;
-	}
+        return super.getTracksForRender();
+    }
 
 	private static float delta(float a, float b) {
 		float angle = (float) Math.toDegrees(Math.toRadians(a) - Math.toRadians(b));
@@ -162,18 +167,21 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 	}
 
 	@Override
-	public List<VecYawPitch> getRenderData() {
-		List<VecYawPitch> data = new ArrayList<VecYawPitch>();
+	public List<VecYPR> getRenderData() {
+		List<VecYPR> data = new ArrayList<>();
 
 		double scale = info.settings.gauge.scale();
-		List<PosStep> points = getPath(scale * info.getTrackModel().spacing);
+		Pair<Double, List<VecYPR>> pair = getPathForRender(scale * info.getTrackModel().spacing);
+		List<VecYPR> points = pair.getRight();
+        float renderScale = (float) (pair.getLeft() / info.getTrackModel().spacing);
+		renderScale *= 1.005f;//Avoid some gaps
 
 		boolean switchStraight = info.switchState == SwitchState.STRAIGHT;
 		int switchSize = 0;
 		TrackDirection direction = info.placementInfo.direction;
 		if (switchStraight ) {
 			for (int i = 0; i < points.size(); i++) {
-				PosStep cur = points.get(i);
+				VecYPR cur = points.get(i);
 				Vec3d flatPos = VecUtil.rotateYaw(cur, -info.placementInfo.yaw);
 				if (Math.abs(flatPos.z) >= 0.5 * scale) {
 					switchSize = i;
@@ -183,18 +191,18 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 		}
 
 		for (int i = 0; i < points.size(); i++) {
-			PosStep cur = points.get(i);
-			PosStep switchPos = cur;
+			VecYPR cur = points.get(i);
+			VecYPR switchPos = cur;
 			if (switchStraight ) {
 				double switchOffset = 1 - (i / (double)switchSize);
 				if (switchOffset > 0) {
 					double dist = 0.2 * switchOffset * scale * info.getTrackModel().spacing;
-					Vec3d offset = VecUtil.fromYaw(dist, cur.yaw + 90 + info.placementInfo.direction.toYaw());
+					Vec3d offset = VecUtil.fromYaw(dist, cur.getYaw() + 90 + info.placementInfo.direction.toYaw());
 					double offsetAngle = Math.toDegrees(0.2/switchSize); // This line took a whole page of scribbled math
 					if (direction == TrackDirection.RIGHT)  {
 						offsetAngle = -offsetAngle;
 					}
-					switchPos = new PosStep(cur.add(offset), cur.yaw + (float)offsetAngle, cur.pitch);
+					switchPos = new VecYPR(cur.add(offset), cur.getYaw() + (float)offsetAngle, cur.getPitch());
 				}
 			}
 			
@@ -202,29 +210,30 @@ public abstract class BuilderIterator extends BuilderBase implements IIterableTr
 			if (points.size() == 1) {
 				angle = 0;
 			} else if (i+1 == points.size()) {
-				PosStep next = points.get(i-1);
-				angle = delta(next.yaw, cur.yaw);
+				VecYPR next = points.get(i-1);
+				angle = delta(next.getYaw(), cur.getYaw());
 				angle *= 2;
 			} else if (i == 0) {
-				PosStep next = points.get(i+1);
-				angle = delta(cur.yaw, next.yaw);
+				VecYPR next = points.get(i+1);
+				angle = delta(cur.getYaw(), next.getYaw());
 				angle *= 2;
 			} else {
-				PosStep prev = points.get(i-1);
-				PosStep next = points.get(i+1);
-				angle = delta(prev.yaw, next.yaw);
+				VecYPR prev = points.get(i-1);
+				VecYPR next = points.get(i+1);
+				angle = delta(prev.getYaw(), next.getYaw());
 			}
 			if (angle != 0) {
+				VecYPR vec = new VecYPR(cur, renderScale, TrackModelPart.RAIL_BASE);
 				if (direction == TrackDirection.RIGHT) {
-					data.add(new VecYawPitch(switchPos.x, switchPos.y, switchPos.z, switchPos.yaw, switchPos.pitch, (1 - angle / 180) * (float) info.settings.gauge.scale(), "RAIL_LEFT"));
-					data.add(new VecYawPitch(cur.x, cur.y, cur.z, cur.yaw, cur.pitch, (1 + angle / 180) * (float) info.settings.gauge.scale(), "RAIL_RIGHT"));
+					vec.addChild(new VecYPR(switchPos, (1 - angle / 180) * renderScale, TrackModelPart.RAIL_LEFT));
+					vec.addChild(new VecYPR(cur, (1 + angle / 180) * renderScale, TrackModelPart.RAIL_RIGHT));
 				} else {
-					data.add(new VecYawPitch(cur.x, cur.y, cur.z, cur.yaw, cur.pitch, (1 - angle / 180) * (float) info.settings.gauge.scale(), "RAIL_LEFT"));
-					data.add(new VecYawPitch(switchPos.x, switchPos.y, switchPos.z, switchPos.yaw, switchPos.pitch, (1 + angle / 180) * (float) info.settings.gauge.scale(), "RAIL_RIGHT"));
+					vec.addChild(new VecYPR(cur, (1 - angle / 180) * renderScale, TrackModelPart.RAIL_LEFT));
+					vec.addChild(new VecYPR(switchPos, (1 + angle / 180) * renderScale, TrackModelPart.RAIL_RIGHT));
 				}
-				data.add(new VecYawPitch(cur.x, cur.y, cur.z, cur.yaw, cur.pitch, "RAIL_BASE"));
+				data.add(vec);
 			} else {
-				data.add(new VecYawPitch(cur.x, cur.y, cur.z, cur.yaw, cur.pitch));
+				data.add(new VecYPR(cur, renderScale));
 			}
 		}
 		

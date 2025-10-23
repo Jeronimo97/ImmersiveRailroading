@@ -4,7 +4,6 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.items.ItemPaintBrush;
-import cam72cam.immersiverailroading.items.ItemTypewriter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.Particles;
@@ -22,6 +21,9 @@ import cam72cam.immersiverailroading.render.item.*;
 import cam72cam.immersiverailroading.render.multiblock.MBBlueprintRender;
 import cam72cam.immersiverailroading.render.multiblock.TileMultiblockRender;
 import cam72cam.immersiverailroading.render.rail.RailPreviewRender;
+import cam72cam.immersiverailroading.script.sound.SoundConfig;
+import cam72cam.immersiverailroading.textfield.library.TextFieldClientPacket;
+import cam72cam.immersiverailroading.textfield.library.TextFieldPacket;
 import cam72cam.immersiverailroading.thirdparty.CompatLoader;
 import cam72cam.immersiverailroading.tile.*;
 import cam72cam.immersiverailroading.util.IRFuzzy;
@@ -90,8 +92,9 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(GuiBuilder.ControlChangePacket::new, PacketDirection.ClientToServer);
 				Packet.register(ItemPaintBrush.PaintBrushPacket::new, PacketDirection.ClientToServer);
 				Packet.register(TileRailBase.AugmentPacket::new, PacketDirection.ClientToServer);
-				Packet.register(ItemTypewriter.TypewriterPacket::new, PacketDirection.ClientToServer);
-				Packet.register(ItemTypewriter.TypewriterSyncPacket::new, PacketDirection.ServerToClient);
+				Packet.register(TextFieldPacket::new, PacketDirection.ClientToServer);
+				Packet.register(TextFieldClientPacket::new, PacketDirection.ServerToClient);
+				Packet.register(SoundConfig.SoundPacket::new, PacketDirection.ServerToClient);
 
 				ServerChronoState.register();
 
@@ -142,6 +145,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				ItemRender.register(IRItems.ITEM_TRACK_BLUEPRINT, new TrackBlueprintItemModel());
 				ItemRender.register(IRItems.ITEM_ROLLING_STOCK_COMPONENT, new StockItemComponentModel());
 				ItemRender.register(IRItems.ITEM_ROLLING_STOCK, new StockItemModel());
+				ItemRender.register(IRItems.ITEM_MULTIPLE_UNIT, new StockItemModel());
 				ItemRender.register(IRItems.ITEM_LARGE_WRENCH, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/wrench/wrench.obj"), new Vec3d(0.5, 0, 0.5), 2));
 				ItemRender.register(IRItems.ITEM_CONDUCTOR_WHISTLE, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/whistle.obj"), new Vec3d(0.5, 0.75, 0.5), 0.1f));
 				ItemRender.register(IRItems.ITEM_GOLDEN_SPIKE, ObjItemRender.getModelFor(new Identifier(MODID, "models/item/goldenspike/goldenspike.obj"), new Vec3d(0.5, 0.5, 0.5), 0.1f));
@@ -207,6 +211,12 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Keyboard.registerKey("ir_keys.config", KeyCode.DIVIDE, "key.categories." + ImmersiveRailroading.MODID, () -> GuiTypes.CONFIG.open(MinecraftClient.getPlayer()));
 				Keyboard.registerKey("ir_keys.sanding", KeyCode.DECIMAL, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.SANDING));
 				//Keyboard.registerKey("ir_keys.emergency", KeyCode.MINUS, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.EMERGENCY));
+				Keyboard.registerKey("ir_keys.increase_hand_brake", KeyCode.COMMA, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.HAND_BRAKE_UP));
+                Keyboard.registerKey("ir_keys.zero_hand_brake", KeyCode.PERIOD, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.HAND_BRAKE_ZERO));
+                Keyboard.registerKey("ir_keys.decrease_hand_brake", KeyCode.MINUS, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.HAND_BRAKE_DOWN));
+                Keyboard.registerKey("ir_keys.increase_dynamic_brake", KeyCode.NUMPAD7, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.DYNAMIC_BRAKE_UP));
+                Keyboard.registerKey("ir_keys.zero_dynamic_brake", KeyCode.NUMPAD4, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.DYNAMIC_BRAKE_ZERO));
+                Keyboard.registerKey("ir_keys.decrease_dynamic_brake", KeyCode.NUMPAD1, "key.categories." + ImmersiveRailroading.MODID, onKeyPress.apply(KeyTypes.DYNAMIC_BRAKE_DOWN));
 				
 				Audio.setSoundChannels(ConfigSound.customAudioChannels);
 				break;

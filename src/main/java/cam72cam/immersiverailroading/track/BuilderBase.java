@@ -8,15 +8,12 @@ import cam72cam.immersiverailroading.tile.TileRailBase;
 import cam72cam.immersiverailroading.util.BlockUtil;
 import cam72cam.immersiverailroading.util.RailInfo;
 import cam72cam.mod.item.ItemStack;
-import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.util.Facing;
-import cam72cam.mod.serialization.TagCompound;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.mod.world.World;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 //TODO @cam72cam use Vec3i and Vec3i
@@ -24,7 +21,7 @@ import java.util.List;
 @SuppressWarnings("incomplete-switch")
 public abstract class BuilderBase {
 	protected final World world;
-	protected ArrayList<TrackBase> tracks = new ArrayList<TrackBase>();
+	protected ArrayList<TrackBase> tracks = new ArrayList<>();
 	
 	public RailInfo info;
 
@@ -42,40 +39,7 @@ public abstract class BuilderBase {
 		parent_pos = pos;
 	}
 
-	public class VecYawPitch extends Vec3d {
-		public final float yaw;
-		public final float pitch;
-		public final float length;
-		public final List<String> groups;
-		
-		public VecYawPitch(double xIn, double yIn, double zIn, float yaw, String... groups) {
-			this(xIn, yIn, zIn, yaw, 0, groups);
-		}
-		public VecYawPitch(double xIn, double yIn, double zIn, float yaw, float pitch, String... groups) {
-			this(xIn, yIn, zIn, yaw, pitch, -1, groups);
-		}
-		public VecYawPitch(double xIn, double yIn, double zIn, float yaw, float pitch, float length, String... groups) {
-			super(xIn, yIn, zIn);
-			this.yaw = yaw;
-			this.groups = Arrays.asList(groups);
-			this.pitch = pitch;
-			this.length = length;
-		}
-		public float getYaw() {
-			return this.yaw;
-		}
-		public float getPitch() {
-			return this.pitch;
-		}
-		public float getLength() {
-			return this.length;
-		}
-		public List<String> getGroups() {
-			return this.groups;
-		}
-	}
-	
-	public abstract List<VecYawPitch> getRenderData();
+	public abstract List<VecYPR> getRenderData();
 
 	public boolean canBuild() {
 		for(TrackBase track : tracks) {
@@ -161,7 +125,7 @@ public abstract class BuilderBase {
 				if (!ITrack.isRail(world, main) && (i == 0 || !world.isSnow(main))) {
 					world.setToAir(main);
 				}
-				if (info.settings.gauge.isModel() && ConfigDamage.enableSideBlockClearing && info.settings.type != TrackItems.SLOPE && info.settings.type != TrackItems.TURNTABLE) {
+				if (info.settings.gauge.isModel() && ConfigDamage.enableSideBlockClearing && info.settings.type != TrackItems.SLOPE && !info.settings.type.isTable()) {
 					for (Facing facing : Facing.HORIZONTALS) {
 						Vec3i pos = main.offset(facing);
 						if (!ITrack.isRail(world, pos)) {

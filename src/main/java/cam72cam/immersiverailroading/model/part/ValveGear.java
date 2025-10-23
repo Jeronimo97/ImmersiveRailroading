@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ValveGear {
+    private static final ExpireableMap<String, ChuffSound> chuffSounds = new ExpireableMap<>((k, v) -> v.free());
 
     protected final WheelSet wheels;
     private final ModelState state;
@@ -297,11 +298,4 @@ public abstract class ValveGear {
             cylinder_drain.stop();
         }
     }
-
-    private static ExpireableMap<String, ChuffSound> chuffSounds = new ExpireableMap<String, ChuffSound>() {
-        @Override
-        public void onRemove(String key, ChuffSound value) {
-            value.free();
-        }
-    };
 }

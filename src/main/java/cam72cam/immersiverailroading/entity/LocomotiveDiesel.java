@@ -16,10 +16,7 @@ import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.fluid.Fluid;
 import cam72cam.mod.fluid.FluidStack;
 import cam72cam.mod.serialization.TagField;
-import org.luaj.vm2.LuaValue;
-
-import java.util.List;
-import java.util.OptionalDouble;
+import java.util.*;
 
 public class LocomotiveDiesel extends Locomotive {
 
@@ -38,6 +35,10 @@ public class LocomotiveDiesel extends Locomotive {
 	@TagSync
 	@TagField("ENGINE_OVERHEATED")
 	private boolean engineOverheated = false;
+	
+	@TagSync
+    @TagField("DYNAMIC_BRAKE")
+    private float dynamicBrakePosition = 0;
 
 	private int throttleCooldown;
 	private int reverserCooldown;
@@ -117,7 +118,41 @@ public class LocomotiveDiesel extends Locomotive {
 	 */
 	@Override
 	public void handleKeyPress(Player source, KeyTypes key, boolean disableIndependentThrottle) {
-		switch (key) {
+        if (getDefinition().isLinkedDynBrakeThrottle()) {
+            switch (key) {
+                case THROTTLE_UP:
+                    if (getDynamicBrake() > 0) {
+                        key = KeyTypes.DYNAMIC_BRAKE_DOWN;
+                    }
+                    break;
+                case THROTTLE_ZERO:
+                    setDynamicBrake(0);
+                    break;
+                case THROTTLE_DOWN:
+                    if (getThrottle() == 0) {
+                        key = KeyTypes.DYNAMIC_BRAKE_UP;
+                    }
+                    break;
+            }
+        }
+	    if (source.hasPermission(Permissions.BRAKE_CONTROL)) {
+            float dynamicBrakeNotch = 0.04f;
+            switch (key) {
+                case DYNAMIC_BRAKE_UP:
+                    setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
+                    break;
+                case DYNAMIC_BRAKE_ZERO:
+                    setDynamicBrake(0f);
+                    break;
+                case DYNAMIC_BRAKE_DOWN:
+                    setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+	    switch (key) {
 		case START_STOP_ENGINE:
 			if (turnOnOffDelay == 0) {
 				turnOnOffDelay = 10;
@@ -137,7 +172,7 @@ public class LocomotiveDiesel extends Locomotive {
 		case THROTTLE_ZERO:
 		case THROTTLE_DOWN:
 			if (this.throttleCooldown > 0) {
-				return;
+				break;
 			}
 			throttleCooldown = 2;
 			super.handleKeyPress(source, key, disableIndependentThrottle);
@@ -146,6 +181,11 @@ public class LocomotiveDiesel extends Locomotive {
 			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
 	}
+	
+    @Override
+    public float getThrottleDelta() {
+        return 1F / this.getDefinition().getThrottleNotches();
+    }
 
 	@Override
 	public boolean providesElectricalPower() {
@@ -159,12 +199,15 @@ public class LocomotiveDiesel extends Locomotive {
 
 	@Override
 	public void setThrottle(float newThrottle) {
-		int notches = getDefinition().getThrottleNotches();
-		if (newThrottle > getThrottle()) {
-			super.setThrottle((float) (Math.ceil(newThrottle * notches) / notches));
-		} else {
-			super.setThrottle((float) (Math.floor(newThrottle * notches) / notches));
-		}
+	    int targetNotch = Math.round(newThrottle / getThrottleDelta()); // *2
+		//issue #1526: when dragging or control with augment throttle glitches
+		super.setThrottle(targetNotch * getThrottleDelta());
+	}
+	
+	@Override
+	public void setRealThrottle(float newThrottle) {
+	    super.setRealThrottle(newThrottle);
+	    setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
 	}
 
 	@Override
@@ -177,11 +220,12 @@ public class LocomotiveDiesel extends Locomotive {
 	public double getAppliedTractiveEffort(Speed speed) {
 		if (isRunning() && (getEngineTemperature() > 75 || !Config.isFuelRequired(gauge))) {
 			double maxPower_W = this.getDefinition().getScriptedHorsePower(gauge, this) * 745.7d;
+			//double maxPower_W = this.getDefinition().getWatt(gauge);
 			double efficiency = 0.82; // Similar to a *lot* of imperial references
 			double maxPowerAtSpeed = maxPower_W * efficiency / Math.max(1, Math.abs(speed.metersPerSecond()));
 			double applied = maxPowerAtSpeed * relativeRPM * getReverser();
 			if (getDefinition().hasDynamicTractionControl) {
-				double max = getStaticTractiveEffort();
+				double max = getStaticTractiveEffort(speed);
 				if (Math.abs(applied) > max) {
 					return Math.copySign(max, applied) * 0.95;
 				}
@@ -234,9 +278,12 @@ public class LocomotiveDiesel extends Locomotive {
 
 		if (this.getLiquidAmount() > 0 && isRunning()) {
 			float consumption = Math.abs(getThrottle()) + 0.05f;
-			float burnTime = BurnUtil.getBurnTime(this.getLiquid());
+			float burnTime = getDefinition().getOverriddenFuels().getOrDefault(this.getLiquid(), 0);
 			if (burnTime == 0) {
-				burnTime = 200; // Default to 200 for unregistered liquids
+				burnTime = BurnUtil.getBurnTime(this.getLiquid());
+			}
+			if (burnTime == 0) {
+				burnTime = 200;
 			}
 			burnTime *= getDefinition().getFuelEfficiency() / 100f;
 			burnTime *= (Config.ConfigBalance.locoDieselFuelEfficiency / 100f);
@@ -270,7 +317,8 @@ public class LocomotiveDiesel extends Locomotive {
 
 	@Override
 	public List<Fluid> getFluidFilter() {
-		return BurnUtil.burnableFluids();
+		Set<Fluid> set = getDefinition().getOverriddenFuels().keySet();
+		return set.isEmpty() ? BurnUtil.burnableFluids() : new ArrayList<>(set);
 	}
 
 	@Override
@@ -289,6 +337,20 @@ public class LocomotiveDiesel extends Locomotive {
 	public float getRelativeRPM() {
 		return relativeRPM;
 	}
+	
+	@Override
+	public void onDrag(Control<?> component, double newValue) {
+	    super.onDrag(component, newValue);
+	    switch (component.part.type) {
+	        case DYNAMIC_BRAKE_X:
+	            setDynamicBrake(getControlPosition(component));
+	            break;
+            case THROTTLE_DYN_BRAKE_X:
+                setDynamicBrake(1 - getControlPosition(component)*2);
+                setThrottle(getControlPosition(component)*2 - 1);
+                break;
+	    }
+	}
 
 	@Override
 	public void onDragRelease(Control<?> component) {
@@ -303,11 +365,67 @@ public class LocomotiveDiesel extends Locomotive {
 			setControlPositions(ModelComponentType.REVERSER_X, getReverser() / -2 + 0.5f);
 		}
 	}
-  
+	
 	@Override
-	public void setTurnedOnLua(LuaValue b) {
-		setTurnedOn(b.toboolean());
+	protected float defaultControlPosition(Control<?> control) {
+	    switch (control.part.type) {
+            case THROTTLE_DYN_BRAKE_X:
+                return 0.5f;
+            default:
+                return super.defaultControlPosition(control);
+        }
 	}
+	
+	@Override
+	public boolean playerCanDrag(Player player, Control<?> control) {
+	    switch (control.part.type) {
+	        case DYNAMIC_BRAKE_X:
+	        case THROTTLE_DYN_BRAKE_X:
+	            return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
+	    }
+	    return super.playerCanDrag(player, control);
+	}
+	
+	@Override
+    protected void copySettings(final EntityRollingStock stock, final boolean direction) {
+        if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).getDefinition().muliUnitCapable) {
+            ((LocomotiveDiesel) stock).setRealDynamicBrake(this.getDynamicBrake());
+        }
+        super.copySettings(stock, direction);
+    }
+	
+	public float getDynamicBrake() {
+        return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
+    }
+
+    public double getDynamicBrakeNewtons() {
+        if (!turnedOn)
+            return 0;
+        double speed = speedPercent(getCurrentSpeed());
+        return getDynamicBrake() * (speed < 0.1 ? speed / 0.1 : 1);
+    }
+
+    public float getDynamicBrakeMultiplier() {
+        return getDefinition().getDynamicBrake();
+    }
+
+    public void setDynamicBrake(final float newDynamicBrakePos) {
+        setRealDynamicBrake(newDynamicBrakePos);
+        if (this.getDefinition().muliUnitCapable) {
+            this.mapTrain(this, true, false, this::copySettings);
+        }
+    }
+
+    private void setRealDynamicBrake(float newDynamicBrakePos) {
+        newDynamicBrakePos = Math.min(1, Math.max(0, newDynamicBrakePos));
+        if (this.getDynamicBrake() != newDynamicBrakePos) {
+            if (getDefinition().isLinearBrakeControl()) {
+                setControlPositions(ModelComponentType.DYNAMIC_BRAKE_X, newDynamicBrakePos);
+            }
+            dynamicBrakePosition = newDynamicBrakePos;
+            setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
+        }
+    }
 
 	@Override
 	public boolean getEngineState() {

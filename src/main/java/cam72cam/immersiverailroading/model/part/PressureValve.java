@@ -31,12 +31,7 @@ public class PressureValve {
         this.sndFile = sndFile;
     }
 
-    private final ExpireableMap<UUID, ISound> sounds = new ExpireableMap<UUID, ISound>() {
-        @Override
-        public void onRemove(UUID key, ISound value) {
-            value.stop();
-        }
-    };
+    private final ExpireableMap<UUID, ISound> sounds = new ExpireableMap<>((k, v) -> v.stop());
 
     public void effects(EntityMoveableRollingStock stock, boolean isBlowingOff) {
         ISound sound = sounds.get(stock.getUUID());
@@ -61,7 +56,6 @@ public class PressureValve {
             Vec3d fakeMotion = stock.getVelocity();
             for (ModelComponent valve : valves) {
                 Vec3d particlePos = stock.getPosition().add(VecUtil.rotateWrongYaw(valve.center.scale(stock.gauge.scale()), stock.getRotationYaw() + 180));
-                particlePos = particlePos.subtract(fakeMotion);
                 Particles.SMOKE.accept(new SmokeParticle.SmokeParticleData(stock.getWorld(), particlePos, new Vec3d(fakeMotion.x, fakeMotion.y + 0.2 * stock.gauge.scale(), fakeMotion.z),40, 0, 0.2f, valve.width() * stock.gauge.scale(), stock.getDefinition().steamParticleTexture));
             }
         }

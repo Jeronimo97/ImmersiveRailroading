@@ -18,7 +18,8 @@
 		"piston_diameter": 0.483,
 		"piston_stroke": 0.66,
 		"wheel_diameter": 2.032,
-		"cylinder_count": 3
+		"cylinder_count": 3,
+		"power_multiplier": 1.6
 	},
 	"firebox": {
 		"slots": 9,

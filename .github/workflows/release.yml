@@ -1,24 +1,31 @@
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
-name: ImmersiveRailroading Testbuild
+name: ImmersiveRailroading Release Build
+
 jobs:
   build:
+    name: Build & upload (${{ matrix.branch }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
-        branch: [ 1.12.2-forge, 1.14.4-forge, 1.15.2-forge, 1.16.5-forge ]
+        branch: [1.7.10-forge, 1.10.2-forge, 1.11.2-forge, 1.12.2-forge, 1.14.4-forge, 1.15.2-forge, 1.16.5-forge]
       fail-fast: false
+
     steps:
-      - name: Checkout code
+      - name: Checkout code at the release tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
+          distribution: temurin
 
       - name: Install dependencies
         run: sudo apt update && sudo apt install -y pngquant findutils xvfb
@@ -35,52 +42,38 @@ jobs:
 
       - name: Modify build.gradle to Include LuaJ and Merge JARs
         run: |
-          echo "" >> build.gradle
-          echo "repositories {" >> build.gradle
-          echo "    flatDir { dirs 'libs' }" >> build.gradle
-          echo "}" >> build.gradle
-          echo "" >> build.gradle
-          echo "dependencies {" >> build.gradle
-          echo "    implementation fileTree(dir: 'libs', include: ['*.jar'])" >> build.gradle
-          echo "}" >> build.gradle
-          echo "" >> build.gradle
-          echo "jar {" >> build.gradle
-          echo "    duplicatesStrategy = DuplicatesStrategy.EXCLUDE" >> build.gradle
-          echo "    from {" >> build.gradle
-          echo "        fileTree(dir: 'libs', include: ['*.jar']).collect { zipTree(it) }" >> build.gradle
-          echo "    }" >> build.gradle
-          echo "}" >> build.gradle
-
+          {
+            echo ""
+            echo "repositories {"
+            echo "    flatDir { dirs 'libs' }"
+            echo "}"
+            echo ""
+            echo "dependencies {"
+            echo "    implementation fileTree(dir: 'libs', include: ['*.jar'])"
+            echo "}"
+            echo ""
+            echo "jar {"
+            echo "    duplicatesStrategy = DuplicatesStrategy.EXCLUDE"
+            echo "    from {"
+            echo "        fileTree(dir: 'libs', include: ['*.jar']).collect { zipTree(it) }"
+            echo "    }"
+            echo "}"
+          } >> build.gradle
 
       - name: Compile with Gradle
-        run: ./gradlew classes
+        run: ./gradlew classes --no-daemon
 
       - name: Process images
-        run: find src/main/resources/assets/immersiverailroading/ | grep png | xargs -I foo pngquant -s1 -f --ext .png foo
+        run: |
+          find src/main/resources/assets/immersiverailroading/ -type f -name '*.png' -print0 \
+            | xargs -0 -I {} pngquant -s1 -f --ext .png {}
 
       - name: Build with Gradle (Including LuaJ)
-        run: |
-          ./gradlew build
+        run: ./gradlew build --no-daemon
 
-      - name: Create Release
-        id: create_release
-        uses: comnoco/create-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload JARs to this release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}-testbuild
-          body: |
-            ## New:
-            *
-            ## Bugfixes:
-            *
-          draft: true
-          prerelease: false
-
-      - name: Upload JAR to release
-        uses: softprops/action-gv-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ github.event.release.tag_name }}
           files: |
             build/libs/ImmersiveRailroading-${{ matrix.branch }}-*.jar

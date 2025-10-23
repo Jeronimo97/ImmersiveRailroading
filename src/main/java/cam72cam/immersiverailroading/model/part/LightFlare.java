@@ -1,5 +1,6 @@
 package cam72cam.immersiverailroading.model.part;
 
+import cam72cam.immersiverailroading.ConfigGraphics;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
 import cam72cam.immersiverailroading.library.ModelComponentType;
@@ -11,6 +12,7 @@ import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.LightDefinition;
 import cam72cam.immersiverailroading.util.VecUtil;
 import cam72cam.mod.MinecraftClient;
+import cam72cam.mod.math.Rotation;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.render.Light;
@@ -23,6 +25,7 @@ import util.Matrix4;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,6 +45,7 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
     private final int blinkOffsetTicks;
     private final boolean castsLights;
     private final boolean blinkFullBright;
+    private final Rotation direction;
     private final String controlGroup;
     private final boolean invert;
     private final Function<T, Matrix4> location;
@@ -61,7 +65,6 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
 
     private LightFlare(EntityRollingStockDefinition def, ModelState state, ModelComponent component) {
         this.component = component;
-        this.forward = component.center.x < 0;
         Matcher rgbValues = component.modelIDs.stream()
                 .map(rgb::matcher)
                 .filter(Matcher::matches)
@@ -81,8 +84,15 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
         this.controlGroup = component.modelIDs.stream()
                 .map(lcgPattern::matcher).filter(Matcher::find).map(m -> m.group(1)).findFirst().orElse(null);
 
-        this.invert = component.modelIDs.stream().anyMatch(g -> g.contains("_LINVERT_") || g.startsWith("LINVERT_") || g.endsWith("_LINVERT"));
-
+        Predicate<String> checker = s -> component.modelIDs.stream().anyMatch(g -> g.contains  ("_" + s + "_")
+                                                                                || g.startsWith(s + "_")
+                                                                                || g.endsWith  ("_" + s));
+        this.invert = checker.test("LINVERT");
+        this.direction = checker.test("FORWARD")
+                         ? Rotation.NONE
+                         : checker.test("REVERSE")
+                           ? Rotation.COUNTERCLOCKWISE_90
+                           : null;
         // This is bad...
         LightDefinition config = def.getLight(component.type.toString()
                 .replace("_X", "_" + component.id)
@@ -90,6 +100,9 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
         );
 
         if (config != null) {
+            this.forward = config.revertDirection
+                           ? !(component.center.x < 0)
+                           : component.center.x < 0;
             this.lightTex = config.lightTex;
             this.blinkIntervalTicks = (int)(config.blinkIntervalSeconds * 20);
             this.blinkOffsetTicks = (int)(config.blinkOffsetSeconds * 20);
@@ -104,6 +117,7 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
                 }
             }
         } else {
+            this.forward = component.center.x < 0;
             this.lightTex = LightDefinition.default_light_tex;
             this.blinkIntervalTicks = 0;
             this.blinkOffsetTicks = 0;
@@ -121,13 +135,21 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
     }
 
     private boolean isLightOff(EntityRollingStock stock) {
-        return !stock.hasElectricalPower() || (controlGroup != null && stock.getControlPosition(controlGroup) == (invert ? 1 : 0));
+        EntityMoveableRollingStock moveable = (EntityMoveableRollingStock) stock;
+        return !stock.hasElectricalPower()
+                || (controlGroup != null && stock.getControlPosition(controlGroup) == (invert ? 1 : 0))
+                || direction != null && ((direction == Rotation.NONE && moveable.getCurrentSpeed().minecraft() < 0)
+                                         || (direction == Rotation.CLOCKWISE_180 && moveable.getCurrentSpeed().minecraft() >= 0));
     }
     private boolean isBlinkOff(EntityRollingStock stock) {
         return isLightOff(stock) || blinkIntervalTicks > 0 && (stock.getTickCount() + blinkOffsetTicks) % (blinkIntervalTicks*2) > blinkIntervalTicks;
     }
 
     public void postRender(T stock, RenderState state) {
+        if(ConfigGraphics.DisableLightTextureRender){
+            return;
+        }
+
         //GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
         //GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
         boolean reverse = stock.getCurrentSpeed().minecraft() < 0;
@@ -143,7 +165,7 @@ public class LightFlare<T extends EntityMoveableRollingStock> {
             return;
         }
 
-        Vec3d flareOffset = new Vec3d(forward ? component.min.x - 0.02 : component.max.x + 0.02, (component.min.y + component.max.y) / 2, (component.min.z + component.max.z) / 2);;
+        Vec3d flareOffset = new Vec3d(forward ? component.min.x - 0.02 : component.max.x + 0.02, (component.min.y + component.max.y) / 2, (component.min.z + component.max.z) / 2);
         if (location != null) {
             // TODO this does not actually work
             Matrix4 m = location.apply(stock);

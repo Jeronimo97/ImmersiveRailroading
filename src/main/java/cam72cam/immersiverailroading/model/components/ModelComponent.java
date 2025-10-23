@@ -7,8 +7,9 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
 import cam72cam.mod.model.obj.OBJModel;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ModelComponent {
@@ -24,17 +25,64 @@ public class ModelComponent {
     public final boolean wooden;
     private final OBJModel model;
 
+    public final List<ModelGroup> groups;
+
+    public static final Pattern lcgPattern = Pattern.compile("_LCG_([^_]+)");
+    public static class ModelGroup {
+        public final String modelID;
+        public final String LCG;
+        public final boolean linvert;
+        public final boolean interior;
+        public final boolean fullbright;
+        public final boolean transparent;
+
+        public ModelGroup(String modelID) {
+            Matcher m = lcgPattern.matcher(modelID);
+            LCG = m.find() ? m.group(1) : null;
+
+            boolean linvert = false;
+            boolean interior = false;
+            boolean fullbright = false;
+            boolean transparent = false;
+
+            for (String x : modelID.split("_")) {
+                switch (x) {
+                    case "LINVERT":
+                        linvert = true;
+                        break;
+                    case "INTERIOR":
+                        interior = true;
+                        break;
+                    case "FULLBRIGHT":
+                        fullbright = true;
+                        break;
+                    case "ALPHA":
+                        transparent = true;
+                        break;
+                }
+            }
+
+            this.modelID = modelID;
+            this.linvert = linvert;
+            this.interior = interior;
+            this.fullbright = fullbright;
+            this.transparent = transparent;
+        }
+    }
+
     public ModelComponent(ModelComponentType type, ModelPosition pos, Integer id, OBJModel model, Set<String> modelIDs) {
         this.type = type;
         this.pos = pos;
         this.id = id;
         this.modelIDs = modelIDs;
+        this.groups = modelIDs.stream().map(ModelGroup::new).collect(Collectors.toList());
         this.key = String.join(" ", modelIDs);
         this.model = model;
         min = model.minOfGroup(this.modelIDs);
         max = model.maxOfGroup(this.modelIDs);
         center = new Vec3d((min.x + max.x)/2, (min.y + max.y)/2, (min.z + max.z)/2);
         wooden = modelIDs.stream().anyMatch(g -> g.contains("WOOD"));
+
     }
 
     public double length() {

@@ -21,7 +21,6 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.serialization.TagMapper;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,6 +53,8 @@ public class LocomotiveSteam extends Locomotive {
 	private Map<Integer, Integer> burnMax = new HashMap<>();
 
 	private float drainRemainder;
+	
+	private boolean chuffOn = false;
 	
 	public LocomotiveSteam() {
 		boilerTemperature = ambientTemperature();
@@ -120,25 +121,36 @@ public class LocomotiveSteam extends Locomotive {
 		return burnMax;
 	}
 
+    @Override
     public double getAppliedTractiveEffort(final Speed speed) {
         if (getDefinition().isCabCar())
             return 0;
         double reverser = getReverser();
         if (reverser == 0)
             return 0;
+
         double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
+        double expansionPressure = getChestPressure() / expansion * (1 + Math.log(expansion));
+        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
+                * Math.abs(reverser) * (getDefinition().getCylinderCount() == 3 ? 1.15 : 1));
+        double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
+        
+        if (pressurePercent <= 0)
+            return 0;
 
-        double effectivePressure = getChestPressure() / expansion * (1 + Math.log(expansion));
-
-        double backPressure =
-                effectivePressure * Math.log(1 + 2.67 * speedPercent(speed) * Math.abs(reverser));
-
-        double appliedTraction = 0.97 * 101.97 * getDefinition().getCylinderCount()
+        double appliedTraction = 50445 * getDefinition().getCylinderCount()
                 * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
-                * getDefinition().getPistonStroke(gauge) * 1.02 * (effectivePressure - backPressure)
-                / (2 * getDefinition().getWheelDiameter(gauge)) * 1000
+                * getDefinition().getPistonStroke(gauge)
+                * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7))
+                * getMaxChestPressure() / getDefinition().getWheelDiameter(gauge)
                 * getDefinition().getPowerMultiplier() * Config.ConfigBalance.powerMultiplier;
 
+        if (getWorld().isClient) {
+            appliedTraction *= 1.03f;
+            if (slipping) {
+                appliedTraction *= 2.5f;
+            }
+        }
         return appliedTraction * Math.copySign(1, reverser);
     }
 	
@@ -152,48 +164,34 @@ public class LocomotiveSteam extends Locomotive {
 			burnTime.put(slot, 0);
 		}
 	}
-	
-    public double speedPercent(final Speed speed) {
-        return speed.metric() / getDefinition().getMaxSpeed(gauge).metric();
-    }
     
     private void chestPressureCalc() {
-        // Anstieg Schieberkastendruck
-        if (getChestPressure() < getMaxChestPressure()) {
-            chestPressure += 0.06f
-                    * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
-                            : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
-                    * getThrottle() * (1 + Math.max(speedPercent(getCurrentSpeed()), 0.01f));
+        double reverser = Math.abs(getReverser());
+        double speedPercent = speedPercent(super.getCurrentSpeed()); 
+
+        chestPressure += 0.06
+                * Math.pow((Config.isFuelRequired(gauge) ? getBoilerPressure()
+                        : this.getDefinition().getMaxPSI(gauge)) * 0.06894757f, 0.5f)
+                * getThrottle() * (1 + Math.max(speedPercent, 0.01f));
+
+        if (getChestPressure() > getMaxChestPressure()) {
+            chestPressure = getMaxChestPressure();
         }
 
-        // Abfall Schieberkastendruck
-        if (getChestPressure() > 0) {
-            if (getChestPressure() < 2 && getThrottle() < 0.05f) {
-                chestPressure -= 0.25f; // unter 2 Bar schlagartig raus
-            }
-            if (cylinderDrainsEnabled()) {
-                chestPressure -= 0.07f; // Zylinderentwässerung
-            }
-            if (slipping) {
-                chestPressure -= 0.1f; // wenn Schleudert
-            }
-            if (getChestPressure() < 0) {
-                chestPressure = 0; // falls negativer Druck, dann auf 0 setzen
-            }
+        if (cylinderDrainsEnabled()) {
+            chestPressure -= 0.07;
         }
 
-        // TODO Verbrauch Schieberkastendruck
-        chestPressure -= (float) (0.015f * chestPressure * Math.abs(getReverser())
-                * Math.abs(speedPercent(getCurrentSpeed())) * Math.PI
-                * getDefinition().getWheelDiameter(gauge));
-    }
-    
-    public double getHorsePower(final Speed speed) {
-        return getReverser() == 0 ? 0
-                : this.getDefinition().getHorsePower(gauge)
-                        * (getChestPressurePercent() * Math.abs(getReverser())
-                                + getChestPressurePercent() * Math.abs(getReverser())
-                                        * (Math.log10(1) - Math.log10(Math.abs(getReverser()))));
+        float factor = (float) ((0.015 * chestPressure
+                * reverser * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge)) + 0.001f);
+        chestPressure -= factor < 0 ? 0 : (float) factor;
+
+        if (slipping) {
+            chestPressure -= Math.abs(10 * simulateWheelSlip());
+        }
+        if (getChestPressure() < 0) {
+            chestPressure = 0;
+        }
     }
 
 	@Override
@@ -337,7 +335,7 @@ public class LocomotiveSteam extends Locomotive {
 			}
 			
 			// Pressure relief valve
-			int maxPSI = this.getDefinition().getMaxPSI(gauge);
+			int maxPSI = (int) this.getDefinition().getMaxPSI(gauge);
 			pressureValve = boilerPressure > maxPSI;
 			if (boilerPressure > maxPSI) {
 				waterUsed += boilerPressure - maxPSI;
@@ -486,7 +484,7 @@ public class LocomotiveSteam extends Locomotive {
 		// This could be optimized to once-per-tick, but I'm not sure that is necessary
 		List<Control<?>> drains = getDefinition().getModel().getControls().stream().filter(x -> x.part.type == ModelComponentType.CYLINDER_DRAIN_CONTROL_X).collect(Collectors.toList());
 		if (drains.isEmpty()) {
-			double csm = Math.abs(getCurrentSpeed().metric()) / gauge.scale();
+			double csm = Math.abs(super.getCurrentSpeed().metric()) / gauge.scale();
 			return csm < 20;
 		}
 

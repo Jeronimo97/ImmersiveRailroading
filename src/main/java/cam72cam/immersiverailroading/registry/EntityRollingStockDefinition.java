@@ -7,12 +7,16 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
 import cam72cam.immersiverailroading.floor.Mesh;
 import cam72cam.immersiverailroading.floor.NavMesh;
+import cam72cam.immersiverailroading.font.FontLoader;
+import cam72cam.immersiverailroading.textfield.TextFieldConfig;
+import cam72cam.immersiverailroading.textfield.library.RGBA;
 import cam72cam.immersiverailroading.util.*;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.StockModel;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
+import cam72cam.mod.ModCore;
 import cam72cam.mod.entity.EntityRegistry;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
@@ -29,10 +33,10 @@ import cam72cam.mod.world.World;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -85,10 +89,12 @@ public abstract class EntityRollingStockDefinition {
     private double passengerCompartmentWidth;
     private double weight;
     private int maxPassengers;
+    private int snowLayers;
     private float interiorLightLevel;
     private boolean hasIndependentBrake;
+    private boolean hasHandBrake;
     private boolean hasPressureBrake;
-    private final Map<ModelComponentType, List<ModelComponent>> renderComponents;
+    private final EnumMap<ModelComponentType, List<ModelComponent>> renderComponents;
     private final List<ItemComponentType> itemComponents;
     private final Function<EntityBuildableRollingStock, float[][]> heightmap;
     private final Map<String, LightDefinition> lights = new HashMap<>();
@@ -101,11 +107,10 @@ public abstract class EntityRollingStockDefinition {
     private double swayMultiplier;
     private double tiltMultiplier;
     private float brakeCoefficient;
+    private PhysicalMaterials brakeMaterials;
+    private float handBrakeCoefficient;
     public double rollingResistanceCoefficient;
     public double directFrictionCoefficient;
-
-    public Map<String, TextRenderOptions> textFieldDef = new HashMap<>();
-    public LinkedList<Fonts> fontDef = new LinkedList<>();
 
     public List<AnimationDefinition> animations;
     public Map<String, Float> cgDefaults;
@@ -114,8 +119,11 @@ public abstract class EntityRollingStockDefinition {
     public Mesh mesh;
     public NavMesh navMesh;
 
+    public List<Identifier> loadedFonts = new ArrayList<>();
+    public final Map<String, TextFieldConfig> textFields;
+
     // used for unique text fields to check if text field input is already assigned
-    public Map<UUID, String> inputs = new HashMap<>();
+    public Map<UUID, Map<String, String>> inputs = new HashMap<>();
 
     private List<DataBlock> textFieldData;
 
@@ -146,15 +154,6 @@ public abstract class EntityRollingStockDefinition {
             volume = obj.getValue("volume").asFloat(1.0f);
         }
 
-        public SoundDefinition(ObjectValue newSound, Map<String, DataBlock.Value> sound) {
-            start = newSound.getValueMap("start", sound).asIdentifier();
-            main = newSound.getValueMap("main", sound).asIdentifier();
-            looping = newSound.getValueMap("looping", sound).asBoolean(true);
-            stop = newSound.getValueMap("stop", sound).asIdentifier();
-            distance = newSound.getValueMap("distance", sound).asFloat();
-            volume = newSound.getValueMap("volume", sound).asFloat(1.0f);
-        }
-
         public static SoundDefinition getOrDefault(DataBlock block, String key) {
             DataBlock found = block.getBlock(key);
             if (found != null) {
@@ -167,22 +166,6 @@ public abstract class EntityRollingStockDefinition {
             return null;
         }
 
-        public static SoundDefinition getOrDefault(ObjectValue value, Map<String, DataBlock.Value> sound) {
-            if (sound.containsKey("start") || sound.containsKey("main") ||
-                    sound.containsKey("looping") || sound.containsKey("stop") ||
-                    sound.containsKey("distance") || sound.containsKey("volume")) {
-                return new SoundDefinition(value, sound);
-            }
-            DataBlock.Value dataBlockValue = sound.get(value.asString());
-
-            if (dataBlockValue != null) {
-                Identifier ident = dataBlockValue.asIdentifier();
-                if (ident != null) {
-                    return new SoundDefinition(ident);
-                }
-            }
-            return null;
-        }
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
@@ -220,6 +203,8 @@ public abstract class EntityRollingStockDefinition {
         public final Identifier animatrix;
         public final float offset;
         public final boolean invert;
+        public final float rangeMin;
+        public final float rangeMax;
         public final float frames_per_tick;
         public final SoundDefinition sound;
 
@@ -234,6 +219,8 @@ public abstract class EntityRollingStockDefinition {
             mode = AnimationMode.valueOf(obj.getValue("mode").asString().toUpperCase(Locale.ROOT));
             offset = obj.getValue("offset").asFloat(0f);
             invert = obj.getValue("invert").asBoolean(false);
+            rangeMin = obj.getValue("range_min").asFloat(0f);
+            rangeMax = obj.getValue("range_max").asFloat(1f);
             frames_per_tick = obj.getValue("frames_per_tick").asFloat(1f);
             sound = SoundDefinition.getOrDefault(obj, "sound");
         }
@@ -249,6 +236,7 @@ public abstract class EntityRollingStockDefinition {
         public final float blinkIntervalSeconds;
         public final float blinkOffsetSeconds;
         public final boolean blinkFullBright;
+        public final boolean revertDirection;
         public final String reverseColor;
         public final Identifier lightTex;
         public final boolean castsLight;
@@ -257,6 +245,7 @@ public abstract class EntityRollingStockDefinition {
             blinkIntervalSeconds = data.getValue("blinkIntervalSeconds").asFloat(0f);
             blinkOffsetSeconds = data.getValue("blinkOffsetSeconds").asFloat(0f);
             blinkFullBright = data.getValue("blinkFullBright").asBoolean(true);
+            revertDirection = data.getValue("revertDirection").asBoolean(false);
             reverseColor = data.getValue("reverseColor").asString();
             lightTex = data.getValue("texture").asIdentifier(default_light_tex);
             castsLight = data.getValue("castsLight").asBoolean(true);
@@ -368,10 +357,10 @@ public abstract class EntityRollingStockDefinition {
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
 
-        this.mesh = Executors.newCachedThreadPool().submit(() -> Mesh.loadMesh(this.model)).get();
+        this.mesh = Mesh.loadMesh(this.model);
         this.navMesh = new NavMesh(this.mesh);
 
-        this.renderComponents = new HashMap<>();
+        this.renderComponents = new EnumMap<>(ModelComponentType.class);
         for (ModelComponent component : model.allComponents) {
             renderComponents.computeIfAbsent(component.type, v -> new ArrayList<>())
                     .add(0, component);
@@ -413,11 +402,7 @@ public abstract class EntityRollingStockDefinition {
 
         this.heightmap = initHeightmap();
 
-        // initialize text fields
-        if (textFieldData != null) {
-            List<TextRenderOptions> options = textFieldData.stream().map(this::loadTextField).collect(Collectors.toList());
-            options.forEach(o -> textFieldDef.put(o.componentId, o));
-        }
+        textFields = parseTextFields(transformData(data).getBlocks("text_fields"));
     }
 
     public final EntityRollingStock spawn(World world, Vec3d pos, float yaw, Gauge gauge, String texture) {
@@ -539,30 +524,36 @@ public abstract class EntityRollingStockDefinition {
         weight = properties.getValue("weight_kg").asInteger() * internal_inv_scale;
         valveGear = ValveGearConfig.get(properties, "valve_gear");
         hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
+        hasHandBrake = properties.getValue("hand_brake").asBoolean(true);
         hasPressureBrake = properties.getValue("pressure_brake").asBoolean();
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
 
         script = data.getValue("script").asIdentifier();
 
-        List<DataBlock> fonts = data.getBlocks("fonts");
-        if (fonts != null) {
-            fontDef = fonts.stream().map(this::loadFontData).collect(Collectors.toCollection(LinkedList::new));;
-        }
 
+        List<DataBlock.Value> fonts = data.getValues("fonts");
+        if (fonts != null) {
+            for (int i = 0; i < fonts.size(); i++) {
+                DataBlock.Value val = fonts.get(i);
+                Identifier font = new Identifier(val.asString());
+                FontLoader.getOrCreateFont(font);
+                loadedFonts.add(i, font);
+            }
+        }
         textFieldData = data.getBlocks("textfield");
 
-        brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.CAST_IRON);
         try {
-            brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.valueOf(properties.getValue("brake_shoe_material").asString()));
+            brakeMaterials = PhysicalMaterials.valueOf(properties.getValue("brake_shoe_material").asString(PhysicalMaterials.CAST_IRON.toString()));
         } catch (Exception ex) {
             ImmersiveRailroading.warn("Invalid brake_shoe_material, possible values are: %s", Arrays.toString(PhysicalMaterials.values()));
         }
+        brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(brakeMaterials);
         brakeCoefficient = properties.getValue("brake_friction_coefficient").asFloat(brakeCoefficient);
         // https://en.wikipedia.org/wiki/Rolling_resistance#Rolling_resistance_coefficient_examples
         rollingResistanceCoefficient = properties.getValue("rolling_resistance_coefficient").asDouble();
         directFrictionCoefficient = properties.getValue("direct_friction_coefficient").asDouble();
-
+        handBrakeCoefficient = properties.getValue("handbrake_coefficient").asFloat(1);
         swayMultiplier = properties.getValue("swayMultiplier").asDouble();
         tiltMultiplier = properties.getValue("tiltMultiplier").asDouble();
 
@@ -574,10 +565,11 @@ public abstract class EntityRollingStockDefinition {
         }
 
         addScripts = new ArrayList<>();
-        List<DataBlock.Value> controlGroup1 = data.getValues("add_scripts");
-        if (controlGroup1 != null) {
-            controlGroup1.forEach(value -> addScripts.add(value.asString()));
+        List<DataBlock.Value> scripts = data.getValues("add_scripts");
+        if (scripts != null) {
+            scripts.forEach(value -> addScripts.add(value.asString()));
         }
+        snowLayers = properties.getValue("snow_layers").asInteger();
 
         DataBlock sounds = data.getBlock("sounds");
         wheel_sound = sounds.getValue("wheels").asIdentifier();
@@ -714,9 +706,12 @@ public abstract class EntityRollingStockDefinition {
         }
     }
 
-
     public boolean hasIndependentBrake() {
         return hasIndependentBrake;
+    }
+
+    public boolean hasHandBrake() {
+        return hasHandBrake;
     }
 
     public boolean hasPressureBrake() {
@@ -892,11 +887,86 @@ public abstract class EntityRollingStockDefinition {
         return tips;
     }
 
+    public List<String> getModelerTooltip() {
+        List<String> tips = new ArrayList<>();
+        tips.add(GuiText.MODELER_TOOLTIP.toString(modelerName));
+        tips.add(GuiText.PACK_TOOLTIP.toString(packName));
+        return tips;
+    }
+
     protected StockModel<?, ?> createModel() throws Exception {
         return new StockModel<>(this);
     }
     public StockModel<?, ?> getModel() {
         return this.model;
+    }
+
+    private Map<String, TextFieldConfig> parseTextFields(List<DataBlock> textFields) {
+        if (textFields == null) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, TextFieldConfig> list = new HashMap<>();
+
+        for (DataBlock textField : textFields) {
+            String groupName = textField.getValue("name").asString();
+            groupName = String.format("TEXTFIELD_%s", groupName);
+
+            DataBlock resolution = textField.getBlock("resolution");
+
+            DataBlock config = textField.getBlock("config");
+
+
+            String finalGroupName = groupName;
+            TextFieldConfig current = new TextFieldConfig(
+                    groupName,
+                    Optional.ofNullable(resolution.getValue("x").asInteger()).orElseGet(() -> {
+                        ModCore.warn("Text field %s doesn't have an x-resolution defined. Using default", finalGroupName);
+                        return 128;
+                    }),
+                    Optional.ofNullable(resolution.getValue("y").asInteger()).orElseGet(() -> {
+                        ModCore.warn("Text field %s doesn't have an y-resolution defined. Using default", finalGroupName);
+                        return 7;
+                    }),
+                    defaults -> {
+                        if (config == null) {
+                            return;
+                        }
+
+                        Optional.ofNullable(config.getValue("text").asString()).ifPresent(defaults::setText);
+                        Optional.ofNullable(config.getValue("color").asString()).ifPresent(c -> defaults.setColor(RGBA.fromHex(c)));
+                        Optional.ofNullable(config.getValue("fullbright").asBoolean()).ifPresent(defaults::setFullbright);
+                        Optional.ofNullable(config.getValue("gap").asInteger()).ifPresent(defaults::setGap);
+                        Optional.ofNullable(config.getValue("align").asString()).ifPresent(a -> defaults.setAlign(TextFieldConfig.Align.valueOf(a)));
+                        Optional.ofNullable(config.getValue("font").asIdentifier()).ifPresent(defaults::setFont);
+                        Optional.ofNullable(config.getValues("linked")).ifPresent(l -> defaults.setLinked(l.stream().map(v -> String.format("TEXTFIELD_%s", v.asString())).collect(Collectors.toList())));
+                        Optional.ofNullable(config.getValue("global").asBoolean()).ifPresent(defaults::setGlobal);
+                        Optional.ofNullable(config.getValue("selectable").asBoolean()).ifPresent(defaults::setSelectable);
+
+                        Set<String> fonts = Optional.ofNullable(config.getValues("availableFonts")).orElse(Collections.emptyList()).stream().map(DataBlock.Value::asString).collect(Collectors.toSet());
+                        if (!fonts.isEmpty()) {
+                            List<Identifier> availableFonts = loadedFonts.stream()
+                                    .filter(identifier -> fonts.stream().anyMatch(f -> identifier.getPath().contains(f)))
+                                    .collect(Collectors.toList());
+                            defaults.setAvailableFonts(availableFonts);
+                        }
+
+                        List<String> filter = Optional.ofNullable(config.getValues("filter")).orElse(Collections.emptyList()).stream().map(DataBlock.Value::asString).collect(Collectors.toList());
+                        if (!filter.isEmpty()) {
+                            defaults.setFilter(filter);
+                        }
+
+                        Optional.ofNullable(config.getValue("unique").asBoolean()).ifPresent(defaults::setUnique);
+                        Optional.ofNullable(config.getValue("numberPlate").asBoolean()).ifPresent(defaults::setNumberPlate);
+                        Optional.ofNullable(config.getValue("verticalAlign").asString()).ifPresent(v -> defaults.setVerticalAlign(TextFieldConfig.VerticalAlign.valueOf(v)));
+                        Optional.ofNullable(config.getValue("scale").asFloat()).ifPresent(defaults::setScale);
+                    }
+            );
+
+            list.put(groupName, current);
+        }
+
+        return list;
     }
 
     /**
@@ -960,7 +1030,7 @@ public abstract class EntityRollingStockDefinition {
     }
 
     protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
-        return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
+        return hasIndependentBrake() || hasHandBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
     
     public GuiBuilder getOverlay() {
@@ -979,8 +1049,12 @@ public abstract class EntityRollingStockDefinition {
         return tiltMultiplier;
     }
 
-    public double getBrakeShoeFriction() {
+    public float getBrakeShoeFriction() {
         return brakeCoefficient;
+    }
+    
+    public int getSnowLayers() {
+        return snowLayers;
     }
 
     public void setTraction(double val){
@@ -1007,136 +1081,19 @@ public abstract class EntityRollingStockDefinition {
     public void setSounds(List<Map<String, DataBlock.Value>> newSound, EntityMoveableRollingStock stock) {
     }
 
-    public static class Position {
-        public final Vec3d normal;
-        public final List<Vec3d> vertices;
-
-        public Position (Vec3d normal, List<Vec3d> vertices) {
-            this.normal = normal;
-            this.vertices = vertices;
-        }
-    }
-
-    public static class Fonts {
-        public Identifier font;
-        public int resX;
-        public int resY;
-        public int size;
-
-        Fonts(Identifier i, int x, int y, int s) {
-            this.font = i;
-            this.resX = x;
-            this.resY = y;
-            this.size = s;
-        }
-    }
-
-    private Fonts loadFontData (DataBlock font) {
-        Identifier identifier = font.getValue("font").asIdentifier();
-        int resX = font.getValue("textureWidth").asInteger(512);
-        int resY = font.getValue("textureHeight").asInteger(12);
-        int size = font.getValue("fontSize").asInteger(12);
-
-        return new Fonts(identifier, resX, resY, size);
-    }
-
-    private TextRenderOptions loadTextField(DataBlock textField) {
-        Identifier font = textField.getValue("font").asIdentifier(null);
-        String textFieldId = textField.getValue("ID").asString(null);
-        int resX = textField.getValue("resX").asInteger(0);
-        int resY = textField.getValue("resY").asInteger(0);
-        boolean flipped = textField.getValue("flipped") != null && textField.getValue("flipped").asBoolean();
-        int textureHeight = textField.getValue("textureHeight").asInteger(12);
-        int fontSize = textField.getValue("fontSize").asInteger(textureHeight);
-        int fontLength = textField.getValue("textureWidth").asInteger(512);
-        int fontGap = textField.getValue("fontGap").asInteger(1);
-        List<DataBlock.Value> fontList = textField.getValues("fontId");
-        List<Integer> fontId = new ArrayList<>();
-        if (fontList != null) {
-            fontId = fontList.stream().map(DataBlock.Value::asInteger).collect(Collectors.toList());
-        }
-//        int fontId = textField.getValue("overlay").asInteger(0);
-        String hexCode = textField.getValue("color").asString(null);
-        boolean fullbright = textField.getValue("fullbright").asBoolean(false);
-        boolean allStock = textField.getValue("global").asBoolean(false);
-        boolean useAlternative = textField.getValue("useAltAlignment").asBoolean(false);
-        int lineSpacingPixels = textField.getValue("lineSpacing").asInteger(1);
-        int offset = textField.getValue("offset").asInteger(0);
-
-        Font.TextAlign align;
-        if (textField.getValue("align") != null) {
-            String alignStr = textField.getValue("align").asString();
-            if (alignStr.equalsIgnoreCase("right")) {
-                align = Font.TextAlign.RIGHT;
-            } else if (alignStr.equalsIgnoreCase("center")) {
-                align = Font.TextAlign.CENTER;
-            } else {
-                align = Font.TextAlign.LEFT;
-            }
-        } else {
-            align = Font.TextAlign.LEFT;
-        }
-
-        List<DataBlock.Value> linkedData = textField.getValues("linked");
-        List<String> linked = new ArrayList<>();
-        if (linkedData != null) {
-            linked = linkedData.stream().map(DataBlock.Value::asString).collect(Collectors.toList());
-        }
-
-        String text = textField.getValue("text") != null ? textField.getValue("text").asString() : "";
-
-        List<DataBlock.Value> filterData = textField.getValues("filter");
-        List<String> filter = new ArrayList<>();
-        if (filterData != null) {
-            filter = filterData.stream().map(DataBlock.Value::asString).collect(Collectors.toList());
-            List<String> rangeFilter = new ArrayList<>();
-            int padding = determinePadding(filter);
-            filter.forEach(s -> {
-                if (s.contains("-")) {
-                    String[] parts = s.split("-");
-                    int start = Integer.parseInt(parts[0]);
-                    int end = Integer.parseInt(parts[1]);
-                    for (int i = start; i <= end ; i++) {
-                        rangeFilter.add(String.format("%0" + padding + "d", i));
-                    }
-                }
-            });
-            filter = filter.stream().filter(n -> !n.contains("-")).collect(Collectors.toList());
-            filter.addAll(rangeFilter);
-        }
-
-        TextRenderOptions options = new TextRenderOptions(
-                font, text, resX, resY, align, flipped, textFieldId, fontSize, fontLength, fontGap, fontId, hexCode, fullbright, textureHeight, useAlternative, lineSpacingPixels, offset, allStock, this
-        );
-
-        options.setLinked(linked);
-        options.setSelectable(textField.getValue("selectable").asBoolean(true));
-        options.setUnique(textField.getValue("unique").asBoolean(false));
-        options.setIsNumberPlate(textField.getValue("isNumberPlate").asBoolean(false));
-        options.setFilter(filter);
-
-        return options;
-    }
-
-    private static int determinePadding(List<String> input) {
-        int maxLength = 0;
-        for (String item : input) {
-            if (item.contains("-")) {
-                String[] parts = item.split("-");
-                maxLength = Math.max(maxLength, parts[0].length());
-                maxLength = Math.max(maxLength, parts[1].length());
-            } else {
-                maxLength = Math.max(maxLength, item.length());
-            }
-        }
-        return maxLength;
-    }
-
     public Mesh getMesh() {
         return this.mesh;
     }
     
+    public float getHandBrakeCoefficient() {
+        return handBrakeCoefficient;
+    }
+
     public String getName() {
         return name;
+    }
+    
+    public PhysicalMaterials getBrakeMaterials() {
+        return brakeMaterials;
     }
 }

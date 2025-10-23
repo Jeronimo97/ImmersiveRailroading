@@ -11,16 +11,7 @@ import cam72cam.mod.render.opengl.Texture;
 import java.util.List;
 
 public class RailBaseOverlayRender {
-	private static final ExpireableMap<String, DirectDraw> cache = new ExpireableMap<String, DirectDraw>() {
-		@Override
-		public int lifespan() {
-			return 1;
-		}
-		@Override
-		public boolean sliding() {
-			return false;
-		}
-	};
+	private static final ExpireableMap<String, DirectDraw> cache = new ExpireableMap<>(1, false);
 
 	private static DirectDraw doDraw(RailInfo info, List<TrackBase> tracks, Vec3i pos) {
 		DirectDraw draw = new DirectDraw();

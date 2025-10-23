@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.items;
 
 import cam72cam.immersiverailroading.ImmersiveRailroading;
+import cam72cam.immersiverailroading.library.ChatText;
 import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.multiblock.Multiblock;
 import cam72cam.immersiverailroading.multiblock.MultiblockRegistry;
@@ -48,7 +49,7 @@ public class ItemManual extends CustomItem {
 		if (mb == null) {
 			return super.getTooltip(stack);
 		}
-		return Collections.singletonList(GuiText.SELECTOR_TYPE.toString(mb.getName()));
+		return Collections.singletonList(GuiText.SELECTOR_TYPE.toString(mb.getTranslatedName()));
 	}
 
 	@Override
@@ -60,7 +61,8 @@ public class ItemManual extends CustomItem {
 				List<Multiblock> keys = MultiblockRegistry.registered();
 				data.multiblock = keys.get((keys.indexOf(data.multiblock) + 1) % (keys.size()));
 				data.write();
-				player.sendMessage(PlayerMessage.direct("Placing: " + data.multiblock.getName()));
+
+				player.sendMessage(ChatText.MULTIBLOCK_SELECTING.getMessage(data.multiblock.getTranslatedName()));
 			}
 		} else {
 			if (world.isClient) {

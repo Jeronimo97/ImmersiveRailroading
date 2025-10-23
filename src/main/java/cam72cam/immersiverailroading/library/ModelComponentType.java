@@ -1,5 +1,9 @@
 package cam72cam.immersiverailroading.library;
 
+import cam72cam.mod.text.TextUtil;
+
+import java.util.Locale;
+
 public enum ModelComponentType {
 	// STANDARD
 	BOGEY_POS_WHEEL_X("BOGEY_#POS#_WHEEL_#ID#"),
@@ -90,8 +94,11 @@ public enum ModelComponentType {
 	THROTTLE_X("THROTTLE_#ID#"),
 	REVERSER_X("REVERSER_#ID#"),
 	TRAIN_BRAKE_X("TRAIN_BRAKE_#ID#"),
+	HAND_BRAKE_X("HAND_BRAKE_#ID#"),
+	DYNAMIC_BRAKE_X("(DYNAMIC|DYN)_BRAKE_#ID#"),
 	INDEPENDENT_BRAKE_X("(INDEPENDENT|IND)_BRAKE_#ID#"),
 	THROTTLE_BRAKE_X("THROTTLE_BRAKE_#ID#"),
+	THROTTLE_DYN_BRAKE_X("THROTTLE_DYN_BRAKE_#ID#"),
 	DOOR_X("DOOR_#ID#"),
 	SEAT_X("SEAT_#ID#"),
 	WINDOW_X("WINDOW_#ID#"),
@@ -114,8 +121,11 @@ public enum ModelComponentType {
 	GAUGE_REVERSER_X("GAUGE_REVERSER_#ID#"),
 	GAUGE_TRAIN_BRAKE_X("GAUGE_TRAIN_BRAKE_#ID#"),
 	GAUGE_INDEPENDENT_BRAKE_X("GAUGE_(INDEPENDENT|IND)_BRAKE_#ID#"),
-	BRAKE_PRESSURE_X("BRAKE_PRESSURE_#ID#"),
+	GAUGE_BRAKE_PRESSURE_X("(GAUGE_BRAKE|BRAKE)_PRESSURE_#ID#"),
+	GAUGE_BRAKE_CYLINDER_PRESSURE_X("(GAUGE_BRAKE|BRAKE)_(CYLINDER|CYL)_PRESSURE_#ID#"),
 	COUPLED_X("COUPLED_#ID#"),
+	GAUGE_HAND_BRAKE_X("GAUGE_HAND_BRAKE_#ID#"),
+    GAUGE_DYNAMIC_BRAKE_X("GAUGE_DYNAMIC_BRAKE_#ID#"),
 
 	// REST
 	IMMERSIVERAILROADING_BASE_COMPONENT("IMMERSIVERAILROADING_BASE_COMPNOENT"),
@@ -137,7 +147,35 @@ public enum ModelComponentType {
 		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS") || group.contains("TEXTFIELD_");
 	}
 
-    public static class ModelPosition {
+	//TODO add new parts
+	public String getOverlayName() {
+		//Get name and remove _X
+		String primary = this.name().substring(0, this.name().length() - 2);
+		switch (this) {
+			case CYLINDER_DRAIN_CONTROL_X:
+			case BELL_CONTROL_X:
+			case WHISTLE_CONTROL_X:
+			case HORN_CONTROL_X:
+				//Remove _CONTROL
+				primary = primary.substring(0, primary.length() - 8);
+				//Fallthrough
+			case TRAIN_BRAKE_X:
+			case INDEPENDENT_BRAKE_X:
+			case HAND_BRAKE_X:
+			case DYNAMIC_BRAKE_X:
+			case THROTTLE_X:
+			case REVERSER_X:
+			case THROTTLE_BRAKE_X:
+			case THROTTLE_DYN_BRAKE_X:
+			case ENGINE_START_X:
+				return TextUtil.translate("part.immersiverailroading:controls." + primary.toLowerCase(Locale.ROOT));
+            default:
+				//Unexpected behaviour
+				return "";
+		}
+	}
+
+	public static class ModelPosition {
 		private static final ModelPosition INNER = new ModelPosition("INNER");
 		public static final ModelPosition LEFT = new ModelPosition("LEFT");
 		public static final ModelPosition INNER_LEFT = INNER.and(LEFT);

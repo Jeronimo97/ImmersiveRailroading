@@ -1,7 +1,7 @@
 package cam72cam.immersiverailroading.render.rail;
 
-import cam72cam.immersiverailroading.library.TrackItems;
 import cam72cam.immersiverailroading.render.ExpireableMap;
+import cam72cam.immersiverailroading.track.VecYPR;
 import cam72cam.immersiverailroading.track.BuilderBase;
 import cam72cam.immersiverailroading.track.TrackBase;
 import cam72cam.immersiverailroading.util.RailInfo;
@@ -31,7 +31,7 @@ public class RailRender {
 	private final RailInfo info;
 	private boolean isLoaded;
 	private boolean isLoading;
-	private List<BuilderBase.VecYawPitch> renderData;
+	private List<VecYPR> renderData;
 	private List<TrackBase> tracks;
 
 	private RailRender(RailInfo info) {
@@ -56,7 +56,7 @@ public class RailRender {
 		isLoading = false;
 	}
 	public void renderRailModel(RenderState state) {
-		if (info.settings.type == TrackItems.TURNTABLE) {
+		if (info.settings.type.isTable()) {
 			load();
 		}
 

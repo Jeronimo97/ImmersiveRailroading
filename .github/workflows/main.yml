@@ -5,6 +5,7 @@ on:
     branches:
       - 'master'
       - 'fixedNullPointer'
+      - 'testbuild' 
 
 jobs:
   build:
@@ -69,3 +70,14 @@ jobs:
         with:
           name: Immersive Railroading ${{matrix.branch}}
           path: build/libs/ImmersiveRailroading-${{matrix.branch}}-*
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Testbuild v${{ github.run_number }}
+          draft: false
+          prerelease: false
+          files: build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

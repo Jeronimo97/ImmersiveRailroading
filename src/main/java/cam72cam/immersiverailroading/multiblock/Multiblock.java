@@ -1,7 +1,6 @@
 package cam72cam.immersiverailroading.multiblock;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import cam72cam.immersiverailroading.IRBlocks;
@@ -20,6 +19,7 @@ import cam72cam.mod.math.Rotation;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.text.PlayerMessage;
+import cam72cam.mod.text.TextUtil;
 import cam72cam.mod.world.BlockInfo;
 import cam72cam.mod.world.World;
 
@@ -85,8 +85,8 @@ public abstract class Multiblock {
 		Vec3i pos = origin.add(offset.rotate(rot));
 		Fuzzy component = lookup(offset);
 		return component.matches(world.getItemStack(pos));
-	}
-	
+    }
+
 	public boolean tryCreate(World world, Vec3i pos) {
 		for (Vec3i activationLocation : this.componentPositions) {
 			for (Rotation rot : Rotation.values()) {
@@ -108,7 +108,7 @@ public abstract class Multiblock {
 	
 	public abstract Vec3i placementPos();
 	public void place(World world, Player player, Vec3i pos, Rotation rot) {
-		Map<String, Integer> missing = new HashMap<String, Integer>();
+		Map<String, Integer> missing = new HashMap<>();
 		Vec3i origin = pos.subtract(this.placementPos().rotate(rot));
 		for (Vec3i offset : this.componentPositions) {
 			Fuzzy component = lookup(offset);
@@ -143,7 +143,7 @@ public abstract class Multiblock {
 			}
 		}
 
-		if (missing.size() != 0) {
+		if (!missing.isEmpty()) {
 			player.sendMessage(ChatText.BUILD_MISSING.getMessage("", ""));
 			for (String name : missing.keySet()) {
 				player.sendMessage(PlayerMessage.direct(String.format("  - %d x %s", missing.get(name), name)));
@@ -201,6 +201,10 @@ public abstract class Multiblock {
 
 	public String getName() {
 		return name;
+	}
+
+	public String getTranslatedName() {
+		return TextUtil.translate("multiblock.immersiverailroading:"+getName().toLowerCase(Locale.ROOT));
 	}
 
 	public abstract class MultiblockInstance {

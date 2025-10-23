@@ -50,12 +50,9 @@ public class ItemWirelessRemotecontrol extends CustomItem {
 	
 	@Override
 	public void onClickAir(Player player, World world, Hand hand) {
-	
-		// Verhindert die Serverseitige abfrage
-				if (!world.isClient) {
-					return;
-				} 
-		
+        if (!world.isClient) {
+            return;
+        }
 		ItemStack stack = player.getHeldItem(Hand.SECONDARY);
 		Data data = new Data(stack);
 		
