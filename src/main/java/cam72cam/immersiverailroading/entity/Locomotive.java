@@ -511,7 +511,7 @@ public abstract class Locomotive extends FreightTank{
 
     
     public float getCurrentTractiveEffort() {
-        return (float) Math.abs((getAppliedTractiveEffort(getCurrentSpeed()) / getStaticTractiveEffort(getCurrentSpeed())));
+        return (float) Math.min(1, Math.abs((getAppliedTractiveEffort(getCurrentSpeed()) / getDefinition().getStartingTractionNewtons(gauge))));
     }
 
 	@Override
