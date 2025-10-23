@@ -1,6 +1,6 @@
 package cam72cam.immersiverailroading.entity.physics;
 
-import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.Config.ImmersionConfig;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.math.Vec3d;
@@ -501,7 +501,7 @@ public class Consist {
                     
                     if (needsBrakeEqualization) {
                         float brakePressureDelta;
-                        switch (Config.ImmersionConfig.brakeMode) {
+                        switch (ImmersionConfig.brakeMode) {
                             case DEFAULT:
                                 brakePressureDelta = 0.1f / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                                 break;
@@ -531,7 +531,7 @@ public class Consist {
                                     p.config.trainBrakePressure -= brakePressureDelta;
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
                                     // Druckaufbau
-                                    p.config.trainBrakePressure += brakePressureDelta * 0.5f;
+                                    p.config.trainBrakePressure += brakePressureDelta;
                                 } else {
                                     p.config.trainBrakePressure = desiredBrakePressure;
                                 }

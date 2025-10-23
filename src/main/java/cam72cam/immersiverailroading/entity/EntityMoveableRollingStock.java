@@ -1,13 +1,16 @@
 package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.Config.ImmersionConfig;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ChronoState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.library.Augment;
+import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.Permissions;
+import cam72cam.immersiverailroading.library.PhysicalMaterials;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
 import cam72cam.immersiverailroading.physics.TickPos;
@@ -529,7 +532,15 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
      * Though, I'm going to limit it to 75% of the total possible adhesion
      */
     public float getBrakeSystemEfficiency() {
-        return getDefinition().getBrakeShoeFriction();
+        float value = getDefinition().getBrakeShoeFriction();
+        if (ImmersionConfig.brakeMode.equals(BrakeMode.REALISTIC)) {
+            if (getDefinition().getBrakeMaterials().equals(PhysicalMaterials.CAST_IRON)) {
+                value *= 0.5f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
+            } else if (getDefinition().getBrakeMaterials().equals(PhysicalMaterials.COMPOSITE)) {
+                value *= 0.2f + (float) Math.pow(0.95f, Math.pow(0.75f * Math.abs(getCurrentSpeed().metric()), 0.5f));
+            }
+        }
+        return value;
     }
 
     public boolean isSliding() {
