@@ -531,7 +531,7 @@ public class Consist {
                                     p.config.trainBrakePressure -= brakePressureDelta;
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
                                     // Druckaufbau
-                                    p.config.trainBrakePressure += brakePressureDelta;
+                                    p.config.trainBrakePressure += brakePressureDelta * 0.5f;
                                 } else {
                                     p.config.trainBrakePressure = desiredBrakePressure;
                                 }
