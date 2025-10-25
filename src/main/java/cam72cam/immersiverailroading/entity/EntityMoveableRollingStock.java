@@ -10,7 +10,6 @@ import cam72cam.immersiverailroading.library.BrakeMode;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.Permissions;
-import cam72cam.immersiverailroading.library.PhysicalMaterials;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
 import cam72cam.immersiverailroading.physics.TickPos;
@@ -534,10 +533,15 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     public float getBrakeSystemEfficiency() {
         float value = getDefinition().getBrakeShoeFriction();
         if (ImmersionConfig.brakeMode.equals(BrakeMode.REALISTIC)) {
-            if (getDefinition().getBrakeMaterials().equals(PhysicalMaterials.CAST_IRON)) {
-                value *= 0.5f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
-            } else if (getDefinition().getBrakeMaterials().equals(PhysicalMaterials.COMPOSITE)) {
-                value *= 0.2f + (float) Math.pow(0.95f, Math.pow(0.75f * Math.abs(getCurrentSpeed().metric()), 0.5f));
+            switch (getDefinition().getBrakeMaterials()) {
+                case CAST_IRON:
+                    return value *= 0.5f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
+                case COMPOSITE:
+                    return value *= 0.2f + (float) Math.pow(0.95f, Math.pow(0.75f * Math.abs(getCurrentSpeed().metric()), 0.5f));
+                case WOOD:
+                    return value *= 0.2f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
+                default:
+                    return value;
             }
         }
         return value;
