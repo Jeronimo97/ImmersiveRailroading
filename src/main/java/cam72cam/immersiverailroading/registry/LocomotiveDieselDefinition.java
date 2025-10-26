@@ -85,7 +85,6 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         running = SoundDefinition.getOrDefault(sounds, "running");
         enginePitchRange = sounds.getValue("engine_pitch_range").asFloat();
         horn = SoundDefinition.getOrDefault(sounds, "horn");
-        bell = SoundDefinition.getOrDefault(sounds, "bell");
     }
 
     @Override

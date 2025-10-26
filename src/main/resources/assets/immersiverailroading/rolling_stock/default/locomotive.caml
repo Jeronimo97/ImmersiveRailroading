@@ -26,4 +26,8 @@ properties =
     tractive_effort_n = null       #
 
     max_speed_kmh = null           # Required
-    multi_unit_capable = False      # Optional: Defaults to true for diesels
+    
+    multi_unit_capable = False     # Optional: Defaults to true for diesels
+
+sounds =
+    compressor = "immersiverailroading:sounds/locomotive/default/compressor.ogg"         # Optional: See sound_definition.caml for details

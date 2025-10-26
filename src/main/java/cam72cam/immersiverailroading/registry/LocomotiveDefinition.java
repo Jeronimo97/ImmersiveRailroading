@@ -10,6 +10,7 @@ import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.model.LocomotiveModel;
 import cam72cam.immersiverailroading.model.StockModel;
+import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.resource.Identifier;
 
@@ -30,6 +31,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private double factorOfAdhesion;
     private boolean speedLimiter;
     private int brakeNotches;
+    public SoundDefinition compressor;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -85,6 +87,10 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         isCog = properties.getValue("cog").asBoolean();
         speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
         brakeNotches = properties.getValue("brake_notches").asInteger(25);
+        
+        DataBlock sounds = data.getBlock("sounds");
+        bell = SoundDefinition.getOrDefault(sounds, "bell");
+        compressor = SoundDefinition.getOrDefault(sounds, "compressor");
     }
 
     protected boolean readCabCarFlag(DataBlock data) {

@@ -18,6 +18,7 @@ import java.util.List;
 public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends LocomotiveDefinition> extends FreightTankModel<ENTITY, DEFINITION> {
     private List<ModelComponent> components;
     private Bell bell;
+    private Compressor compressor;
 
     private ModelComponent frameFront;
     private ModelComponent frameRear;
@@ -127,9 +128,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
                 new ModelComponentType[]{ModelComponentType.CAB}
         );
         rocking.include(components);
-        bell = Bell.get(
-                provider, rocking,
-                def.bell);
+        bell = Bell.get(provider, rocking, def.bell);
+        compressor = Compressor.get(provider, rocking, def.compressor);
 
         super.parseComponents(provider, def);
     }
@@ -139,6 +139,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     protected void effects(ENTITY stock) {
         super.effects(stock);
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
+        compressor.effects(stock, stock.isLowAir() ? 0.8f : 0);
     }
 
     @Override

@@ -22,6 +22,7 @@ public enum ModelComponentType {
 	BELL("BELL"),
 	WHISTLE("WHISTLE"),
 	HORN("HORN"),
+	COMPRESSOR("COMPRESSOR"),
 	
 	// DIESEL
 	FUEL_TANK("FUEL_TANK"),

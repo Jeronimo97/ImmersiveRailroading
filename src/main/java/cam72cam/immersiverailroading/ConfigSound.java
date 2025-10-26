@@ -82,9 +82,13 @@ public class ConfigSound {
 			@Name("Bell")
 			@Range(min = 0, max = 100)
 			public static int bell = 100;
-
 			public static float bell() { return immersive_railroading / 100f * category / 100f * bell / 100f; }
 
+			@Name("Compressor")
+            @Range(min = 0, max = 100)
+			public static int compressor = 100;
+			public static float compressor() { return immersive_railroading / 100f * category / 100f * compressor / 100f; }
+			
 			@Name("Steam")
 			public static class Steam {
 				@Name("Category Steam Locomotive")
