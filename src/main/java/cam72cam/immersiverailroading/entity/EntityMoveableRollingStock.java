@@ -58,8 +58,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
     @TagSync
     @TagField("BRAKE_PRESSURE")
-    private float trainBrakePressure = 1;
-    
+    private float trainBrakePressure = 0;
+
     @TagSync
     @TagField("BRAKE_CYLINDER_PRESSURE")
     private float brakeCylinderPressure = 0;

@@ -114,9 +114,12 @@ public class SimulationState {
         public float trainBrakePosition;
         public float trainBrakePressure;
         public float brakeCylinderPressure;
+        
+        public EntityCoupleableRollingStock stock;
 
         public Configuration(EntityCoupleableRollingStock stock) {
             id = stock.getUUID();
+            this.stock = stock;
             gauge = stock.gauge;
             world = stock.getWorld();
 
@@ -146,8 +149,8 @@ public class SimulationState {
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
-                desiredBrakePressure = Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
-                        1 - locomotive.getTrainBrake() : locomotive.getTrainBrake() == 1 ? 0 : 1 - 0.31 * (double)locomotive.getTrainBrake();
+                desiredBrakePressure = Math.min(locomotive.getMainAirReservoir() * 2 ,Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                        1 - locomotive.getTrainBrake() : locomotive.getTrainBrake() == 1 ? 0 : 1 - 0.31 * (double)locomotive.getTrainBrake());
                 isSanding = locomotive.isSanding();
                 isSanding = locomotive.isSanding();
             } else {

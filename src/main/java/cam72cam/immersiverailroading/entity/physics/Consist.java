@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.entity.physics;
 
 import cam72cam.immersiverailroading.Config.ImmersionConfig;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
+import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
  * */
 public class Consist {
     static boolean debug = false;
-    static int trainLength = 0;
+    public static int trainLength = 0;
 
     public static class Particle {
         public SimulationState state;
@@ -532,6 +533,8 @@ public class Consist {
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
                                     // Druckaufbau
                                     p.config.trainBrakePressure += brakePressureDelta * 0.5f;
+                                    if (p.config.stock instanceof Locomotive)
+                                        ((Locomotive) p.config.stock).lowerMainAirReservoir();
                                 } else {
                                     p.config.trainBrakePressure = desiredBrakePressure;
                                 }
