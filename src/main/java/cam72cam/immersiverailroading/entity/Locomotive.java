@@ -460,6 +460,15 @@ public abstract class Locomotive extends FreightTank{
 				* (4/getDefinition().factorOfAdhesion()) // Physics are tuned to an adhesion factor of 4
 				* Config.ConfigBalance.tractionMultiplier;
 	}
+
+    public float adhesionCoefficient() {
+        float adhMult = super.adhesionCoefficient();
+        if (isSanding)
+            adhMult *= 3;
+        if (slipping)
+            adhMult *= 0.5f;
+        return adhMult;
+    }
 	
 	protected double simulateWheelSlip() {
 		if (cogging) {
@@ -523,7 +532,7 @@ public abstract class Locomotive extends FreightTank{
 	}
 
 	@Override
-	public double getBrakeAdhesionEfficiency() {
+	public float getBrakeAdhesionEfficiency() {
 		if (cogging) {
 			return 10;
 		}

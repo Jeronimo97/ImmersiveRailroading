@@ -24,6 +24,7 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
+import cam72cam.mod.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -569,7 +570,20 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         return retardedNewtons + pressureNewtons + independentNewtons + handbrakeNewtons;
     }
 
-    public double getBrakeAdhesionEfficiency() {
-        return 1;
+    public float adhesionCoefficient() {
+        float adhMult = 1;
+        World world = getWorld();
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos))
+                adhMult *= 0.7f;
+            else if (world.isSnowing(blockPos))
+                adhMult *= 0.35f;
+        }
+        return adhMult;
+    }
+
+    public float getBrakeAdhesionEfficiency() {
+        return adhesionCoefficient();
     }
 }
