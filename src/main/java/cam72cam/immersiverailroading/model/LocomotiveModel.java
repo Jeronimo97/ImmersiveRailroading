@@ -139,7 +139,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     protected void effects(ENTITY stock) {
         super.effects(stock);
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
-        compressor.effects(stock, stock.isLowAir() ? 0.8f : 0);
+        compressor.effects(stock, stock.isLowAir() && stock.providesElectricalPower() ? 0.8f : 0);
     }
 
     @Override
