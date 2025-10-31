@@ -675,34 +675,43 @@ public abstract class Locomotive extends FreightTank{
 	}
 	
 	public float getMainAirReservoir() {
-	    return mainAirReservoir;
-	}
-	
-	public boolean isLowAir() {
-	    return isLowAir;
-	}
-	
-	private void raiseMainAirReservoir() {
-	    if (getWorld().isClient)
-	        return;
-	    if (!isLowAir() && getMainAirReservoir() < 0.8f) {
-	        isLowAir = true;
-	    } else if (isLowAir() && getMainAirReservoir() >= 1.0f) {
-	        isLowAir = false;
-	    }
-	    if (!isLowAir())
-	        return;
+        if (getTickCount() % 20 == 0 && getPassengerCount() > 0) {
+            if (getWorld().isServer) {
+                //System.out.println("Server: " + mainAirReservoir);
+            } else if (getWorld().isClient) {
+                //System.out.println("Client: " + mainAirReservoir);
+            }
+        }
+        return mainAirReservoir;
+    }
 
-	    float newMainReservoir = getMainAirReservoir() + 0.1f / consist.trainLength;
-	    newMainReservoir = Math.min(1, Math.max(0, newMainReservoir));
-	    mainAirReservoir = newMainReservoir;
-	}
-	
-	public void lowerMainAirReservoir() {
-	    float newMainReservoir = getMainAirReservoir() - 0.000001f * consist.trainLength;
+    public boolean isLowAir() {
+        return isLowAir;
+    }
+
+    private void raiseMainAirReservoir() {
+        if (getWorld().isClient)
+            return;
+        if (!isLowAir() && getMainAirReservoir() < 0.8f) {
+            isLowAir = true;
+        } else if (isLowAir() && getMainAirReservoir() >= 1.0f) {
+            isLowAir = false;
+        }
+        if (!isLowAir())
+            return;
+
+        float newMainReservoir = getMainAirReservoir() + 0.1f / consist.trainLength;
         newMainReservoir = Math.min(1, Math.max(0, newMainReservoir));
         mainAirReservoir = newMainReservoir;
-	}
+    }
+
+    public void lowerMainAirReservoir() {
+        if (getWorld().isClient)
+            return;
+        float newMainReservoir = getMainAirReservoir() - 0.000001f * consist.trainLength;
+        newMainReservoir = Math.min(1, Math.max(0, newMainReservoir));
+        mainAirReservoir = newMainReservoir;
+    }
 
 	public int getBell() {
 		return bellTime;
