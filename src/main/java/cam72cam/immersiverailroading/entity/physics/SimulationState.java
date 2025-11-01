@@ -454,11 +454,11 @@ public class SimulationState {
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
 
         this.sliding = false;
-      //TODO Add Dynamic Brake to Wheel sliding
-        if (brakeCylinderNewtons > config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
+        if (brakeCylinderNewtons + dynamicBrakeNewtons> config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
             // WWWWWHHHEEEEE!!! SLIDING!!!!
             double kineticFriction = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.STEEL);
-            brakeCylinderNewtons = config.massKg * kineticFriction;
+            brakeCylinderNewtons = config.massKg * kineticFriction * 9.8 * config.stock.getBrakeSystemEfficiency() * config.brakeCylinderPressure;
+            dynamicBrakeNewtons *= kineticFriction;
             this.sliding = true;
         }
 
