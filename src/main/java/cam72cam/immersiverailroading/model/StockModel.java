@@ -60,6 +60,9 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final float sndRand;
     private final PartSound wheel_sound;
     private final PartSound slidingSound;
+    private final PartSound brakeHighSpeedSound;
+    private final PartSound brakeLowSpeedSound;
+    private final PartSound brakeShoeSound;
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
 
@@ -148,6 +151,9 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         sndRand = (float) Math.random() / 10;
         wheel_sound = new PartSound(new SoundDefinition(def.wheel_sound), true, 40, ConfigSound.SoundCategories.RollingStock::wheel);
         slidingSound = new PartSound(new SoundDefinition(def.sliding_sound), true, 40, ConfigSound.SoundCategories.RollingStock::sliding);
+        brakeHighSpeedSound = new PartSound(def.brakeHighSpeedSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
+        brakeLowSpeedSound = new PartSound(def.brakeLowSpeedSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
+        brakeShoeSound = new PartSound(def.brakeShoeSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         flangeSound = new FlangeSound(def.flange_sound, true, 40);
         sway = new SwaySimulator();
     }
@@ -250,17 +256,26 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         gauges.forEach(c -> c.effects(stock));
         animations.forEach(c -> c.effects(stock));
 
-
-        float adjust = (float) Math.abs(stock.getCurrentSpeed().metric()) / 300;
+        float speed = (float) Math.abs(stock.getCurrentSpeed().metric());
+        float adjust = speed / 300;
         float pitch = adjust + 0.7f;
         if (stock.getDefinition().shouldScalePitch()) {
             // TODO this is probably wrong...
             pitch = (float) (pitch/stock.gauge.scale());
         }
         float volume = 0.01f + adjust;
+        float brakePressure = stock.getBrakeCylinderPressure();
+        
+        float squeeze = speed / 100 + 1;
+        
+        if (brakePressure > 0)
+            System.out.println("Pitch: " + squeeze);
 
-        wheel_sound.effects(stock, Math.abs(stock.getCurrentSpeed().metric()) > 1 ? volume : 0, pitch + sndRand);
+        wheel_sound.effects(stock, speed > 1 ? volume : 0, pitch + sndRand);
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
+        brakeHighSpeedSound.effects(stock, speed > 25 && brakePressure > 0 ? (speed < 30 ? 5 * (speed - 25) / 25 : 1) * Math.min(brakePressure + 0.2f, 1) : 0, squeeze);
+        brakeLowSpeedSound.effects(stock, speed > 1 && speed <= 30 && brakePressure > 0 ? speed > 20 ? (30 / speed) - (speed / 30) : Math.min(brakePressure + 0.5f, 1) : 0, 0.55f - speed / 100);
+        brakeShoeSound.effects(stock, stock.getBrakesApply());
         flangeSound.effects(stock);
         sway.effects(stock);
     }

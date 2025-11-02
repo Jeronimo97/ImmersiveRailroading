@@ -87,6 +87,11 @@ sounds = # Optional
     flange = "immersiverailroading:sounds/default/flange.ogg"           # Optional: Played when flange rub occurs
     flange_min_yaw = 2.5                                                # Optional: TODO explain this
     collision = "immersiverailroading:sounds/default/collision.ogg"     # Optional: Played when a collision occurs
+    brake_noise_fast = "immersiverailroading:sounds/default/brake_noise_fast.ogg"
+    brake_noise_slow = "immersiverailroading:sounds/default/brake_noise_slow.ogg"
+    brake_apply =
+        start = "immersiverailroading:sounds/default/brake_apply.ogg"
+        looping = false
 
 #    controls =              # Optional: Map of model controls to sound properties
 #        MODEL_TYPE_ID =         # Example: model group k4_REVERSER_1_Cube would map to REVERSER_1

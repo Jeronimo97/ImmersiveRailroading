@@ -63,6 +63,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     @TagSync
     @TagField("BRAKE_CYLINDER_PRESSURE")
     private float brakeCylinderPressure = 0;
+    
+    private boolean brakesApply = false;
 
     @TagSync
     @TagField("SLIDING")
@@ -294,6 +296,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
         if (getWorld().isClient) {
             getDefinition().getModel().onClientTick(this);
+            brakesApply();
         }
 
         // Apply position onTick
@@ -546,6 +549,19 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
             }
         }
         return value;
+    }
+    
+    private void brakesApply() {
+        float pressure = getBrakeCylinderPressure();
+        if (!brakesApply && pressure > 0) {
+            brakesApply = true;
+        } else if (brakesApply && pressure == 0) {
+            brakesApply = false;
+        }
+    }
+    
+    public boolean getBrakesApply() {
+        return brakesApply;
     }
 
     public boolean isSliding() {
