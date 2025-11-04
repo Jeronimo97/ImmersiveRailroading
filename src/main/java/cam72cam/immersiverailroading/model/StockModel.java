@@ -63,6 +63,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final PartSound brakeHighSpeedSound;
     private final PartSound brakeLowSpeedSound;
     private final PartSound brakeShoeSound;
+    private final PartSound brakePressureSound;
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
 
@@ -154,6 +155,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         brakeHighSpeedSound = new PartSound(def.brakeHighSpeedSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         brakeLowSpeedSound = new PartSound(def.brakeLowSpeedSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         brakeShoeSound = new PartSound(def.brakeShoeSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
+        brakePressureSound = new PartSound(def.brakePressureSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         flangeSound = new FlangeSound(def.flange_sound, true, 40);
         sway = new SwaySimulator();
     }
@@ -265,17 +267,13 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         }
         float volume = 0.01f + adjust;
         float brakePressure = stock.getBrakeCylinderPressure();
-        
-        float squeeze = speed / 100 + 1;
-        
-        if (brakePressure > 0)
-            System.out.println("Pitch: " + squeeze);
 
         wheel_sound.effects(stock, speed > 1 ? volume : 0, pitch + sndRand);
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
-        brakeHighSpeedSound.effects(stock, speed > 25 && brakePressure > 0 ? (speed < 30 ? 5 * (speed - 25) / 25 : 1) * Math.min(brakePressure + 0.2f, 1) : 0, squeeze);
+        brakeHighSpeedSound.effects(stock, speed > 25 && brakePressure > 0 ? (speed < 30 ? 5 * (speed - 25) / 25 : 1) * Math.min(brakePressure + 0.2f, 1) : 0, speed / 100 + 1);
         brakeLowSpeedSound.effects(stock, speed > 1 && speed <= 30 && brakePressure > 0 ? speed > 20 ? (30 / speed) - (speed / 30) : Math.min(brakePressure + 0.5f, 1) : 0, 0.55f - speed / 100);
         brakeShoeSound.effects(stock, stock.getBrakesApply());
+        brakePressureSound.effects(stock, stock.brakeCylinderDelta ? 0.1f : 0);        
         flangeSound.effects(stock);
         sway.effects(stock);
     }
@@ -294,6 +292,10 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         wheel_sound.removed(stock);
         slidingSound.removed(stock);
         flangeSound.removed(stock);
+        brakeHighSpeedSound.removed(stock);
+        brakeLowSpeedSound.removed(stock);
+        brakeShoeSound.removed(stock);
+        brakePressureSound.removed(stock);
         sway.removed(stock);
     }
 

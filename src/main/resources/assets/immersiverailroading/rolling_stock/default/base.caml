@@ -92,6 +92,7 @@ sounds = # Optional
     brake_apply =
         start = "immersiverailroading:sounds/default/brake_apply.ogg"
         looping = false
+    brake_pressure = "immersiverailroading:sounds/default/pressure.ogg"
 
 #    controls =              # Optional: Map of model controls to sound properties
 #        MODEL_TYPE_ID =         # Example: model group k4_REVERSER_1_Cube would map to REVERSER_1
