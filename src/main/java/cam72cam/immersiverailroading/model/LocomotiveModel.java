@@ -1,5 +1,6 @@
 package cam72cam.immersiverailroading.model;
 
+import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
@@ -19,6 +20,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     private List<ModelComponent> components;
     private Bell bell;
     private Compressor compressor;
+    private PartSound brakePressureSound;
 
     private ModelComponent frameFront;
     private ModelComponent frameRear;
@@ -40,6 +42,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         super(def);
         frontTrackers = new TrackFollowers(s -> new TrackFollower(s, frameFront, drivingWheelsFront != null ? drivingWheelsFront.wheels : null, true));
         rearTrackers = new TrackFollowers(s -> new TrackFollower(s, frameRear, drivingWheelsRear != null ? drivingWheelsRear.wheels : null, false));
+        
+        brakePressureSound = new PartSound(def.brakePressureSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
     }
 
     @Override
@@ -140,6 +144,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         super.effects(stock);
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
         compressor.effects(stock, stock.isLowAir() && stock.providesElectricalPower() ? 0.2f : 0);
+        brakePressureSound.effects(stock, stock.trainBrakeDelta ? 0.1f : 0);
     }
 
     @Override
@@ -154,6 +159,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         }
 
         bell.removed(stock);
+        compressor.removed(stock);
+        brakePressureSound.removed(stock);
     }
 
     private Matrix4 getFrontLocomotiveMatrix(EntityMoveableRollingStock s) {

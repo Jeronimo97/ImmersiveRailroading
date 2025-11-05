@@ -299,7 +299,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         if (getWorld().isClient) {
             getDefinition().getModel().onClientTick(this);
             brakesApply();
-            if (getTickCount() % 5 == 0)
+            if (getTickCount() % 10 == 0)
                 brakePressureDelta();
         }
 
@@ -566,7 +566,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     
     public void brakePressureDelta() {
         float cylinderPressure = getBrakeCylinderPressure();
-        if (cylinderPressure != this.cylinderPressureInternal) {
+        if (cylinderPressure < this.cylinderPressureInternal) {
             brakeCylinderDelta = true;
         } else {
             brakeCylinderDelta = false;

@@ -46,10 +46,12 @@ public abstract class Locomotive extends FreightTank{
 	@TagSync
 	@TagField("AIR_BRAKE")
 	private float trainBrakePosition = 0;
+	private float trainBrakeInternal = 0;
+	public boolean trainBrakeDelta = false;
 	
     @TagSync
     @TagField("MAIN_AIR_RESERVOIR")
-    private float mainAirReservoir = 0;
+    private double mainAirReservoir = 0;
     
     @TagSync
     @TagField("COMPRESSOR")
@@ -456,6 +458,9 @@ public abstract class Locomotive extends FreightTank{
         if(providesElectricalPower()) {
             raiseMainAirReservoir();
         }
+        
+        if (getWorld().isClient && getTickCount() % 10 == 0)
+            trainBrakeDelta();
 	}
 	
     public double speedPercent(Speed speed) {
@@ -558,14 +563,14 @@ public abstract class Locomotive extends FreightTank{
 	 */
 
 	protected void copySettings(EntityRollingStock stock, boolean direction) {
-        if (stock instanceof Locomotive) {
-            ((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
-            if (((Locomotive)stock).getDefinition().muliUnitCapable) {
-                ((Locomotive) stock).setRealThrottle(this.getThrottle());
-                ((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
-            }
-        }
-    }
+		if (stock instanceof Locomotive) {
+		    ((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
+		    if (((Locomotive)stock).getDefinition().muliUnitCapable) {
+		        ((Locomotive) stock).setRealThrottle(this.getThrottle());
+		        ((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
+		    }
+		}
+	}
 
 	public float getThrottle() {
 		return throttle;
@@ -674,14 +679,7 @@ public abstract class Locomotive extends FreightTank{
 		}
 	}
 	
-	public float getMainAirReservoir() {
-        if (getTickCount() % 20 == 0 && getPassengerCount() > 0) {
-            if (getWorld().isServer) {
-                //System.out.println("Server: " + mainAirReservoir);
-            } else if (getWorld().isClient) {
-                //System.out.println("Client: " + mainAirReservoir);
-            }
-        }
+	public double getMainAirReservoir() {
         return mainAirReservoir;
     }
 
@@ -692,25 +690,30 @@ public abstract class Locomotive extends FreightTank{
     private void raiseMainAirReservoir() {
         if (getWorld().isClient)
             return;
-        if (!isLowAir() && getMainAirReservoir() < 0.8f) {
+        if (!isLowAir() && getMainAirReservoir() < 0.8) {
             isLowAir = true;
-        } else if (isLowAir() && getMainAirReservoir() >= 1.0f) {
+        } else if (isLowAir() && getMainAirReservoir() >= 1.0) {
             isLowAir = false;
         }
         if (!isLowAir())
             return;
-
-        float newMainReservoir = getMainAirReservoir() + 0.1f / consist.trainLength;
+        mainAirReservoir(0.0002);
+    }
+    
+    public void mainAirReservoir(double pressureDelta) {
+        double newMainReservoir = getMainAirReservoir() + pressureDelta;
         newMainReservoir = Math.min(1, Math.max(0, newMainReservoir));
         mainAirReservoir = newMainReservoir;
     }
-
-    public void lowerMainAirReservoir() {
-        if (getWorld().isClient)
-            return;
-        float newMainReservoir = getMainAirReservoir() - 0.000001f * consist.trainLength;
-        newMainReservoir = Math.min(1, Math.max(0, newMainReservoir));
-        mainAirReservoir = newMainReservoir;
+    
+    public void trainBrakeDelta() {
+        float brakePressure = getBrakePressure();
+        if (brakePressure < this.trainBrakeInternal) {
+            trainBrakeDelta = true;
+        } else {
+            trainBrakeDelta = false;
+        }
+        this.trainBrakeInternal = brakePressure;
     }
 
 	public int getBell() {

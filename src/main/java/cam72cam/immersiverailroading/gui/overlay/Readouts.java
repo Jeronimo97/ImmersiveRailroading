@@ -122,8 +122,8 @@ public enum Readouts {
                 return (float) (stock instanceof LocomotiveDiesel ?
                         ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
             case MAIN_AIR_RESERVOIR:
-                return stock instanceof Locomotive ?
-                        ((Locomotive) stock).getMainAirReservoir() : 0;
+                return (float) (stock instanceof Locomotive ?
+                        ((Locomotive) stock).getMainAirReservoir() : 0);
         }
         return 0;
     }
