@@ -690,14 +690,14 @@ public abstract class Locomotive extends FreightTank{
     private void raiseMainAirReservoir() {
         if (getWorld().isClient)
             return;
-        if (!isLowAir() && getMainAirReservoir() < 0.8) {
+        if (!isLowAir() && getMainAirReservoir() < 0.85) {
             isLowAir = true;
         } else if (isLowAir() && getMainAirReservoir() >= 1.0) {
             isLowAir = false;
         }
         if (!isLowAir())
             return;
-        mainAirReservoir(0.0002);
+        mainAirReservoir(0.0005);
     }
     
     public void mainAirReservoir(double pressureDelta) {
