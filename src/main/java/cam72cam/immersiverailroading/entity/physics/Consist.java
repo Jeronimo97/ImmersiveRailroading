@@ -514,9 +514,9 @@ public class Consist {
                             case REALISTIC:
                                 //System.out.println("Length: " + trainLength);
                                 //TODO Temporary until fixed values
-                                float fastBrake =   0.031f * 600 / (trainLength * 13.5f);
-                                float normalBrake = 0.008f * 600 / (trainLength * 25f);
-                                brakePressureDelta = linked.stream().anyMatch(s -> s.config.trainBrakePosition > 0.999f) ? fastBrake : normalBrake;
+                                float fastBrake =   1.37f / trainLength;
+                                float normalBrake = 0.192f / trainLength;
+                                brakePressureDelta = linked.stream().anyMatch(s -> s.config.trainBrakePosition == 1) ? fastBrake : normalBrake;
                                 break;
                             case INSTANT:
                             default:
@@ -533,7 +533,7 @@ public class Consist {
                                     p.config.trainBrakePressure -= brakePressureDelta;
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
                                     // Druckaufbau
-                                    p.config.trainBrakePressure += brakePressureDelta * 0.5f;
+                                    p.config.trainBrakePressure += brakePressureDelta;
                                     if (p.config.stock instanceof Locomotive)
                                         ((Locomotive) p.config.stock).mainAirReservoir(-0.000003 * Math.pow(trainLength, ((Locomotive) p.config.stock).getMainAirReservoir()));
                                 } else {
