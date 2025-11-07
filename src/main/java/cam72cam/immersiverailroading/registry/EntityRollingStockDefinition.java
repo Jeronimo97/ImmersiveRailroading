@@ -88,7 +88,8 @@ public abstract class EntityRollingStockDefinition {
     private boolean hasHandBrake;
     private float handBrakeCoefficient;
     private boolean hasPressureBrake;
-    private final Map<ModelComponentType, List<ModelComponent>> renderComponents;
+    private boolean hasEpBrake;
+    private final EnumMap<ModelComponentType, List<ModelComponent>> renderComponents;
     private final List<ItemComponentType> itemComponents;
     private final Function<EntityBuildableRollingStock, float[][]> heightmap;
     private final Map<String, LightDefinition> lights = new HashMap<>();
@@ -487,6 +488,7 @@ public abstract class EntityRollingStockDefinition {
         hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
         hasHandBrake = properties.getValue("hand_brake").asBoolean(true);
         hasPressureBrake = properties.getValue("pressure_brake").asBoolean();
+        hasEpBrake = properties.getValue("ep_brake").asBoolean(false);
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
 
@@ -663,6 +665,10 @@ public abstract class EntityRollingStockDefinition {
 
     public boolean hasPressureBrake() {
         return hasPressureBrake;
+    }
+    
+    public boolean hasEpBrake() {
+        return hasEpBrake;
     }
 
     private static class HeightMapData {

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * */
 public class Consist {
     static boolean debug = false;
-    public static int trainLength = 0;
+    private static int trainLength = 0;
 
     public static class Particle {
         public SimulationState state;
@@ -494,8 +494,8 @@ public class Consist {
                     // Spread brake pressure
                     
                     trainLength = 0;
-                    linked.forEach(s -> {
-                        trainLength += s.config.length;
+                    linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 0 :
+                         s.config.length;
                     });
 
                     float desiredBrakePressure = (float) linked.stream()
