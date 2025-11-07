@@ -58,6 +58,8 @@ public class SimulationState {
     public List<Vec3i> blocksToBreak;
 
     public double directResistance;
+    private static float trainBrake = 0;
+    private static boolean singleReleaseBrake = false;
 
     public Configuration config;
     public boolean dirty = true;
@@ -437,6 +439,28 @@ public class SimulationState {
     public boolean atRest() {
         return velocity == 0 && Math.abs(forcesNewtons()) < frictionNewtons();
     }
+    
+    private float calculateBrakePressure() {
+        if (config.stock.getDefinition().hasSingleRealseBrake()) {
+            float currTrainBrake = config.trainBrakePressure;
+            if (currTrainBrake > trainBrake && !singleReleaseBrake) {
+                singleReleaseBrake = true;
+            }
+            if (singleReleaseBrake && config.trainBrakePressure >= 1) {
+                singleReleaseBrake = false;
+            }
+            trainBrake = currTrainBrake;
+            if (singleReleaseBrake) {
+                config.brakeCylinderPressure = Math.max(config.brakeCylinderPressure - 0.01f, 0);
+                return config.brakeCylinderPressure;
+            }
+        }
+
+        config.brakeCylinderPressure = Math.max(config.hasPressureBrake ? Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                1 - config.trainBrakePressure :
+                    (1 - config.trainBrakePressure) / 0.3f, 1) : 0, config.independentBrake);
+        return config.brakeCylinderPressure;
+    }
 
     public double frictionNewtons() {
         // https://evilgeniustech.com/idiotsGuideToRailroadPhysics/OtherLocomotiveForces/#rolling-resistance
@@ -447,17 +471,15 @@ public class SimulationState {
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
-        config.brakeCylinderPressure = Math.max(config.hasPressureBrake ? Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
-                1 - config.trainBrakePressure :
-                    (1 - config.trainBrakePressure) / 0.3f, 1) : 0, config.independentBrake);
-        double brakeCylinderNewtons = Math.max(config.designAdhesionNewtons * config.brakeCylinderPressure, config.handBrakeNewtons);
+        
+        double brakeCylinderNewtons = Math.max(config.designAdhesionNewtons * calculateBrakePressure(), config.handBrakeNewtons);
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
 
         this.sliding = false;
         if (brakeCylinderNewtons + dynamicBrakeNewtons> config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
             // WWWWWHHHEEEEE!!! SLIDING!!!!
             double kineticFriction = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.STEEL);
-            brakeCylinderNewtons = config.massKg * kineticFriction * 9.8 * config.stock.getBrakeSystemEfficiency() * config.brakeCylinderPressure;
+            brakeCylinderNewtons = config.massKg * kineticFriction * 9.8 * config.stock.getBrakeSystemEfficiency() * calculateBrakePressure();
             dynamicBrakeNewtons *= kineticFriction;
             this.sliding = true;
         }
