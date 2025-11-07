@@ -393,19 +393,19 @@ public class LocomotiveDiesel extends Locomotive {
         super.copySettings(stock, direction);
     }
 	
-	public float getDynamicBrake() {
-        return getDefinition().getDynamicBrake() != 0 ? dynamicBrakePosition : 0;
+	public int getDynamicBrake() {
+        return (int) (getDefinition().getDynamicBrakeNewton() != 0 ? dynamicBrakePosition : 0);
     }
 
-    public double getDynamicBrakeNewtons() {
+    public double getDynamicBrakeMultiplier() {
         if (!turnedOn)
             return 0;
         double speed = speedPercent(getCurrentSpeed());
         return getDynamicBrake() * (speed < 0.1 ? speed / 0.1 : 1);
     }
 
-    public float getDynamicBrakeMultiplier() {
-        return getDefinition().getDynamicBrake();
+    public int getDynamicBrakeNewton() {
+        return getDefinition().getDynamicBrakeNewton();
     }
 
     public void setDynamicBrake(final float newDynamicBrakePos) {

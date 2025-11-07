@@ -169,7 +169,7 @@ public class SimulationState {
             this.independentBrake = stock.getIndependentBrake();
             this.handBrakeNewtons = stock.getHandBrake() * 9.8 * 0.015 * stock.getDefinition().getWeight(gauge) * stock.getDefinition().getHandBrakeCoefficient();
             if (stock instanceof LocomotiveDiesel) {
-                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() * ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier();
+                this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() * ((LocomotiveDiesel) stock).getDynamicBrakeNewton();
             } else {
                 this.dynamicBrakeNewtons = 0;
             }

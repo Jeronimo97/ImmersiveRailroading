@@ -36,7 +36,7 @@ public class DieselLocomotiveModel extends LocomotiveModel<LocomotiveDiesel, Loc
         addControl(provider, ModelComponentType.ENGINE_START_X);
         addControl(provider, ModelComponentType.HORN_CONTROL_X);
         
-        if (def.getDynamicBrake() != 0) {
+        if (def.getDynamicBrakeNewton() != 0) {
             addControl(provider, ModelComponentType.DYNAMIC_BRAKE_X);
             addGauge(provider, ModelComponentType.GAUGE_DYNAMIC_BRAKE_X, Readouts.DYNAMIC_BRAKE);
         }

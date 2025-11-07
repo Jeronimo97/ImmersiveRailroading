@@ -27,7 +27,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     private int notches;
     private float enginePitchRange;
     public boolean hasDynamicTractionControl;
-    private float dynamicBrake;
+    private int dynamicBrake;
     private boolean isLinkedDynBrakeThrottle;
 
     public LocomotiveDieselDefinition(String defID, DataBlock data) throws Exception {
@@ -77,7 +77,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         }
         notches = properties.getValue("throttle_notches").asInteger();
         hornSus = properties.getValue("horn_sustained").asBoolean();
-        dynamicBrake = properties.getValue("dynamic_brake_factor").asFloat(0);
+        dynamicBrake = properties.getValue("dynamic_brake_newton").asInteger(0);
         isLinkedDynBrakeThrottle = properties.getValue("isLinkedDynamicBrakeThrottle").asBoolean(false);
 
         DataBlock sounds = data.getBlock("sounds");
@@ -131,7 +131,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         return enginePitchRange;
     }
     
-    public float getDynamicBrake() {
+    public int getDynamicBrakeNewton() {
         return dynamicBrake;
     }
     

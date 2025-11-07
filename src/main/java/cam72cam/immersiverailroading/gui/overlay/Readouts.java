@@ -120,7 +120,7 @@ public enum Readouts {
                         : 0;
             case DYNAMIC_BRAKE:
                 return (float) (stock instanceof LocomotiveDiesel ?
-                        ((LocomotiveDiesel) stock).getDynamicBrakeNewtons() : 0);
+                        ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() : 0);
             case MAIN_AIR_RESERVOIR:
                 return (float) (stock instanceof Locomotive ?
                         ((Locomotive) stock).getMainAirReservoir() : 0);
