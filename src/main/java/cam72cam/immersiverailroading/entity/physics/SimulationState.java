@@ -109,6 +109,7 @@ public class SimulationState {
         public float independentBrake;
         public double handBrakeNewtons;
         public double dynamicBrakeNewtons;
+        public double magnetBrakeNewtons;
         public boolean isSanding;
 
         public boolean hasPressureBrake;
@@ -172,6 +173,11 @@ public class SimulationState {
                 this.dynamicBrakeNewtons = ((LocomotiveDiesel) stock).getDynamicBrakeMultiplier() * ((LocomotiveDiesel) stock).getDynamicBrakeNewton();
             } else {
                 this.dynamicBrakeNewtons = 0;
+            }
+            if (stock instanceof LocomotiveDiesel) {
+                this.magnetBrakeNewtons = ((LocomotiveDiesel) stock).getMagnetBrakeNewton();
+            } else {
+                this.magnetBrakeNewtons = 0;
             }
             this.directResistanceNewtons = stock::getDirectFrictionNewtons;
             this.hasPressureBrake = stock.getDefinition().hasPressureBrake();
@@ -474,7 +480,8 @@ public class SimulationState {
         
         double brakeCylinderNewtons = Math.max(config.designAdhesionNewtons * calculateBrakePressure(), config.handBrakeNewtons);
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
-
+        double magnetBrakeNewtons = config.magnetBrakeNewtons;
+        
         this.sliding = false;
         if (brakeCylinderNewtons + dynamicBrakeNewtons> config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
             // WWWWWHHHEEEEE!!! SLIDING!!!!
@@ -486,12 +493,13 @@ public class SimulationState {
 
         brakeCylinderNewtons *= Config.ConfigBalance.brakeMultiplier;
         dynamicBrakeNewtons *= Config.ConfigBalance.brakeMultiplier;
-
+        magnetBrakeNewtons *= Config.ConfigBalance.brakeMultiplier;
+        
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
 
         return rollingResistanceNewtons + blockResistanceNewtons + brakeCylinderNewtons
-                + directResistance + startingFriction + dynamicBrakeNewtons;
+                + directResistance + startingFriction + dynamicBrakeNewtons + magnetBrakeNewtons;
     }
 
     private boolean checkTileType(TileRailBase base, TrackItems type) {

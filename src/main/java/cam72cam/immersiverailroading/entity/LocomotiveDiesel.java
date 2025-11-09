@@ -425,4 +425,8 @@ public class LocomotiveDiesel extends Locomotive {
             setControlPositions(ModelComponentType.THROTTLE_DYN_BRAKE_X, getThrottle()/2 + (1- getDynamicBrake())/2);
         }
     }
+    
+    public double getMagnetBrakeNewton() {
+        return getCurrentSpeed().metric() > 50 ? this.getDefinition().getMagnetBrakeNewton() : 0;
+    }
 }

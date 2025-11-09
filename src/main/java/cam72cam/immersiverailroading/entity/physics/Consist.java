@@ -529,10 +529,10 @@ public class Consist {
                         linked.forEach(p -> {
                             if (p.config.hasPressureBrake) {
                                 if (p.config.trainBrakePressure > desiredBrakePressure + brakePressureDelta) {
-                                    // Druckabfall
+                                    // pressure decrease
                                     p.config.trainBrakePressure -= brakePressureDelta;
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
-                                    // Druckaufbau
+                                    // pressure increase
                                     p.config.trainBrakePressure += brakePressureDelta;
                                     if (p.config.stock instanceof Locomotive)
                                         ((Locomotive) p.config.stock).mainAirReservoir(-0.000003f * (float) Math.pow(trainLength, ((Locomotive) p.config.stock).getMainAirReservoir()));
