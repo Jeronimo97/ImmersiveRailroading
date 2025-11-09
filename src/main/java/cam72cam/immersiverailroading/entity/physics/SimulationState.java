@@ -174,11 +174,7 @@ public class SimulationState {
             } else {
                 this.dynamicBrakeNewtons = 0;
             }
-            if (stock instanceof LocomotiveDiesel) {
-                this.magnetBrakeNewtons = ((LocomotiveDiesel) stock).getMagnetBrakeNewton();
-            } else {
-                this.magnetBrakeNewtons = 0;
-            }
+            this.magnetBrakeNewtons = stock.getMagnetBrakeNewton();
             this.directResistanceNewtons = stock::getDirectFrictionNewtons;
             this.hasPressureBrake = stock.getDefinition().hasPressureBrake();
             if (stock instanceof Locomotive)

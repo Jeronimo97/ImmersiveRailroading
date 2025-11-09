@@ -611,4 +611,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     public float getBrakeAdhesionEfficiency() {
         return adhesionCoefficient();
     }
+    
+    public double getMagnetBrakeNewton() {
+        return getCurrentSpeed().metric() > 50 ? this.getDefinition().getMagnetBrakeNewton() : 0;
+    }
 }
