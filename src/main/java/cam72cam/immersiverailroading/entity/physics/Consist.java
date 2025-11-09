@@ -535,7 +535,7 @@ public class Consist {
                                     // Druckaufbau
                                     p.config.trainBrakePressure += brakePressureDelta;
                                     if (p.config.stock instanceof Locomotive)
-                                        ((Locomotive) p.config.stock).mainAirReservoir(-0.000003 * Math.pow(trainLength, ((Locomotive) p.config.stock).getMainAirReservoir()));
+                                        ((Locomotive) p.config.stock).mainAirReservoir(-0.000003f * (float) Math.pow(trainLength, ((Locomotive) p.config.stock).getMainAirReservoir()));
                                 } else {
                                     p.config.trainBrakePressure = desiredBrakePressure;
                                 }

@@ -49,9 +49,9 @@ public abstract class Locomotive extends FreightTank{
 	private float trainBrakeInternal = 0;
 	public boolean trainBrakeDelta = false;
 	
-    @TagSync
+    @TagSync(forceSync = true)
     @TagField("MAIN_AIR_RESERVOIR")
-    private double mainAirReservoir = 0;
+    private float mainAirReservoir = 0;
     
     @TagSync
     @TagField("COMPRESSOR")
@@ -679,7 +679,7 @@ public abstract class Locomotive extends FreightTank{
 		}
 	}
 	
-	public double getMainAirReservoir() {
+	public float getMainAirReservoir() {
         return mainAirReservoir;
     }
 
@@ -697,11 +697,11 @@ public abstract class Locomotive extends FreightTank{
         }
         if (!isLowAir())
             return;
-        mainAirReservoir(0.0005);
+        mainAirReservoir(0.0005f);
     }
     
-    public void mainAirReservoir(double pressureDelta) {
-        double newMainReservoir = getMainAirReservoir() + pressureDelta;
+    public void mainAirReservoir(float pressureDelta) {
+        float newMainReservoir = getMainAirReservoir() + pressureDelta;
         newMainReservoir = Math.min(1, Math.max(0, newMainReservoir));
         mainAirReservoir = newMainReservoir;
     }
