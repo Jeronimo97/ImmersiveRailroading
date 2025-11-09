@@ -270,8 +270,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         wheel_sound.effects(stock, speed > 1 ? volume : 0, pitch + sndRand);
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
-        brakeHighSpeedSound.effects(stock, speed > 25 && brakePressure > 0 ? (speed < 30 ? 5 * (speed - 25) / 25 : 1) * Math.min(brakePressure + 0.2f, 1) : 0, speed / 100 + 1);
-        brakeLowSpeedSound.effects(stock, speed > 1 && speed <= 30 && brakePressure > 0 ? speed > 20 ? (30 / speed) - (speed / 30) : Math.min(brakePressure + 0.5f, 1) : 0, 0.55f - speed / 100);
+        brakeHighSpeedSound.effects(stock, speed > 10 && brakePressure > 0 ? speed < 23 ? 0.77f * (speed - 10) / 10 * brakePressure : brakePressure : 0, speed * 0.0156f + 0.48f);
+        brakeLowSpeedSound.effects(stock, speed > 1 && speed <= 23 && brakePressure > 0 ? speed > 14 ? ((23 / speed) - (speed / 23)) * brakePressure : brakePressure : 0, 0.5f - speed / 100);
         brakeShoeSound.effects(stock, stock.getBrakesApply());
         brakePressureSound.effects(stock, stock.brakeCylinderDelta ? 0.1f : 0);        
         flangeSound.effects(stock);
