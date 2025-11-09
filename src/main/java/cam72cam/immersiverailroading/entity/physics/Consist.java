@@ -512,8 +512,6 @@ public class Consist {
                                 brakePressureDelta = 0.1f / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                                 break;
                             case REALISTIC:
-                                //System.out.println("Length: " + trainLength);
-                                //TODO Temporary until fixed values
                                 float fastBrake =   1.37f / trainLength;
                                 float normalBrake = 0.192f / trainLength;
                                 brakePressureDelta = linked.stream().anyMatch(s -> s.config.trainBrakePosition == 1) ? fastBrake : normalBrake;
@@ -523,9 +521,6 @@ public class Consist {
                                 brakePressureDelta = 1;
                                 break;
                         }
-                        
-                        //System.out.println("Delta: " + brakePressureDelta);
-                        
                         linked.forEach(p -> {
                             if (p.config.hasPressureBrake) {
                                 if (p.config.trainBrakePressure > desiredBrakePressure + brakePressureDelta) {
@@ -542,7 +537,6 @@ public class Consist {
                             }
                         });
                     }
-
                     linked.clear();
                 }
             }
