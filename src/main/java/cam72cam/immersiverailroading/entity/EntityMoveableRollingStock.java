@@ -613,6 +613,6 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     }
     
     public double getMagnetBrakeNewton() {
-        return getCurrentSpeed().metric() > 50 ? this.getDefinition().getMagnetBrakeNewton() : 0;
+        return getCurrentSpeed().metric() > 50 && getBrakeCylinderPressure() > 0.95 ? this.getDefinition().getMagnetBrakeNewton() : 0;
     }
 }
