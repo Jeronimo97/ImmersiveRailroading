@@ -494,7 +494,7 @@ public class Consist {
                     // Spread brake pressure
                     
                     trainLength = 0;
-                    linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 0 :
+                    linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 1 :
                          s.config.length;
                     });
 
