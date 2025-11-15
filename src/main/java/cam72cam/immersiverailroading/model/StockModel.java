@@ -266,12 +266,12 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
             pitch = (float) (pitch/stock.gauge.scale());
         }
         float volume = 0.01f + adjust;
-        float brakePressure = stock.getBrakeCylinderPressure();
+        float brakePressure = stock.getBrakeCylinderPressure() * 5;
 
         wheel_sound.effects(stock, speed > 1 ? volume : 0, pitch + sndRand);
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
         brakeHighSpeedSound.effects(stock, speed > 10 && brakePressure > 0 ? speed < 23 ? 0.77f * (speed - 10) / 10 * brakePressure : brakePressure : 0, speed * 0.0156f + 0.48f);
-        brakeLowSpeedSound.effects(stock, speed > 1 && speed <= 23 && brakePressure > 0 ? speed > 14 ? ((23 / speed) - (speed / 23)) * brakePressure : brakePressure : 0, 0.5f - speed / 100);
+        brakeLowSpeedSound.effects(stock, speed > 1 && speed <= 45 && brakePressure > 0 ? speed > 30 ? ((45 / speed) - (speed / 45)) * brakePressure : brakePressure : 0, 0.5f - speed / 100);
         brakeShoeSound.effects(stock, stock.getBrakesApply());
         brakePressureSound.effects(stock, stock.brakeCylinderDelta ? 0.1f : 0);        
         flangeSound.effects(stock);
