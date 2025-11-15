@@ -538,9 +538,9 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         if (ImmersionConfig.brakeMode.equals(BrakeMode.REALISTIC)) {
             switch (getDefinition().getBrakeMaterials()) {
                 case CAST_IRON:
-                    return value *= 0.5f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
+                    return value *= 0.5f + (float) Math.pow(0.45f, 0.03f * Math.abs(getCurrentSpeed().metric() - 0.7f));
                 case COMPOSITE:
-                    return value *= 0.2f + (float) Math.pow(0.95f, Math.pow(0.75f * Math.abs(getCurrentSpeed().metric()), 0.5f));
+                    return value *= 0.2f + (float) Math.pow(0.95f, Math.pow(0.75f * Math.abs(getCurrentSpeed().metric()), 0.6f));
                 case WOOD:
                     return value *= 0.2f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
                 default:

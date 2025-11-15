@@ -16,7 +16,7 @@ public enum PhysicalMaterials {
         // unless otherwise specified: https://structx.com/Material_Properties_005a.html
         if (match(STEEL, STEEL, this, other)) {
             // assume slightly dirty / non-ideal surfaces
-            return kinetic ? 0.3f : 0.7f;
+            return kinetic ? 0.23f : 0.7f;
         }
         if (match(STEEL, CAST_IRON, this, other)) {
             return kinetic ? 0.2f : 0.4f;
