@@ -528,7 +528,7 @@ public class Consist {
                                     p.config.trainBrakePressure -= brakePressureDelta;
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
                                     // pressure increase
-                                    p.config.trainBrakePressure += brakePressureDelta;
+                                    p.config.trainBrakePressure += brakePressureDelta * 0.5;
                                     if (p.config.stock instanceof Locomotive)
                                         ((Locomotive) p.config.stock).mainAirReservoir(-0.000003f * (float) Math.pow(trainLength, ((Locomotive) p.config.stock).getMainAirReservoir()));
                                 } else {
