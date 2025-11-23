@@ -70,7 +70,7 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
             } else {
                 overriddenFuels = Collections.emptyMap();
             }
-            hasDynamicTractionControl = properties.getValue("dynamic_traction_control").asBoolean(true);
+            hasDynamicTractionControl = properties.getValue("dynamic_traction_control").asBoolean();
         } else {
             fuelCapacity_l = 0;
             overriddenFuels = Collections.emptyMap();
