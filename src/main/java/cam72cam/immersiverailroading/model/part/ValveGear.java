@@ -154,11 +154,11 @@ public abstract class ValveGear {
             }
 
             Pair<Matrix4, Vec3d> particlePos = null; //Lazy eval
-            if (ConfigGraphics.particlesEnabled && drains_enabled) {
+            if (ConfigGraphics.particlesEnabled && ((LocomotiveSteam) stock).getChestPressure() > 0) {
                 particlePos = particlePos(stock);
                 double accell = 0.3 * stock.gauge.scale();
                 Vec3d sideMotion = stock.getVelocity().add(VecUtil.rotateWrongYaw(particlePos.getLeft().apply(direction).scale(accell), stock.getRotationYaw()+180));
-                Particles.SMOKE.accept(new SmokeParticle.SmokeParticleData(stock.getWorld(), particlePos.getRight(), new Vec3d(sideMotion.x, sideMotion.y+0.01 * stock.gauge.scale(), sideMotion.z), 80, 0, 0.6f, 0.2 * stock.gauge.scale(), stock.getDefinition().steamParticleTexture));
+                Particles.SMOKE.accept(new SmokeParticle.SmokeParticleData(stock.getWorld(), particlePos.getRight(), new Vec3d(sideMotion.x, sideMotion.y+0.01 * stock.gauge.scale(), sideMotion.z), 80, 0, drains_enabled ? 0.6f : 0.1f, (drains_enabled ? 0.2 : 0.1) * stock.gauge.scale(), stock.getDefinition().steamParticleTexture));
             }
 
             if (stock instanceof LocomotiveSteam) {
