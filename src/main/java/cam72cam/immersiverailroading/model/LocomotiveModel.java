@@ -88,6 +88,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addGauge(provider, ModelComponentType.GAUGE_REVERSER_X, Readouts.REVERSER);
         addGauge(provider, ModelComponentType.GAUGE_TRAIN_BRAKE_X, Readouts.TRAIN_BRAKE);
         addGauge(provider, ModelComponentType.GAUGE_TRACTIVE_EFFORT_X, Readouts.TRACTIVE_EFFORT);
+        addGauge(provider, ModelComponentType.GAUGE_MAIN_AIR_RESERVOIR_X, Readouts.MAIN_AIR_RESERVOIR);
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);
