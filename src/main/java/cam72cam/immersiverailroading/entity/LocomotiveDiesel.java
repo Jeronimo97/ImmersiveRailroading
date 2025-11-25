@@ -117,6 +117,7 @@ public class LocomotiveDiesel extends Locomotive {
 	 */
 	@Override
 	public void handleKeyPress(Player source, KeyTypes key, boolean disableIndependentThrottle) {
+	    super.handleKeyPress(source, key, disableIndependentThrottle);
         if (getDefinition().isLinkedDynBrakeThrottle()) {
             switch (key) {
                 case THROTTLE_UP:
@@ -149,35 +150,57 @@ public class LocomotiveDiesel extends Locomotive {
                 default:
                     break;
             }
+            if (getDefinition().isLinkedBrakeDynBrake()) {
+                boolean hasBrakeNotches = getDefinition().hasBrakeNotches();
+                switch (key) {
+                    case TRAIN_BRAKE_UP:
+                        if (brakeCooldown > 0) {
+                            break;
+                        }
+                        brakeCooldown = hasBrakeNotches ? 2 : 0;
+                        setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
+                        break;
+                    case TRAIN_BRAKE_ZERO:
+                        setDynamicBrake(0f);
+                        break;
+                    case TRAIN_BRAKE_DOWN:
+                        if (brakeCooldown > 0) {
+                            break;
+                        }
+                        brakeCooldown = hasBrakeNotches ? 2 : 0;
+                        setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
-	    
-	    switch(key) {
-			case START_STOP_ENGINE:
-				if (turnOnOffDelay == 0) {
-					turnOnOffDelay = 10;
-					setTurnedOn(!isTurnedOn());
-				}
+        
+	    switch (key) {
+		case START_STOP_ENGINE:
+			if (turnOnOffDelay == 0) {
+				turnOnOffDelay = 10;
+				setTurnedOn(!isTurnedOn());
+			}
+			break;
+		case REVERSER_UP:
+		case REVERSER_ZERO:
+		case REVERSER_DOWN:
+			if (this.reverserCooldown > 0) {
+				return;
+			}
+			reverserCooldown = 3;
+			break;
+		case THROTTLE_UP:
+		case THROTTLE_ZERO:
+		case THROTTLE_DOWN:
+			if (this.throttleCooldown > 0) {
 				break;
-			case REVERSER_UP:
-			case REVERSER_ZERO:
-			case REVERSER_DOWN:
-				if (this.reverserCooldown > 0) {
-					return;
-				}
-				reverserCooldown = 3;
-				super.handleKeyPress(source, key, disableIndependentThrottle);
-				break;
-			case THROTTLE_UP:
-			case THROTTLE_ZERO:
-			case THROTTLE_DOWN:
-				if (this.throttleCooldown > 0) {
-					return;
-				}
-				throttleCooldown = 2;
-				super.handleKeyPress(source, key, disableIndependentThrottle);
-				break;
-			default:
-				super.handleKeyPress(source, key, disableIndependentThrottle);
+			}
+			throttleCooldown = 2;
+			break;
+		default:
+		    break;
 		}
 	}
 
@@ -341,8 +364,15 @@ public class LocomotiveDiesel extends Locomotive {
 	public void onDrag(Control<?> component, double newValue) {
 	    super.onDrag(component, newValue);
 	    switch (component.part.type) {
+	        case TRAIN_BRAKE_X:
+                if (getDefinition().isLinearBrakeControl() && getDefinition().isLinkedBrakeDynBrake()) {
+                    setDynamicBrake(getControlPosition(component));
+                }
+                break;
 	        case DYNAMIC_BRAKE_X:
-	            setDynamicBrake(getControlPosition(component));
+	            if (getDefinition().isLinearBrakeControl()) {
+	                setDynamicBrake(getControlPosition(component));
+	            }
 	            break;
             case THROTTLE_DYN_BRAKE_X:
                 setDynamicBrake(1 - getControlPosition(component)*2);
