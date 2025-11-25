@@ -51,7 +51,7 @@ public abstract class Locomotive extends FreightTank{
 	
     @TagSync(forceSync = true)
     @TagField("MAIN_AIR_RESERVOIR")
-    private float mainAirReservoir = 0;
+    private float mainAirReservoir = Config.ConfigBalance.instantMainAirReservoir ? 1 : 0;
     
     @TagSync
     @TagField("COMPRESSOR")

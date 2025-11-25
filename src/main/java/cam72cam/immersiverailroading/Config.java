@@ -232,9 +232,12 @@ public class Config {
 		@Comment("Round to nearest bucket")
 		public static boolean RoundStockTankToNearestBucket = true;
 		
-		@Comment("Sand Efficiency")
-	    @Range(min = 0, max = 10)
-	    public static int SandEfficiency = 1;
+        @Comment("Sand Efficiency")
+        @Range(min = 1, max = 10)
+        public static int SandEfficiency = 1;
+        
+        @Comment("Instant Main air reservoir (Serverside)")
+        public static boolean instantMainAirReservoir = false;
 	}
 
 	@Name("performance")
