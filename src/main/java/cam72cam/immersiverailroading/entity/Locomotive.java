@@ -29,7 +29,7 @@ import static cam72cam.immersiverailroading.library.PhysicalMaterials.*;
 
 public abstract class Locomotive extends FreightTank{
 	private static final float throttleDelta = 0.04f;
-	private int brakeCooldown;
+	public int brakeCooldown;
 	
 	@TagField("deadMansSwitch")
 	private boolean deadMansSwitch;
@@ -150,6 +150,7 @@ public abstract class Locomotive extends FreightTank{
         }
 
 		boolean linkThrottleReverser = forceLinkThrottleReverser() || disableIndependentThrottle;
+		boolean hasBrakeNotches = getDefinition().hasBrakeNotches();
 
 		switch(key) {
 			case HORN:
@@ -212,7 +213,7 @@ public abstract class Locomotive extends FreightTank{
             if (brakeCooldown > 0) {
                 break;
             }
-            brakeCooldown = 2;		    
+            brakeCooldown = hasBrakeNotches ? 2 : 0;		    
 			setTrainBrake(getTrainBrake() + getBrakeDelta());
 			break;
 		case TRAIN_BRAKE_ZERO:
@@ -222,7 +223,7 @@ public abstract class Locomotive extends FreightTank{
             if (brakeCooldown > 0) {
                 break;
             }
-            brakeCooldown = 2;		   
+            brakeCooldown = hasBrakeNotches ? 2 : 0;		   
 			setTrainBrake(getTrainBrake() - getBrakeDelta());
 			break;
 		case DEAD_MANS_SWITCH:
