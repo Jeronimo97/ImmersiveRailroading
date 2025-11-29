@@ -435,29 +435,45 @@ public abstract class Locomotive extends FreightTank{
 	        }
 		}
 
-		this.distanceTraveled += simulateWheelSlip();
-
 		if (getWorld().isServer) {
 			setControlPosition("REVERSERFORWARD", getReverser() > 0 ? 1 : 0);
 			setControlPosition("REVERSERNEUTRAL", getReverser() == 0 ? 1 : 0);
 			setControlPosition("REVERSERBACKWARD", getReverser() < 0 ? 1 : 0);
+			
+            if (getDefinition().isCog() && getTickCount() % 20 == 0) {
+                SimulationState state = getCurrentState();
+                if (state != null) {
+                    ITrack found = MovementTrack.findTrack(getWorld(), state.couplerPositionFront, state.yaw, gauge.value());
+                    if (found instanceof TileRailBase) {
+                        TileRailBase onTrack = (TileRailBase) found;
+                        cogging = onTrack.isCog();
+                    }
+                }
+            }			
+			
+	        // Compressor
+	        if(providesElectricalPower()) {
+	            raiseMainAirReservoir();
+	        }
 		}
 
-		if (getWorld().isServer) {
-			if (getDefinition().isCog() && getTickCount() % 20 == 0) {
-				SimulationState state = getCurrentState();
-				if (state != null) {
-					ITrack found = MovementTrack.findTrack(getWorld(), state.couplerPositionFront, state.yaw, gauge.value());
-					if (found instanceof TileRailBase) {
-						TileRailBase onTrack = (TileRailBase) found;
-						cogging = onTrack.isCog();
-					}
-				}
-			}
-		}
-        // Compressor
-        if(providesElectricalPower()) {
-            raiseMainAirReservoir();
+        this.distanceTraveled += simulateWheelSlip();
+		
+		if (sandingKeyTimeout > 0) {
+            sandingKeyTimeout--;
+        }
+        isSanding = false;
+        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
+        if (sandingKey) {
+            ItemStack stack = this.cargoItems.get(2);
+            if (sandTime == 0) {
+                stack.setCount(stack.getCount() - 1);
+                sandTime = 60 * Config.ConfigBalance.SandEfficiency;
+            }
+            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
+                sandTime--;
+                isSanding = true;
+            }
         }
         
         if (getWorld().isClient && getTickCount() % 10 == 0)
@@ -490,19 +506,17 @@ public abstract class Locomotive extends FreightTank{
         return adhMult;
     }
 	
-	protected double simulateWheelSlip() {
-		if (cogging) {
-			return 0;
-		}
-
-		double adhesionFactor = Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) /
-								getStaticTractiveEffort(getCurrentSpeed());
-		slipping = adhesionFactor > 1;
-		if (slipping) {
-			return Math.copySign((adhesionFactor-1)/5, getReverser());
-		}
-		return 0;
-	}
+    protected double simulateWheelSlip() {
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
+        double staticTractiveEffort = getStaticTractiveEffort(super.getCurrentSpeed());
+        slipping = appliedTractiveEffort > staticTractiveEffort;
+        
+        if (cogging || !slipping)
+            return 0;
+        
+        double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
+        return Math.copySign((adhesionFactor) / 5, getReverser());
+    }
 
 	public double getTractiveEffortNewtons(Speed speed) {
 		if (!this.isBuilt()) {
@@ -689,8 +703,6 @@ public abstract class Locomotive extends FreightTank{
     }
 
     private void raiseMainAirReservoir() {
-        if (getWorld().isClient)
-            return;
         if (!isLowAir() && getMainAirReservoir() < 0.85) {
             isLowAir = true;
         } else if (isLowAir() && getMainAirReservoir() >= 1.0) {
@@ -707,6 +719,7 @@ public abstract class Locomotive extends FreightTank{
         mainAirReservoir = newMainReservoir;
     }
     
+    // Client-side only
     public void trainBrakeDelta() {
         float brakePressure = getBrakePressure();
         if (brakePressure < this.trainBrakeInternal) {
