@@ -117,7 +117,7 @@ public class Simulation {
                 // Keep it loaded
                 world.keepLoaded(new Vec3i(state.position));
                 // TODO Debugging
-                if (ConfigDebug.debugLogging)
+                if (ConfigDebug.debugLog)
                     System.out.println("Loaded Chunk at: " + state.position.x + ", " + state.position.y + ", " + state.position.z);
 
                 if (state.consist.positions == null) {
