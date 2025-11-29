@@ -144,10 +144,6 @@ public class LocomotiveSteam extends Locomotive {
             return 0;
         
         double reverser = getReverser();
-        if (getWorld().isServer) {
-            chestPressureCalc(speed, reverser);
-        }
-        
         if (reverser == 0 || getBoilerPressureBar() == 0 && ConfigBalance.FuelRequired)
             return 0;
 
@@ -160,13 +156,7 @@ public class LocomotiveSteam extends Locomotive {
         if (pressurePercent <= 0)
             return 0;
         
-        double appliedTraction = cylinderDimensions * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7)) * Config.ConfigBalance.powerMultiplier;
-
-        if (getWorld().isClient && slipping) {
-            appliedTraction *= 2.5f;
-        }
-        
-        return appliedTraction * Math.copySign(1, reverser);
+        return cylinderDimensions * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7)) * Config.ConfigBalance.powerMultiplier * Math.copySign(1, reverser);
     }
     
     @Override
@@ -191,21 +181,24 @@ public class LocomotiveSteam extends Locomotive {
 		}
 	}
     
-    private void chestPressureCalc(Speed speed, double reverser) {
-        double speedPercent = speedPercent(speed);
+    private void chestPressureCalc() {
         float pressure = getChestPressureBar();
-
-        pressure += 0.06f * Math.pow(Config.isFuelRequired(gauge) ? getBoilerPressureBar() : (getMaxBoilerPSI() * PressureDisplayType.psiToBar), 0.5f) * getThrottle() * (1 + Math.max(speedPercent, 0.01f));
+        float throttle = getThrottle();
+        if (throttle == 0 && pressure == 0)
+            return;
+        
+        double speedPercent = speedPercent(super.getCurrentSpeed());
+        pressure += 0.06f * Math.pow(Config.isFuelRequired(gauge) ? getBoilerPressureBar() : (getMaxBoilerPSI() * PressureDisplayType.psiToBar), 0.5f) * throttle * (1 + Math.max(speedPercent, 0.01f));
 
         if (cylinderDrainsEnabled()) {
             pressure -= 0.07f;
         }
         
         pressure -= (0.015f * pressure
-                * Math.abs(reverser) * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge)) + 0.005f;
+                * Math.abs(getReverser()) * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge)) + 0.005f;
 
         if (slipping) {
-            pressure -= Math.abs(10 * simulateWheelSlip());
+            pressure -= Math.abs(0.3f * simulateWheelSlip());
         }
         
         setChestPressureBar(MathUtil.clamp(pressure, 0, getMaxChestPressure()));
@@ -403,6 +396,10 @@ public class LocomotiveSteam extends Locomotive {
                 theTank.drain(new FluidStack(theTank.getContents().getFluid(), (int) Math.floor(waterUsed)), false);
                 drainRemainder = waterUsed % 1;
             }
+        }
+        
+        if (getWorld().isServer && (boilerPressurePSI > 0 || !Config.isFuelRequired(gauge))) {
+            chestPressureCalc();
         }
 	}
 

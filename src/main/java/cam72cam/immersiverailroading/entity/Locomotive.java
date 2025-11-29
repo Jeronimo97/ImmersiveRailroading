@@ -10,6 +10,7 @@ import cam72cam.immersiverailroading.physics.MovementTrack;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.immersiverailroading.tile.TileRailBase;
+import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
@@ -371,26 +372,24 @@ public abstract class Locomotive extends FreightTank {
 			}
 		}
 
-		this.distanceTraveled += simulateWheelSlip();
-
 		if (getWorld().isServer) {
 			setControlPosition("REVERSERFORWARD", getReverser() > 0 ? 1 : 0);
 			setControlPosition("REVERSERNEUTRAL", getReverser() == 0 ? 1 : 0);
 			setControlPosition("REVERSERBACKWARD", getReverser() < 0 ? 1 : 0);
+			
+            if (getDefinition().isCog() && getTickCount() % 20 == 0) {
+                SimulationState state = getCurrentState();
+                if (state != null) {
+                    ITrack found = MovementTrack.findTrack(getWorld(), state.couplerPositionFront, state.yaw, gauge.value());
+                    if (found instanceof TileRailBase) {
+                        TileRailBase onTrack = (TileRailBase) found;
+                        cogging = onTrack.isCog();
+                    }
+                }
+            }
 		}
 
-		if (getWorld().isServer) {
-			if (getDefinition().isCog() && getTickCount() % 20 == 0) {
-				SimulationState state = getCurrentState();
-				if (state != null) {
-					ITrack found = MovementTrack.findTrack(getWorld(), state.couplerPositionFront, state.yaw, gauge.value());
-					if (found instanceof TileRailBase) {
-						TileRailBase onTrack = (TileRailBase) found;
-						cogging = onTrack.isCog();
-					}
-				}
-			}
-		}
+        this.distanceTraveled += simulateWheelSlip();
 	}
 	
 	@Override
@@ -407,7 +406,7 @@ public abstract class Locomotive extends FreightTank {
 	public abstract double getAppliedTractiveEffort(Speed speed);
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
-	protected final double getStaticTractiveEffort(Speed speed) {        
+	protected final double getStaticTractiveEffort() {        
         return getDefinition().getStartingTractionNewtons(gauge)
                 * Config.ConfigBalance.tractionMultiplier * adhesionCoefficient();
     }
@@ -429,17 +428,16 @@ public abstract class Locomotive extends FreightTank {
         return adhMult;
     }
 	
-	protected double simulateWheelSlip() {
-        Speed speed = super.getCurrentSpeed();
-        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(speed));
-        double staticTractiveEffort = getStaticTractiveEffort(speed);
+    protected double simulateWheelSlip() {
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
+        double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
 
         if (cogging || !slipping)
             return 0;
 
         double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
-        return Math.copySign((adhesionFactor - 1) / 8, getReverser());
+        return Math.copySign((adhesionFactor) / 5, getReverser());
     }
 
     public double getTractiveEffortNewtons(Speed speed) {
@@ -457,13 +455,9 @@ public abstract class Locomotive extends FreightTank {
     }
     
     public float getCurrentTractiveEffort() {
-        return (float) (getAppliedTractiveEffort(getCurrentSpeed()) / getStaticTractiveEffort(getCurrentSpeed()));
+        return (float) (getAppliedTractiveEffort(getCurrentSpeed()) / getStaticTractiveEffort());
     }
     
-    public double speedPercent(Speed speed) {
-        return Math.abs(speed.metric() / getDefinition().getMaxSpeed(gauge).metric());
-    }
-
 	@Override
 	public double getBrakeSystemEfficiency() {
 		if (cogging) {
@@ -615,7 +609,6 @@ public abstract class Locomotive extends FreightTank {
 	private void setRealIndependentBrake(float newIndependentBrake) {
 		super.setIndependentBrake(newIndependentBrake);
 	}
-
 
 	public int getBell() {
 		return bellTime;
