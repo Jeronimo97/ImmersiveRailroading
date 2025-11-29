@@ -502,12 +502,12 @@ public class Consist {
                     
                     if (needsBrakeEqualization) {
                         float brakePressureDelta;
+                        trainLength = 50;
                         switch (ImmersionConfig.brakeMode) {
                             case DEFAULT:
                                 brakePressureDelta = 0.1f / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                                 break;
                             case REALISTIC:
-                                trainLength = 0;
                                 linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 1 :
                                      s.config.length;
                                 });
