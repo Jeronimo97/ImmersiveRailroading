@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.entity.physics;
 
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
+import cam72cam.immersiverailroading.Config.ConfigDebug;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock;
 import cam72cam.immersiverailroading.entity.physics.chrono.ChronoState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
@@ -115,6 +116,9 @@ public class Simulation {
 
                 // Keep it loaded
                 world.keepLoaded(new Vec3i(state.position));
+                // TODO Debugging
+                if (ConfigDebug.debugLogging)
+                    System.out.println("Loaded Chunk at: " + state.position.x + ", " + state.position.y + ", " + state.position.z);
 
                 if (state.consist.positions == null) {
                     continue;

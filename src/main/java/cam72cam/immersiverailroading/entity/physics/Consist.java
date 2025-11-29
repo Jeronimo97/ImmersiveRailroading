@@ -492,11 +492,6 @@ public class Consist {
                 if (source.nextLink == null || !source.nextLink.coupled) {
                     // No further linked couplings
                     // Spread brake pressure
-                    
-                    trainLength = 0;
-                    linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 1 :
-                         s.config.length;
-                    });
 
                     float desiredBrakePressure = (float) linked.stream()
                             .filter(s -> s.config.desiredBrakePressure != null)
@@ -512,6 +507,11 @@ public class Consist {
                                 brakePressureDelta = 0.1f / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                                 break;
                             case REALISTIC:
+                                trainLength = 0;
+                                linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 1 :
+                                     s.config.length;
+                                });
+                                
                                 float fastBrake =   1.37f / trainLength;
                                 float normalBrake = 0.192f / trainLength;
                                 brakePressureDelta = linked.stream().anyMatch(s -> s.config.trainBrakePosition == 1) ? fastBrake : normalBrake;

@@ -157,15 +157,10 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 		World world = getWorld();
 
 		if (world.isClient) {
-			// Only couple server side
-
-			//ParticleUtil.spawnParticle(internal, EnumParticleTypes.REDSTONE, this.getCouplerPosition(CouplerType.FRONT));
-			//ParticleUtil.spawnParticle(internal, EnumParticleTypes.SMOKE_NORMAL, this.getCouplerPosition(CouplerType.BACK));
-
 			if (!hadElectricalPower && hasElectricalPower()) {
 				gotElectricalPowerTick = getTickCount();
 			}
-
+			// Only couple server side
 			return;
 		}
 
@@ -200,7 +195,8 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 
 		if (this.getCurrentState() != null && !this.getCurrentState().atRest || ConfigDebug.keepStockLoaded) {
 			//Then exclude stocks not linked to any locomotive
-            if (!ConfigDebug.excludeStandaloneWagons || this.linkedToLocomotive) {
+		    // TODO hadElectricalPower??
+            if ((!ConfigDebug.excludeStandaloneWagons || this.linkedToLocomotive) && hadElectricalPower) {
                 keepLoaded();
             }
         }
@@ -239,6 +235,9 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 	public void keepLoaded() {
 		World world = getWorld();
 		world.keepLoaded(getBlockPosition());
+		//TODO Debugging
+		if (ConfigDebug.debugLogging)
+		    System.out.println("Loaded Chunk at: " + getBlockPosition().x + ", " + getBlockPosition().y + ", " + getBlockPosition().z);
 		if (getCurrentState() != null && !getCurrentState().atRest) {
 			world.keepLoaded(new Vec3i(this.guessCouplerPosition(CouplerType.FRONT)));
 			world.keepLoaded(new Vec3i(this.guessCouplerPosition(CouplerType.BACK)));
