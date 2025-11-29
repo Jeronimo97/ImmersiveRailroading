@@ -9,6 +9,7 @@ public enum PressureDisplayType {
     public static final float kPaToPsi = 0.145037f;
     public static final float psiToBar = 0.0689474f;
     public static final float BarToPsi = 14.5037f;
+    public static final float BarToKPa = 100;
 
     public float convertFromPSI(float value) {
         switch (this) {
@@ -16,6 +17,19 @@ public enum PressureDisplayType {
             case bar: return value * psiToKPa * 0.01f;
             case kpa: return value * psiToKPa;
             default: return value;
+        }
+    }
+    
+    public float convertFromBar(float value) {
+        switch (this) {
+            // 1 bar = 100 kPa
+            default:
+            case bar:
+                return value;
+            case kpa:
+                return value * BarToKPa;
+            case psi:
+                return value * BarToPsi;
         }
     }
 

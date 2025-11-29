@@ -149,12 +149,12 @@ public abstract class ValveGear {
         public void effects(EntityMoveableRollingStock stock) {
             boolean drains_enabled = isEndStroke(stock) && stock instanceof LocomotiveSteam && ((LocomotiveSteam) stock).cylinderDrainsEnabled();
 
-            if (stock instanceof Locomotive && (((LocomotiveSteam)stock).getBoilerPressure() <= 0 && Config.ConfigBalance.FuelRequired)) {
+            if (stock instanceof Locomotive && (((LocomotiveSteam)stock).getBoilerPressureBar() <= 0 && Config.ConfigBalance.FuelRequired)) {
                 return;
             }
 
             Pair<Matrix4, Vec3d> particlePos = null; //Lazy eval
-            if (ConfigGraphics.particlesEnabled && ((LocomotiveSteam) stock).getChestPressure() > 0) {
+            if (ConfigGraphics.particlesEnabled && ((LocomotiveSteam) stock).getChestPressureBar() > 0) {
                 particlePos = particlePos(stock);
                 double accell = 0.3 * stock.gauge.scale();
                 Vec3d sideMotion = stock.getVelocity().add(VecUtil.rotateWrongYaw(particlePos.getLeft().apply(direction).scale(accell), stock.getRotationYaw()+180));

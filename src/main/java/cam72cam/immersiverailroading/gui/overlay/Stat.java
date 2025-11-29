@@ -84,7 +84,7 @@ public enum Stat {
 
             case BOILER_PRESSURE:
                 return stock instanceof LocomotiveSteam ?
-                        String.format(format, ConfigGraphics.pressureUnit.convertFromPSI(((LocomotiveSteam) stock).getBoilerPressure())) : "";
+                        String.format(format, ConfigGraphics.pressureUnit.convertFromBar(((LocomotiveSteam) stock).getBoilerPressureBar())) : "";
             case MAX_BOILER_PRESSURE:
                 return stock instanceof LocomotiveSteam ?
                         String.format(format, ConfigGraphics.pressureUnit.convertFromPSI((float)((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge)))

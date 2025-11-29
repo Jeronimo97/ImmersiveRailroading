@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.gui.overlay;
 
 import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
+import cam72cam.immersiverailroading.library.unit.PressureDisplayType;
 import cam72cam.immersiverailroading.model.LocomotiveModel;
 import cam72cam.immersiverailroading.model.StockModel;
 
@@ -62,7 +63,7 @@ public enum Readouts {
                 return 0;
             case BOILER_PRESSURE:
                 return stock instanceof LocomotiveSteam ?
-                        ((LocomotiveSteam) stock).getBoilerPressure() / ((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge) : 0;
+                        ((LocomotiveSteam) stock).getBoilerPressureBar() / ((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge) * PressureDisplayType.psiToBar: 0;
             case THROTTLE:
                 return stock instanceof Locomotive ? ((Locomotive) stock).getThrottle() : 0;
             case REVERSER:
