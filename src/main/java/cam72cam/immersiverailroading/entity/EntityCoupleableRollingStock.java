@@ -195,8 +195,7 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 
 		if (this.getCurrentState() != null && !this.getCurrentState().atRest || ConfigDebug.keepStockLoaded) {
 			//Then exclude stocks not linked to any locomotive
-		    // TODO hadElectricalPower??
-            if ((!ConfigDebug.excludeStandaloneWagons || this.linkedToLocomotive) && hadElectricalPower) {
+            if (!ConfigDebug.excludeStandaloneWagons || this.linkedToLocomotive) {
                 keepLoaded();
             }
         }
