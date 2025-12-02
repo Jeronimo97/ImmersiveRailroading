@@ -236,7 +236,7 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 		World world = getWorld();
 		world.keepLoaded(getBlockPosition());
 		//TODO Debugging
-		if (ConfigDebug.debugLog)
+		if (ConfigDebug.debugLog && getTickCount() % 200 == 0)
 		    System.out.println("Loaded Chunk at: " + getBlockPosition().x + ", " + getBlockPosition().y + ", " + getBlockPosition().z);
 		if (getCurrentState() != null && !getCurrentState().atRest) {
 			world.keepLoaded(new Vec3i(this.guessCouplerPosition(CouplerType.FRONT)));
