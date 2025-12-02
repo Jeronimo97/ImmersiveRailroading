@@ -97,8 +97,8 @@ public class LocomotiveSteam extends Locomotive {
 
 		// This is terrible, but allows wheel slip for both legacy and updated hp vs te
 		double traction_N = Math.max(
-				this.getDefinition().getStartingTractionNewtons(gauge),
-				this.getDefinition().getWatt(gauge) * 0.5 / Math.max(Math.abs(speed.imperial()), 1.0)
+				this.getDefinition().getScriptedStartingTractionNewtons(gauge, this),
+				this.getDefinition().getScriptedWatt(gauge, this) * 0.5 / Math.max(Math.abs(speed.imperial()), 1.0)
 		);
 		if (Config.isFuelRequired(gauge)) {
 			traction_N = traction_N / this.getDefinition().getMaxPSI(gauge) * this.getBoilerPressure();
@@ -107,7 +107,7 @@ public class LocomotiveSteam extends Locomotive {
 		// Cap the max "effective" reverser.  At high speeds having a fully open reverser just damages equipment
 		double reverser = getReverser();
 		double reverserCap = 0.25;
-		double maxReverser = 1 - Math.abs(getCurrentSpeed().metric()) / getDefinition().getMaxSpeed(gauge).metric() * reverserCap;
+		double maxReverser = 1 - Math.abs(getCurrentSpeed().metric()) / getDefinition().getScriptedMaxSpeed(gauge, this).metric() * reverserCap;
 
 		// This should probably be tuned...
 		double multiplier = Math.copySign(Math.abs(Math.pow(getThrottle() * Math.min(Math.abs(reverser), maxReverser), 3)), reverser);

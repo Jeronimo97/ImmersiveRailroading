@@ -80,6 +80,7 @@ public enum ModelComponentType {
 	PRESSURE_VALVE_X("PRESSURE_VALVE_#ID#", false),
 	DIESEL_EXHAUST_X("EXHAUST_#ID#", false),
 	CYLINDER_DRAIN_SIDE("(CYLINDER|DRAIN)_(COCK|EXHAUST)_#SIDE#", false),
+	CUSTOM_PARTICLE_X("CUSTOM_PARTICLE_#ID#", false),
 
 	// Cargo
 	CARGO_FILL_X("CARGO_FILL_#ID#", false),
@@ -118,6 +119,12 @@ public enum ModelComponentType {
 	BRAKE_PRESSURE_X("BRAKE_PRESSURE_#ID#"),
 	COUPLED_X("COUPLED_#ID#"),
 
+	TEXTFIELD_X("TEXTFIELD"),
+
+	// Floor
+	FLOOR("FLOOR"),
+	COLLISION("COLLISION"),
+
 	// REST
 	IMMERSIVERAILROADING_BASE_COMPONENT("IMMERSIVERAILROADING_BASE_COMPNOENT"),
 	REMAINING(""),
@@ -135,7 +142,7 @@ public enum ModelComponentType {
 	}
 
 	public static boolean shouldRender(String group) {
-		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS");
+		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS") || group.contains("TEXTFIELD_");
 	}
 
 	public String getOverlayName() {

@@ -54,6 +54,8 @@ public class SoundPacket extends Packet {
 			case WHISTLE:
 				volume *= ConfigSound.SoundCategories.passenger_whistle();
 				break;
+			case SCRIPTED:
+				break;
 		}
 		snd.setVolume(volume);
 		snd.setPitch(pitch);
@@ -64,5 +66,6 @@ public class SoundPacket extends Packet {
 		COUPLE,
 		COLLISION,
 		WHISTLE,
+		SCRIPTED,
 	}
 }

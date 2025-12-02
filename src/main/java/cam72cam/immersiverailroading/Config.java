@@ -239,6 +239,12 @@ public class Config {
 
 		@Comment("How many MB of memory to reserve for stock loading per thread, higher numbers = safer but slower")
 		public static int megabytesReservedPerStockLoadingThread = 1024;
+
+		@Comment("Disables the Lua script implementation")
+		public static boolean disableLuaScript = false;
+
+		@Comment("Time until the Lua script is unloaded in seconds, if 0, then the script always runs, normally 45sec")
+		public static int luaScriptSleep = 45;
 	}
 
 	@Name("debug")
@@ -301,7 +307,10 @@ public class Config {
 
 		@Comment("Does stock drops itself/components when player is in creative mode?")
 		public static boolean stockDropInCreativeMode = true;
-	}
+
+		@Comment("Render Debug lines of text fields")
+		public static boolean renderDebugLines = false;
+    }
 
 	public static boolean isFuelRequired(Gauge gauge) {
 		return !(!ConfigBalance.FuelRequired || (!ConfigBalance.ModelFuelRequired && gauge.isModel()));

@@ -8,6 +8,7 @@ item.immersiverailroading:item_augment.ITEM_LOADER.name=Item Loader
 item.immersiverailroading:item_augment.ITEM_UNLOADER.name=Item Unloader
 item.immersiverailroading:item_augment.FLUID_LOADER.name=Fluid Loader
 item.immersiverailroading:item_augment.FLUID_UNLOADER.name=Fluid Unloader
+item.immersiverailroading:item_augment.LUA_SCRIPTER.name=Lua Augment
 item.immersiverailroading:item_augment.DETECTOR.name=Detector
 item.immersiverailroading:item_augment.COUPLER.name=Coupler
 item.immersiverailroading:item_augment.ACTUATOR.name=Door Actuator
@@ -20,6 +21,7 @@ item.immersiverailroading:item_golden_spike.name=Golden Spike
 item.immersiverailroading:item_radio_control_card.name=Train Radio-control Card
 item.immersiverailroading:item_switch_key.name=Switch Key
 item.immersiverailroading:item_track_exchanger.name=Track Exchanger
+item.immersiverailroading:item_typewriter.name=Typewriter
 
 tile.immersiverailroading:block_rail.name=Rail
 tile.immersiverailroading:block_rail_gag.name=Rail (Gag)
@@ -62,6 +64,7 @@ chat.immersiverailroading:switch_state.locked=Switch locked to %s
 chat.immersiverailroading:switch_state.reset=The last-locked switch has been wirelessly unlocked!
 chat.immersiverailroading:switch_state.cant_reset=You haven't locked any switches with this key!
 chat.immersiverailroading:switch_state.already_reset=The last-locked switch is already unlocked!
+chat.immersiverailroading:typewriter.no_stock=Not looking at any stock
 chat.immersiverailroading:multiblock.select=Select multiblock: %s
 
 gui.immersiverailroading:label.brake=Brake
@@ -87,6 +90,13 @@ gui.immersiverailroading:selector.plate_type=Plate Type: %s
 gui.immersiverailroading:selector.plate_boiler=Plate Boiler: %s
 gui.immersiverailroading:selector.cast_single=Single Casting
 gui.immersiverailroading:selector.cast_repeat=Repeat Casting
+gui.immersiverailroading:selector.alignment=Alignment: %s
+gui.immersiverailroading:selector.textfield=Text Field: %s
+gui.immersiverailroading:selector.font=Font: %s
+
+gui.immersiverailroading:slider.offset=Gap in px:
+gui.immersiverailroading:slider.line_spacing=Line Spacing in px: %s
+gui.immersiverailroading:checkbox.global= Global
 gui.immersiverailroading:selector.paintbrush_random=Apply random variant
 gui.immersiverailroading:selector.paintbrush_apply_to_stock=Apply to single stock
 gui.immersiverailroading:selector.paintbrush_apply_to_train=Apply to whole train
@@ -115,6 +125,8 @@ gui.immersiverailroading:track.rail_bed_fill=Bed Fill:    %s
 gui.immersiverailroading:track.place_blueprint_true=Place:      Blueprint
 gui.immersiverailroading:track.place_blueprint_false=Place:      Track
 
+
+gui.immersiverailroading:unit.count=Stocks:         %s
 gui.immersiverailroading:loco.works=Works:          %s
 gui.immersiverailroading:loco.power=Power:          %s
 gui.immersiverailroading:loco.tractive_effort=Tractive Eff:  %s
@@ -246,6 +258,7 @@ itemGroup.immersiverailroading.locomotive=Immersive Railroading Locomotives
 itemGroup.immersiverailroading.stock=Immersive Railroading Stock
 itemGroup.immersiverailroading.passenger=Immersive Railroading Passenger
 itemGroup.immersiverailroading.components=Immersive Railroading Components
+itemGroup.immersiverailroading.unit=Immersive Railroading Units
 
 death.attack.immersiverailroading:casting=%s discovered that molten metal does not make a good swimming pool
 death.attack.immersiverailroading:hitByTrain=%s failed to outrun a train

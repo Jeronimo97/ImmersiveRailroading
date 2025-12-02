@@ -247,6 +247,21 @@ public class RealBB implements IBoundingBox {
 	}
 
 	@Override
+	public IBoundingBox expandToFit(IBoundingBox other) {
+		return null;
+	}
+
+	@Override
+	public Vec3d getCenter() {
+		return null;
+	}
+
+	@Override
+	public boolean intersectsSegment(Vec3d start, Vec3d end) {
+		return false;
+	}
+
+	@Override
 	public boolean contains(Vec3d vec) {
 		return this.intersectsAt(vec, vec, false).getLeft();
 	}

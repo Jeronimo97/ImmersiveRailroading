@@ -54,7 +54,7 @@ public enum Stat {
                 return "";
             case MAX_SPEED:
                 if (stock instanceof Locomotive) {
-                    Speed speed = ((Locomotive)stock).getDefinition().getMaxSpeed(stock.gauge);
+                    Speed speed = ((Locomotive)stock).getDefinition().getScriptedMaxSpeed(stock.gauge, (Locomotive) stock);
                     switch (ConfigGraphics.speedUnit) {
                         case mph:
                             return String.format(format, Math.abs(speed.imperial()));

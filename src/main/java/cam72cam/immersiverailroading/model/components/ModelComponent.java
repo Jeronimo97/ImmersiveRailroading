@@ -6,6 +6,7 @@ import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.model.obj.OBJGroup;
 import cam72cam.mod.model.obj.OBJModel;
+import scala.Int;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -15,7 +16,8 @@ import java.util.stream.Collectors;
 public class ModelComponent {
     public final ModelComponentType type;
     public final ModelPosition pos;
-    public final Integer id;
+    public Integer id;
+    public String name;
     public final String key;
 
     public final Set<String> modelIDs;
@@ -70,10 +72,15 @@ public class ModelComponent {
         }
     }
 
-    public ModelComponent(ModelComponentType type, ModelPosition pos, Integer id, OBJModel model, Set<String> modelIDs) {
+    public ModelComponent(ModelComponentType type, ModelPosition pos, String id, OBJModel model, Set<String> modelIDs) {
         this.type = type;
         this.pos = pos;
-        this.id = id;
+        // That's horrible TODO replace!
+        try {
+            this.id = Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            this.name = id;
+        }
         this.modelIDs = modelIDs;
         this.groups = modelIDs.stream().map(ModelGroup::new).collect(Collectors.toList());
         this.key = String.join(" ", modelIDs);

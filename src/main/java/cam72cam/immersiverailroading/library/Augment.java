@@ -13,6 +13,7 @@ public enum Augment {
 	DETECTOR,
 	COUPLER,
 	ACTUATOR,
+	LUA_SCRIPTER,
 	;
 	
 	public Color color() {
@@ -37,6 +38,8 @@ public enum Augment {
 			return Color.ORANGE;
 		case ACTUATOR:
 			return Color.SILVER;
+		case LUA_SCRIPTER:
+			return Color.PINK;
 		}
 		return Color.WHITE;
 	}
