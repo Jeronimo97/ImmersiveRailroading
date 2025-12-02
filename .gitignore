@@ -5,6 +5,7 @@ eclipse/
 .metadata
 .classpath
 .project
+bin/
 
 ## Idea
 .idea/
