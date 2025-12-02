@@ -44,7 +44,7 @@ public class GuiBuilder {
     private final String text;
     private final float textHeight;
 
-    private Readouts readout;
+    private final Readouts readout;
     private final String control;
     private final String setting;
     private final String texture_variant;
@@ -170,11 +170,13 @@ public class GuiBuilder {
         // Controls
         String readout = data.getValue("readout").asString();
         if (readout != null) {
+            Readouts readouts1 = null;
             try {
-                this.readout = Readouts.valueOf(readout.toUpperCase(Locale.ROOT));
+                readouts1 = Readouts.valueOf(readout.toUpperCase(Locale.ROOT));
             } catch (Exception e) {
                 ImmersiveRailroading.warn("The readout %s is not a valid readout, skipped.", readout.toUpperCase(Locale.ROOT));
-                this.readout = null;
+            } finally {
+                this.readout = readouts1;
             }
         } else {
             this.readout = null;
