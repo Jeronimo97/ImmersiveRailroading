@@ -370,11 +370,17 @@ public class LocomotiveSteam extends Locomotive {
 			waterUsed += delta;
 		}
 		
-
+		if (waterUsed != 0) {
+            waterUsed *= Config.ConfigBalance.locoWaterUsage;
+            waterUsed += drainRemainder;
+            if (waterUsed > 0 && theTank.getContents() != null) {
+                theTank.drain(new FluidStack(theTank.getContents().getFluid(), (int) Math.floor(waterUsed)), false);
+                drainRemainder = waterUsed % 1;
+            }
+        }
 		
 		setBoilerPressureBar(boilerPressurePSI * PressureDisplayType.psiToBar);
 		setBoilerTemperature(Math.max(boilerTemperature, ambientTemperature()));
-
 		
 		// EXPLOSION
 		if (boilerPressurePSI > maxPSI * 1.1 || (boilerPressurePSI > maxPSI * 0.5 && boilerTemperature > 150)) {
@@ -388,17 +394,8 @@ public class LocomotiveSteam extends Locomotive {
 			}
 			getWorld().removeEntity(this);
 		}
-		
-        if (waterUsed != 0) {
-            waterUsed *= Config.ConfigBalance.locoWaterUsage;
-            waterUsed += drainRemainder;
-            if (waterUsed > 0 && theTank.getContents() != null) {
-                theTank.drain(new FluidStack(theTank.getContents().getFluid(), (int) Math.floor(waterUsed)), false);
-                drainRemainder = waterUsed % 1;
-            }
-        }
         
-        if (getWorld().isServer && (boilerPressurePSI > 0 || !Config.isFuelRequired(gauge))) {
+        if (boilerPressurePSI > 0 || !Config.isFuelRequired(gauge)) {
             chestPressureCalc();
         }
 	}

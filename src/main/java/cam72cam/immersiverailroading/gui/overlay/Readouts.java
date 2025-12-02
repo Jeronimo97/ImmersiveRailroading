@@ -63,7 +63,7 @@ public enum Readouts {
                 return 0;
             case BOILER_PRESSURE:
                 return stock instanceof LocomotiveSteam ?
-                        ((LocomotiveSteam) stock).getBoilerPressureBar() / ((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge) * PressureDisplayType.psiToBar: 0;
+                        ((LocomotiveSteam) stock).getBoilerPressureBar() / (((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge) * PressureDisplayType.psiToBar) : 0;
             case THROTTLE:
                 return stock instanceof Locomotive ? ((Locomotive) stock).getThrottle() : 0;
             case REVERSER:
