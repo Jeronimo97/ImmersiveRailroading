@@ -57,8 +57,6 @@ public class LocomotiveSteam extends Locomotive {
 
 	private float drainRemainder;
 	
-	private double cylinderDimensions;
-	
 	public LocomotiveSteam() {
 		boilerTemperature = ambientTemperature();
 	}
@@ -140,7 +138,8 @@ public class LocomotiveSteam extends Locomotive {
 
 	@Override
     public double getAppliedTractiveEffort(final Speed speed) {
-        if (getDefinition().isCabCar())
+        LocomotiveSteamDefinition def = getDefinition();
+        if (def.isCabCar())
             return 0;
         
         double reverser = getReverser();
@@ -150,26 +149,18 @@ public class LocomotiveSteam extends Locomotive {
         double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
         double expansionPressure = getChestPressureBar() / expansion * (1 + Math.log(expansion));
         double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
-                * Math.abs(reverser) * (getDefinition().getCylinderCount() == 3 ? 1.15 : 1));
+                * Math.abs(reverser) * (def.getCylinderCount() == 3 ? 1.15 : 1));
         double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
 
         if (pressurePercent <= 0)
             return 0;
         
-        return cylinderDimensions * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7)) * Config.ConfigBalance.powerMultiplier * Math.copySign(1, reverser);
+        return 50445 * def.getCylinderCount() * def.getPistonDiameter(gauge) * def.getPistonDiameter(gauge)
+                * def.getPistonStroke(gauge) * getMaxChestPressure() / def.getWheelDiameter(gauge)
+                * def.getPowerMultiplier() * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7))
+                * ConfigBalance.powerMultiplier * Math.copySign(1, reverser);
     }
     
-    @Override
-    public void onAssemble() {
-        super.onAssemble();
-        // Static cylinder dimension calculation
-        cylinderDimensions = 50445 * getDefinition().getCylinderCount()
-                * Math.pow(getDefinition().getPistonDiameter(gauge), 2)
-                * getDefinition().getPistonStroke(gauge)
-                * getMaxChestPressure() / getDefinition().getWheelDiameter(gauge)
-                * getDefinition().getPowerMultiplier();
-    }
-	
 	@Override
 	public void onDissassemble() {
 		super.onDissassemble();
