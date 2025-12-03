@@ -27,7 +27,7 @@ pivot =                    # Required: Pivot points, legacy name "trucks"
     rear = null                 # Distance in meters (usually negative) from the center of the model to the rear pivot point
 
 # Sound settings
-sound_dampening_percentage = 0.75   # Optional: How much riding this piece of stock reduces sound volumes (percentage)
+sound_dampening_percentage = 0.5    # Optional: How much riding this piece of stock reduces sound volumes (percentage)
 scale_pitch = True                  # Optional: Scale any sounds emitted by this stock by the gauge it's placed on
 
 # Coupler Settings

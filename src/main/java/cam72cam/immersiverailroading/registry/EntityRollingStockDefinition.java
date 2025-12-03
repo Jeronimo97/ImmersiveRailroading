@@ -472,9 +472,9 @@ public abstract class EntityRollingStockDefinition {
         bogeyFront = pivot.getValue("front").asFloat() * (float) internal_model_scale;
         bogeyRear = pivot.getValue("rear").asFloat() * (float) internal_model_scale;
 
-        dampeningAmount = data.getValue("sound_dampening_percentage").asFloat();
+        dampeningAmount = 1 - data.getValue("sound_dampening_percentage").asFloat();
         if (dampeningAmount < 0 || dampeningAmount > 1) {
-            dampeningAmount = 0.75f;
+            dampeningAmount = 0.5f;
         }
         scalePitch = data.getValue("scale_pitch").asBoolean();
 

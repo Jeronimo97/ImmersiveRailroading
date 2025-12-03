@@ -78,6 +78,7 @@ public class PartSound {
         }
 
         ISound toUpdate = null;
+        volume *= stock.getRidingSoundModifier();
         if (volume > 0) {
             // Playing
             switch (sounds.state) {
