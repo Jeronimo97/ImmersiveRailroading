@@ -9,6 +9,9 @@ import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
+import cam72cam.mod.math.Vec3d;
+import cam72cam.mod.render.Particle;
+import cam72cam.mod.render.Particle.VanillaParticles;
 
 import java.util.List;
 
@@ -33,6 +36,7 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         if (!def.isCabCar()) {
             addGauge(provider, ModelComponentType.GAUGE_TEMPERATURE_X, Readouts.TEMPERATURE);
             addGauge(provider, ModelComponentType.GAUGE_BOILER_PRESSURE_X, Readouts.BOILER_PRESSURE);
+            addGauge(provider, ModelComponentType.GAUGE_CHEST_PRESSURE_X, Readouts.CHEST_PRESSURE);
         }
 
         addControl(provider, ModelComponentType.WHISTLE_CONTROL_X);
@@ -93,6 +97,16 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         pressureValve.effects(stock, stock.isOverpressure() && Config.isFuelRequired(stock.gauge));
         idleSounds.effects(stock, stock.getBoilerTemperature() > stock.ambientTemperature() + 5 ? 0.1f : 0);
         whistle.effects(stock, stock.getBoilerPressureBar() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
+        
+        // firebox.center
+        /*
+        Particle.renderVanilla(VanillaParticles.FLAME, stock.getPosition().add(firebox.center), stock.getVelocity(), 10);
+        
+        for (int i = 0; i <= 4; i++) {
+            Particle.renderVanilla(VanillaParticles.SAND_DUST, stock.getPosition().add(-0.75, 0.5, 3.75 - 1.5 * i), stock.getVelocity(), 1);
+            Particle.renderVanilla(VanillaParticles.SAND_DUST, stock.getPosition().add(0.75, 0.5, 3.75 - 1.5 * i), stock.getVelocity(), 1);
+        }
+        */
     }
 
     @Override
