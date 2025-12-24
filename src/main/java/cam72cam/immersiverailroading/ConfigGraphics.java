@@ -4,6 +4,8 @@ import cam72cam.immersiverailroading.library.PressureDisplayType;
 import cam72cam.immersiverailroading.library.SpeedDisplayType;
 import cam72cam.immersiverailroading.library.TemperatureDisplayType;
 import cam72cam.immersiverailroading.library.ValveGearConfig;
+import cam72cam.immersiverailroading.library.ScrollMode;
+import cam72cam.immersiverailroading.library.unit.*;
 import cam72cam.mod.config.ConfigFile.Comment;
 import cam72cam.mod.config.ConfigFile.Name;
 import cam72cam.mod.render.OptiFine;
@@ -68,4 +70,17 @@ public class ConfigGraphics {
 
 	@Comment("Try to fake interior lighting for locomotives/passenger cars that are being ridden")
 	public static boolean FakeInteriorLighting = true;
+
+	@Comment("Disable headlights' texture render")
+	public static boolean DisableLightTextureRender = false;
+
+	@Comment("The track's maximum visibility range")
+	@Range(min = 256, max = 4096)
+	public static double TrackRenderDistance = 256;
+
+	@Comment("Should semi-transparent parts render? Disable this if you are experiencing problems with semi-transparent parts when using a Shader")
+	public static boolean RenderSemiTransparentParts = true;
+	
+	@Comment("Change scroll mode between 'ALL', 'ONLY_ROT_TRANSLATION' (allow scrolling only for rotations and translations) or 'NONE' (prevent scrolling on all parts).")
+	public static ScrollMode scrollMode = ScrollMode.ALL;
 }

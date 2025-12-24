@@ -36,6 +36,8 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
     public final boolean toggle;
     public final boolean press;
     public final boolean global;
+    public final boolean rotation;
+    public final boolean translation;
     protected final boolean invert;
     protected final float offset;
     private final boolean hide;
@@ -93,6 +95,8 @@ public class Control<T extends EntityMoveableRollingStock> extends Interactable<
         Predicate<String> hasKey = s -> config.getValue(s).asBoolean(part.modelIDs.stream().anyMatch(g -> g.contains("_" + s + "_") || g.startsWith(s + "_") || g.endsWith("_" + s)));
         this.toggle = hasKey.test("TOGGLE");
         this.press = hasKey.test("PRESS");
+        this.rotation = hasKey.test("ROT");
+        this.translation = hasKey.test("TL");
         this.global = hasKey.test("GLOBAL");
         this.invert = hasKey.test("INVERT");
         this.hide = hasKey.test("HIDE");
