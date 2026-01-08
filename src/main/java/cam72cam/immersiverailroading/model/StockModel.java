@@ -266,7 +266,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
             pitch = (float) (pitch/stock.gauge.scale());
         }
         float volume = 0.01f + adjust;
-        float brakePressure = stock.getBrakeCylinderPressure() * 5;
+        float brakePressure = Math.max(stock.getBrakeCylinderPressure(), stock.getHandBrake()) * 5;
 
         wheel_sound.effects(stock, speed > 1 ? volume : 0, pitch + sndRand);
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
