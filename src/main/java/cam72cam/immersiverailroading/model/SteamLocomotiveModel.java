@@ -8,11 +8,8 @@ import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.*;
+import cam72cam.immersiverailroading.model.part.particle.FireParticle;
 import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
-import cam72cam.mod.math.Vec3d;
-import cam72cam.mod.render.Particle;
-import cam72cam.mod.render.Particle.VanillaParticles;
-
 import java.util.List;
 
 public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, LocomotiveSteamDefinition> {
@@ -24,6 +21,8 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
     private ModelComponent firebox;
 
     private final PartSound idleSounds;
+    
+    private FireParticle fireParticle;
 
     public SteamLocomotiveModel(LocomotiveSteamDefinition def) throws Exception {
         super(def);
@@ -66,6 +65,8 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
 
         chimney = SteamChimney.get(provider);
         pressureValve = PressureValve.get(provider, def.pressure);
+        
+        fireParticle = FireParticle.get(provider);
 
         super.parseComponents(provider, def);
     }
@@ -98,15 +99,9 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         idleSounds.effects(stock, stock.getBoilerTemperature() > stock.ambientTemperature() + 5 ? 0.1f : 0);
         whistle.effects(stock, stock.getBoilerPressureBar() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
         
-        // firebox.center
-        /*
-        Particle.renderVanilla(VanillaParticles.FLAME, stock.getPosition().add(firebox.center), stock.getVelocity(), 10);
-        
-        for (int i = 0; i <= 4; i++) {
-            Particle.renderVanilla(VanillaParticles.SAND_DUST, stock.getPosition().add(-0.75, 0.5, 3.75 - 1.5 * i), stock.getVelocity(), 1);
-            Particle.renderVanilla(VanillaParticles.SAND_DUST, stock.getPosition().add(0.75, 0.5, 3.75 - 1.5 * i), stock.getVelocity(), 1);
+        if(stock.getBoilerTemperature() > stock.ambientTemperature()) {
+            fireParticle.effects(stock);
         }
-        */
     }
 
     @Override

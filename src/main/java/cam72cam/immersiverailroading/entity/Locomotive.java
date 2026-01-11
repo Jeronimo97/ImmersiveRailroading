@@ -66,6 +66,13 @@ public abstract class Locomotive extends FreightTank {
 	private boolean cogging = false;
 
 	protected boolean slipping = false;
+	
+    @TagSync
+    @TagField("sanding")
+    public boolean sandingKey = false;
+    protected boolean isSanding = false;
+    protected int sandTime = 0;
+    protected int sandingKeyTimeout = 0;
 
 	/*
 	 * 
