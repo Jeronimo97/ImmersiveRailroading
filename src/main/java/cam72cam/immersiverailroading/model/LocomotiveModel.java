@@ -11,6 +11,7 @@ import cam72cam.immersiverailroading.library.ValveGearConfig;
 import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.TrackFollower.TrackFollowers;
+import cam72cam.immersiverailroading.model.part.particle.SandParticle;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
 import util.Matrix4;
 
@@ -37,6 +38,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     protected ModelState rearLocomotiveRocking;
     private final TrackFollowers frontTrackers;
     private final TrackFollowers rearTrackers;
+    
+    private SandParticle sandParticle;
 
     public LocomotiveModel(DEFINITION def) throws Exception {
         super(def);
@@ -135,6 +138,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         rocking.include(components);
         bell = Bell.get(provider, rocking, def.bell);
         compressor = Compressor.get(provider, rocking, def.compressor);
+        
+        sandParticle = SandParticle.get(provider);
 
         super.parseComponents(provider, def);
     }
@@ -146,6 +151,10 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
         compressor.effects(stock, stock.isLowAir() && stock.providesElectricalPower() ? 0.2f : 0);
         brakePressureSound.effects(stock, stock.trainBrakeDelta ? 0.1f : 0);
+        
+        if (stock.sandingKey) {
+            sandParticle.effects(stock);
+        } 
     }
 
     @Override
