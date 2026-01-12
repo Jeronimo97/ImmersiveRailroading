@@ -8,8 +8,8 @@ import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.*;
-import cam72cam.immersiverailroading.model.part.particle.FireParticle;
 import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
+import cam72cam.mod.render.Particle.VanillaParticles;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
 
     private final PartSound idleSounds;
     
-    private FireParticle fireParticle;
+    private VanillaParticle fireParticle;
 
     public SteamLocomotiveModel(LocomotiveSteamDefinition def) throws Exception {
         super(def);
@@ -66,7 +66,7 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         chimney = SteamChimney.get(provider);
         pressureValve = PressureValve.get(provider, def.pressure);
         
-        fireParticle = FireParticle.get(provider);
+        fireParticle = VanillaParticle.get(provider, ModelComponentType.FIRE_PARTICLE_X);
 
         super.parseComponents(provider, def);
     }
@@ -77,8 +77,8 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
     }
 
     @Override
-    protected void effects(LocomotiveSteam stock) {
-        super.effects(stock);
+    protected void tick(LocomotiveSteam stock) {
+        super.tick(stock);
 
         if (drivingWheels != null) {
             drivingWheels.effects(stock);

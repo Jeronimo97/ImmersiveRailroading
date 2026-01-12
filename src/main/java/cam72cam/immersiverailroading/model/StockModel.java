@@ -18,8 +18,10 @@ import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.Sound
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
+import cam72cam.mod.render.Particle.VanillaParticles;
 import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
+import cam72cam.mod.resource.Identifier;
 import util.Matrix4;
 
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> extends OBJModel {
+
     private final DEFINITION def;
     public final List<ModelComponent> allComponents;
     protected ModelState base;
@@ -66,7 +69,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final PartSound brakePressureSound;
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
-
+    
     public StockModel(DEFINITION def) throws Exception {
         super(def.modelLoc, def.darken, def.internal_model_scale, def.textureNames.keySet(), ConfigGraphics.textureCacheSeconds, i -> {
             List<Integer> lodSizes = new ArrayList<>();
@@ -248,16 +251,16 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
 
     public final void onClientTick(EntityMoveableRollingStock stock) {
-        effects((ENTITY) stock);
+        tick((ENTITY) stock);
     }
 
-    protected void effects(ENTITY stock) {
+    protected void tick(ENTITY stock) {
         headlights.forEach(x -> x.effects(stock));
         controls.forEach(c -> c.effects(stock));
         doors.forEach(c -> c.effects(stock));
         gauges.forEach(c -> c.effects(stock));
         animations.forEach(c -> c.effects(stock));
-
+        
         float speed = (float) Math.abs(stock.getCurrentSpeed().metric());
         float adjust = speed / 300;
         float pitch = adjust + 0.7f;

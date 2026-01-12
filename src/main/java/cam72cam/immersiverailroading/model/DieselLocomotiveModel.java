@@ -72,8 +72,8 @@ public class DieselLocomotiveModel extends LocomotiveModel<LocomotiveDiesel, Loc
     }
 
     @Override
-    protected void effects(LocomotiveDiesel stock) {
-        super.effects(stock);
+    protected void tick(LocomotiveDiesel stock) {
+        super.tick(stock);
         exhaust.effects(stock);
         horn.effects(stock,
                 stock.getHornTime() > 0 && (stock.isRunning() || stock.getDefinition().isCabCar())

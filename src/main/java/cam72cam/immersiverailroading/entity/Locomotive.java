@@ -49,7 +49,7 @@ public abstract class Locomotive extends FreightTank{
 	private float trainBrakeInternal = 0;
 	public boolean trainBrakeDelta = false;
 	
-    @TagSync(forceSync = true)
+    @TagSync(floatPrecision = 5)
     @TagField("MAIN_AIR_RESERVOIR")
     private float mainAirReservoir = Config.ConfigBalance.instantMainAirReservoir ? 1 : 0;
     

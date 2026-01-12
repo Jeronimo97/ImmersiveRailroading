@@ -326,7 +326,7 @@ public abstract class EntityRollingStockDefinition {
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
 
-        this.renderComponents = new HashMap<>();
+        this.renderComponents = new EnumMap<>(ModelComponentType.class);
         for (ModelComponent component : model.allComponents) {
             renderComponents.computeIfAbsent(component.type, v -> new ArrayList<>())
                     .add(0, component);
