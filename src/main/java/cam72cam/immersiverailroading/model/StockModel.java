@@ -18,6 +18,7 @@ import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.Sound
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
+import cam72cam.mod.render.Particle.VanillaParticles;
 import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
 import util.Matrix4;
@@ -62,6 +63,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final PartSound slidingSound;
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
+
+    private VanillaParticle steamParticle;
 
     public StockModel(DEFINITION def) throws Exception {
         super(def.modelLoc, def.darken, def.internal_model_scale, def.textureNames.keySet(), ConfigGraphics.textureCacheSeconds, i -> {
@@ -229,6 +232,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         this.shell = provider.parse(ModelComponentType.SHELL);
         rocking.include(shell);
+
+        steamParticle = VanillaParticle.get(provider, ModelComponentType.STEAM_PARTICLE_X);
     }
 
     protected boolean unifiedBogies() {
@@ -237,18 +242,23 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
 
     public final void onClientTick(EntityMoveableRollingStock stock) {
-        effects((ENTITY) stock);
+        tick((ENTITY) stock);
     }
 
-    protected void effects(ENTITY stock) {
+    protected void tick(ENTITY stock) {
         headlights.forEach(x -> x.effects(stock));
         controls.forEach(c -> c.effects(stock));
         doors.forEach(c -> c.effects(stock));
         gauges.forEach(c -> c.effects(stock));
         animations.forEach(c -> c.effects(stock));
 
-
-        float adjust = (float) Math.abs(stock.getCurrentSpeed().metric()) / 300;
+        if (stock.hasElectricalPower()) {
+            // TODO idk, if this is so good ~ Jeronimo
+            steamParticle.tickSteam(stock);
+        }
+        
+        float speed = (float) Math.abs(stock.getCurrentSpeed().metric());
+        float adjust = speed / 300;
         float pitch = adjust + 0.7f;
         if (stock.getDefinition().shouldScalePitch()) {
             // TODO this is probably wrong...
