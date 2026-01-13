@@ -87,9 +87,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addGauge(provider, ModelComponentType.GAUGE_THROTTLE_X, Readouts.THROTTLE);
         addGauge(provider, ModelComponentType.GAUGE_REVERSER_X, Readouts.REVERSER);
         addGauge(provider, ModelComponentType.GAUGE_TRAIN_BRAKE_X, Readouts.TRAIN_BRAKE);
-        if (def.hasIndependentBrake()) {
-            addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
-        }
+        addGauge(provider, ModelComponentType.GAUGE_SANDING_X, Readouts.SANDING);
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);

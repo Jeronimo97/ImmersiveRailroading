@@ -37,6 +37,7 @@ public enum Readouts {
     CHEST_PRESSURE,
     ROLLING_STOCK_PITCH,
     TRACTIVE_EFFORT,
+    SANDING,
     ;
 
     public float getValue(EntityRollingStock stock) {
@@ -120,6 +121,8 @@ public enum Readouts {
             case TRACTIVE_EFFORT:
                 return stock instanceof Locomotive ?
                         ((Locomotive) stock).getCurrentTractiveEffort() : 0;
+            case SANDING:
+                return stock instanceof Locomotive && ((Locomotive)stock).sandingKey ? 1 : 0;
         }
         return 0;
     }
