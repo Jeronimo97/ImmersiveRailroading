@@ -32,6 +32,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     private double pistonStroke;
     private double wheelDiameter;
     private int cylinderCount;
+    private boolean basicChestDrain;
 
     public LocomotiveSteamDefinition(String defID, DataBlock data) throws Exception {
         super(LocomotiveSteam.class, defID, data);
@@ -78,6 +79,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
             wheelDiameter = properties.getValue("wheel_diameter").asDouble(1.4);
             cylinderCount = properties.getValue("cylinder_count").asInteger(2);
             powerMultiplier = properties.getValue("power_multiplier").asDouble(1.5);
+            basicChestDrain = properties.getValue("basic_chest_drain").asBoolean(false);
         }
         cab_forward = properties.getValue("cab_forward").asBoolean(false);
 
@@ -88,7 +90,7 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
         pressure = sounds.getValue("pressure").asIdentifier();
         bell = SoundDefinition.getOrDefault(sounds, "bell");
         cylinder_drain = sounds.getValue("cylinder_drain").asIdentifier();
-
+        
         List<DataBlock> quilling = sounds.getBlocks("quilling");
         if (quilling != null) {
             quill = new Quilling(quilling);
@@ -146,5 +148,9 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
 
     public int getCylinderCount() {
         return cylinderCount;
+    }
+    
+    public boolean getBasicChestDrain() {
+        return basicChestDrain;
     }
 }
