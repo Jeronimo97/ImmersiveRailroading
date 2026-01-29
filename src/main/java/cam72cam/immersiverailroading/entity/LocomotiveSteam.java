@@ -91,7 +91,7 @@ public class LocomotiveSteam extends Locomotive {
 		return boilerPressureBar;
 	}
 	
-	public float getBoilerPressurePercent() {
+	public float getBoilerPressure() {
 	    return boilerPressureBar * PressureDisplayType.BarToPsi / getMaxBoilerPSI();
 	}
 	
