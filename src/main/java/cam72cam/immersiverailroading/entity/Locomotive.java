@@ -16,13 +16,16 @@ import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.item.ClickResult;
+import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
 
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public abstract class Locomotive extends FreightTank {
 	private static final float trainBrakeNotch = 0.04f;
@@ -70,7 +73,7 @@ public abstract class Locomotive extends FreightTank {
     @TagSync
     @TagField("sanding")
     public boolean sandingKey = false;
-    protected boolean isSanding = false;
+    public boolean isSanding = false;
     protected int sandTime = 0;
     protected int sandingKeyTimeout = 0;
 
@@ -215,8 +218,21 @@ public abstract class Locomotive extends FreightTank {
 				this.deadManChangeTimeout = 5;
 			}
 			break;
-			default:
-				super.handleKeyPress(source, key, disableIndependentThrottle);
+		case SANDING:
+            if (sandingKeyTimeout == 0) {
+                sandingKey = !sandingKey;
+                sandingKeyTimeout = 5;
+
+                List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                        .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                        .collect(Collectors.toList());
+                for (Control<?> sand : sanding) {
+                    setControlPosition(sand, sandingKey ? 1 : 0);
+                }
+            }
+            break;
+		default:
+			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
 	}
 
@@ -290,6 +306,7 @@ public abstract class Locomotive extends FreightTank {
 			case WHISTLE_CONTROL_X:
 			case HORN_CONTROL_X:
 			case ENGINE_START_X:
+            case SANDING_CONTROL_X:
 				return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
 			default:
 				return true;
@@ -397,7 +414,43 @@ public abstract class Locomotive extends FreightTank {
 		}
 
         this.distanceTraveled += simulateWheelSlip();
+		
+		if (sandingKeyTimeout > 0) {
+            sandingKeyTimeout--;
+        }
+        isSanding = false;
+        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
+        if (sandingKey) {
+            ItemStack stack = this.cargoItems.get(2);
+            if (sandTime == 0) {
+                stack.setCount(stack.getCount() - 1);
+                sandTime = maxSandTime();
+            }
+            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
+                sandTime--;
+                isSanding = true;
+            }
+        }
 	}
+    
+    public float getSandTimePercentage() {
+        return (float) sandTime / maxSandTime();
+    }
+    
+    private int maxSandTime() {
+        return 1000 * Config.ConfigBalance.SandEfficiency;
+    }
+    
+    public boolean isSanding() {
+        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                .collect(Collectors.toList());
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+    }
+    
+    public void setSanding(boolean sanding) {
+        sandingKey = sanding;
+    }
 	
 	@Override
     public Speed getCurrentSpeed() {
@@ -428,8 +481,8 @@ public abstract class Locomotive extends FreightTank {
             if (world.isSnowing(blockPos))
                 adhMult *= 0.35f;
         }
-        //if (isSanding)
-        //    adhMult *= 3;
+        if (isSanding)
+            adhMult *= 3;
         if (slipping)
             adhMult *= 0.5f;
         return adhMult;

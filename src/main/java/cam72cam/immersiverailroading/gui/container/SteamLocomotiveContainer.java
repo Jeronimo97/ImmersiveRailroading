@@ -1,6 +1,8 @@
 package cam72cam.immersiverailroading.gui.container;
 
+import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveSteam;
+import cam72cam.mod.fluid.Fluid;
 import cam72cam.mod.gui.container.IContainerBuilder;
 import cam72cam.mod.item.Fuzzy;
 import cam72cam.mod.item.ItemStack;
@@ -10,10 +12,12 @@ import java.util.Map;
 public class SteamLocomotiveContainer extends BaseContainer {
     public final LocomotiveSteam stock;
     private final ItemStack template;
+    private final ItemStack templateSand;
 
     public SteamLocomotiveContainer(LocomotiveSteam stock) {
         this.stock = stock;
         this.template = Fuzzy.BUCKET.example();
+        this.templateSand = Fuzzy.SAND.example();
     }
 
     public void draw(IContainerBuilder container){
@@ -45,8 +49,8 @@ public class SteamLocomotiveContainer extends BaseContainer {
             if (time != 0) {
                 float perc = Math.min(1f, (float)time / burnMax.get(slot));
 
-                int xSlot = (slot-2) % horizSlots;
-                int ySlot = (slot-2) / horizSlots;
+                int xSlot = (slot-3) % horizSlots;
+                int ySlot = (slot-3) / horizSlots;
 
 
                 container.drawSlotOverlay("minecraft:blocks/fire_layer_1", xSlot * 18 + ((horizSlots) * 9), containerY + ySlot * 18, perc, 0x77c64306);
@@ -63,6 +67,15 @@ public class SteamLocomotiveContainer extends BaseContainer {
         currY = container.drawPlayerInventoryConnector(0, currY, horizSlots);
         currY = container.drawPlayerInventory(currY, horizSlots*2);
         drawName(container, stock);
+        
+        int Ysand = 0;
+        Ysand = container.drawTopBar(horizSlots * 45, Ysand, 1);
+        container.drawCenteredString("Sand", horizSlots * 30, Ysand - 12);
+        Ysand = container.drawSlotRow(stock.cargoItems, 2, 1, horizSlots * 45, Ysand);
+        container.drawSlot(stock.cargoItems, 2, horizSlots * 45, Ysand - 18);
+        container.drawSlotOverlay(templateSand, horizSlots * 45, Ysand - 18);
+        container.drawTankBlock(horizSlots * 45, Ysand - 18, 1, 1, Fluid.LAVA, stock.cargoItems.get(2).getCount() != 0 ? ((Locomotive) stock).getSandTimePercentage() : 0);
+        Ysand = container.drawBottomBar(horizSlots * 45, Ysand, 1);
     }
 
     @Override

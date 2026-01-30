@@ -96,7 +96,7 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
                     (drivingWheelsRear != null && drivingWheelsRear.isEndStroke(stock));
             chimney.effects(stock, isEndStroke);
         }
-        pressureValve.effects(stock, stock.isOverpressure() && Config.isFuelRequired(stock.gauge));
+        pressureValve.effects(stock, stock.isOverpressure());
         idleSounds.effects(stock, stock.getBoilerTemperature() > stock.ambientTemperature() + 5 ? 0.1f : 0);
         whistle.effects(stock, stock.getBoilerPressureBar() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
         
