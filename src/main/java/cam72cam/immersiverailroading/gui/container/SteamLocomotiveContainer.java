@@ -1,6 +1,9 @@
 package cam72cam.immersiverailroading.gui.container;
 
+import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveSteam;
+import cam72cam.mod.fluid.Fluid;
 import cam72cam.mod.gui.container.IContainerBuilder;
 import cam72cam.mod.item.Fuzzy;
 import cam72cam.mod.item.ItemStack;
@@ -47,8 +50,8 @@ public class SteamLocomotiveContainer extends BaseContainer {
             if (time != 0) {
                 float perc = Math.min(1f, (float)time / burnMax.get(slot));
 
-                int xSlot = (slot-2) % horizSlots;
-                int ySlot = (slot-2) / horizSlots;
+                int xSlot = (slot-3) % horizSlots;
+                int ySlot = (slot-3) / horizSlots;
 
 
                 container.drawSlotOverlay("minecraft:blocks/fire_layer_1", xSlot * 18 + ((horizSlots) * 9), containerY + ySlot * 18, perc, 0x77c64306);
@@ -72,6 +75,7 @@ public class SteamLocomotiveContainer extends BaseContainer {
         Ysand = container.drawSlotRow(stock.cargoItems, 2, 1, horizSlots * 45, Ysand);
         container.drawSlot(stock.cargoItems, 2, horizSlots * 45, Ysand - 18);
         container.drawSlotOverlay(templateSand, horizSlots * 45, Ysand - 18);
+        container.drawTankBlock(horizSlots * 45, Ysand - 18, 1, 1, Fluid.LAVA, stock.cargoItems.get(2).getCount() != 0 ? ((Locomotive) stock).getSandTimePercentage() : 0);
         Ysand = container.drawBottomBar(horizSlots * 45, Ysand, 1);
     }
 

@@ -1,6 +1,8 @@
 package cam72cam.immersiverailroading.gui.container;
 
 import cam72cam.immersiverailroading.entity.FreightTank;
+import cam72cam.immersiverailroading.entity.Locomotive;
+import cam72cam.mod.fluid.Fluid;
 import cam72cam.mod.gui.container.IContainerBuilder;
 import cam72cam.mod.item.Fuzzy;
 import cam72cam.mod.item.ItemStack;
@@ -52,6 +54,7 @@ public class DieselLocomotiveContainer extends BaseContainer {
         Ysand = container.drawSlotRow(stock.cargoItems, 2, 1, horizSlots * 20, Ysand);
         container.drawSlot(stock.cargoItems, 2, horizSlots * 20, Ysand - 18);
         container.drawSlotOverlay(templateSand, horizSlots * 20, Ysand - 18);
+        container.drawTankBlock(horizSlots * 20, Ysand - 18, 1, 1, Fluid.LAVA, stock.cargoItems.get(2).getCount() != 0 ? ((Locomotive) stock).getSandTimePercentage() : 0);
         Ysand = container.drawBottomBar(horizSlots * 20, Ysand, 1);
     }
 

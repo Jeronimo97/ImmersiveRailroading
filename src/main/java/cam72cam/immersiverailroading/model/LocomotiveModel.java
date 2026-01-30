@@ -153,7 +153,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         compressor.effects(stock, stock.isLowAir() && stock.providesElectricalPower() ? 0.2f : 0);
         brakePressureSound.effects(stock, stock.trainBrakeDelta ? 0.1f : 0);
         
-        if (stock.sandingKey) {
+        if (stock.isSanding) {
             sandParticle.tick(stock, VanillaParticles.SAND_DUST, 2);
         } 
     }
