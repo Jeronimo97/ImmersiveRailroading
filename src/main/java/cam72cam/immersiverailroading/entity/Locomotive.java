@@ -10,7 +10,6 @@ import cam72cam.immersiverailroading.physics.MovementTrack;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.immersiverailroading.tile.TileRailBase;
-import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
