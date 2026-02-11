@@ -590,13 +590,18 @@ public abstract class Locomotive extends FreightTank{
 
 	protected void copySettings(EntityRollingStock stock, boolean direction) {
 		if (stock instanceof Locomotive) {
-		    ((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
 		    if (((Locomotive)stock).getDefinition().muliUnitCapable) {
 		        ((Locomotive) stock).setRealThrottle(this.getThrottle());
 		        ((Locomotive) stock).setRealReverser(this.getReverser() * (direction ? 1 : -1));
 		    }
 		}
 	}
+	
+   protected void copyBrakeSetting(EntityRollingStock stock, boolean direction) {
+        if (stock instanceof Locomotive) {
+            ((Locomotive) stock).setRealTrainBrake(this.getTrainBrake());
+        }
+    }
 
 	public float getThrottle() {
 		return throttle;
@@ -691,7 +696,7 @@ public abstract class Locomotive extends FreightTank{
 	
 	public void setTrainBrake(float newTrainBrake) {
 		setRealTrainBrake(newTrainBrake);
-		this.mapTrain(this, true, false, this::copySettings);
+		this.mapTrain(this, true, false, this::copyBrakeSetting);
 	}
 	
 	private void setRealTrainBrake(float newTrainBrake) {
