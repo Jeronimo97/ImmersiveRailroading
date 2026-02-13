@@ -416,11 +416,11 @@ public class LocomotiveDiesel extends Locomotive {
 	}
 	
 	@Override
-    protected void copySettings(final EntityRollingStock stock, final boolean direction) {
+    protected void copyBrakeSetting(final EntityRollingStock stock, final boolean direction) {
         if (stock instanceof LocomotiveDiesel && ((LocomotiveDiesel) stock).getDefinition().muliUnitCapable) {
             ((LocomotiveDiesel) stock).setRealDynamicBrake(this.getDynamicBrake());
         }
-        super.copySettings(stock, direction);
+        super.copyBrakeSetting(stock, direction);
     }
 	
 	public float getDynamicBrake() {
@@ -441,7 +441,7 @@ public class LocomotiveDiesel extends Locomotive {
     public void setDynamicBrake(final float newDynamicBrakePos) {
         setRealDynamicBrake(newDynamicBrakePos);
         if (this.getDefinition().muliUnitCapable) {
-            this.mapTrain(this, true, false, this::copySettings);
+            this.mapTrain(this, true, false, this::copyBrakeSetting);
         }
     }
 
