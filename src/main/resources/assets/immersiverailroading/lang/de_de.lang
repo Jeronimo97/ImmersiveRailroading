@@ -246,8 +246,8 @@ itemGroup.immersiverailroading.passenger=Immersive Railroading Personenwagen
 itemGroup.immersiverailroading.components=Immersive Railroading Bauteile
 
 death.attack.immersiverailroading:casting=%s hat herausgefunden, dass sich geschmolzenes Metall nicht so gut zum schwimmen eignet.
-death.attack.immersiverailroading:hitByTrain=%s versagte bei dem Versuch vor einem Zug wegzurennen.
-death.attack.immersiverailroading:hitByTrainInDarkness=%s hat die Scheinwerfer des herannahenden Zuges nicht gesehen.
+death.attack.immersiverailroading:hit_by_train=%s versagte bei dem Versuch vor einem Zug wegzurennen.
+death.attack.immersiverailroading:hit_by_train_in_darkness=%s hat die Scheinwerfer des herannahenden Zuges nicht gesehen.
 
 immersiverailroading:detector_mode.simple=Fahrzeuge erkennen
 immersiverailroading:detector_mode.speed=Geschwindigkeit erkennen

@@ -179,8 +179,9 @@ itemGroup.immersiverailroading.stock=沉浸铁路丨货车
 itemGroup.immersiverailroading.passenger=沉浸铁路丨客车
 itemGroup.immersiverailroading.components=沉浸铁路丨组件
 
-death.attack.immersiverailroading:casting=%s 发现熔化的金属并不是一个适合游泳的地方
-death.attack.immersiverailroading:hitByTrain=%s 没能逃离火车的碾压
+death.attack.immersiverailroading:casting=%s 发现熔化的金属并不适合游泳
+death.attack.immersiverailroading:hit_by_train=%s 被火车创飞了
+death.attack.immersiverailroading:hit_by_train_in_darkness=%s 没能察觉飞驰过来的火车头灯
 
 immersiverailroading:detector_mode.simple=检测货物
 immersiverailroading:detector_mode.speed=检测速度

@@ -198,7 +198,8 @@ itemGroup.immersiverailroading.passenger=Пассажирские вагоны
 itemGroup.immersiverailroading.components=Компоненты ПС
 
 death.attack.immersiverailroading:casting=%s открыл для себя, что, увы, резервуар с расскаленным металлом нельзя использовать в качестве бассейна.
-death.attack.immersiverailroading:hitByTrain=%s попал под поезд
+death.attack.immersiverailroading:hit_by_train=%s был эффектно отправлен поездом в полёт.
+death.attack.immersiverailroading:hit_by_train_in_darkness=%s не распознал свет фар поезда и оказался в неправильной части железной дороги.
 
 immersiverailroading:detector_mode.simple=Обнаружение подвижного состава
 immersiverailroading:detector_mode.speed=Измерение скорости

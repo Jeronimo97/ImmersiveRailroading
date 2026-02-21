@@ -198,7 +198,8 @@ itemGroup.immersiverailroading.passenger=Voitures d'Immersive Railroading
 itemGroup.immersiverailroading.components=Composants de véhicules
 
 death.attack.immersiverailroading:casting=%s a découvert que faire un plongeon dans la cuve de métaux fondus n'était pas l'idée du siècle
-death.attack.immersiverailroading:hitByTrain=%s n'a pas réussi à semer le train
+death.attack.immersiverailroading:hit_by_train=%s n'a pas réussi à semer le train
+death.attack.immersiverailroading:hit_by_train_in_darkness=[Need translate]
 
 immersiverailroading:detector_mode.simple=Détecte les matériels roulants
 immersiverailroading:detector_mode.speed=Détecte la vitesse

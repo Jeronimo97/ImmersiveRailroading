@@ -168,7 +168,9 @@ itemGroup.immersiverailroading.stock=IR 運搬車
 itemGroup.immersiverailroading.passenger=IR 客車
 itemGroup.immersiverailroading.components=IR 部品
 
-death.attack.immersiverailroading:casting=%s は溶けた鉄鋼が水泳プールに適していないことを学んだdeath.attack.immersiverailroading:hitByTrain=%s は「事故は起こるさ」を獲得した
+death.attack.immersiverailroading:casting=%s は溶けた金属が泳ぐのに適していないことを学んだ
+death.attack.immersiverailroading:hit_by_train=%s は列車から逃げきれなかった
+death.attack.immersiverailroading:hit_by_train_in_darkness=%s は向かってくる列車の前照灯が見えなかったようだ
 
 immersiverailroading:detector_mode.simple=列車を検出
 immersiverailroading:detector_mode.speed=速度を検出
