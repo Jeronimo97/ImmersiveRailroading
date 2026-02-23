@@ -51,7 +51,7 @@ public abstract class Locomotive extends FreightTank{
 	
     @TagSync(floatPrecision = 5)
     @TagField("MAIN_AIR_RESERVOIR")
-    private float mainAirReservoir = Config.ConfigBalance.instantMainAirReservoir ? 1 : 0;
+    private float mainAirReservoir = !Config.ImmersionConfig.brakeMode.equals(BrakeMode.REALISTIC) ? 1 : 0;
     
     @TagSync
     @TagField("COMPRESSOR")
@@ -721,6 +721,10 @@ public abstract class Locomotive extends FreightTank{
     private void raiseMainAirReservoir() {
         if (getDefinition().isCabCar())
             return;
+        if (!getDefinition().hasCompressor()) {
+            mainAirReservoir = 1;
+            return;
+        }
         if (!isLowAir() && getMainAirReservoir() < 0.85) {
             isLowAir = true;
         } else if (isLowAir() && getMainAirReservoir() >= 1.0) {
