@@ -37,6 +37,7 @@ public class FlangeSound {
         void effects() {
             double yawDelta = DegreeFuncs.delta(stock.getFrontYaw(), stock.getRearYaw()) /
                     Math.abs(stock.getDefinition().getBogeyFront(stock.gauge) - stock.getDefinition().getBogeyRear(stock.gauge));
+            
             double startingFlangeSpeed = 5;
             double kmh = Math.abs(stock.getCurrentSpeed().metric());
             double flangeMinYaw = stock.getDefinition().flange_min_yaw;
@@ -48,7 +49,7 @@ public class FlangeSound {
                     sound.setVolume(lastFlangeVolume);
                     sound.play(stock.getPosition());
                 }
-                sound.setPitch(0.9f + Math.abs((float)stock.getCurrentSpeed().metric())/600 + sndRand);
+                sound.setPitch(0.9f + (float)kmh / 600 + sndRand);
                 float oscillation = (float)Math.sin((stock.getTickCount()/40f * sndRand * 40));
                 double flangeFactor = (yawDelta - flangeMinYaw) / (90 - flangeMinYaw);
                 float desiredVolume = (float)flangeFactor/2 * oscillation/4 + 0.25f;

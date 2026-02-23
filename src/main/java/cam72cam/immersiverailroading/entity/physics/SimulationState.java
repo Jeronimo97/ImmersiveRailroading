@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.entity.physics;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.Config.ConfigDebug;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
@@ -465,14 +466,20 @@ public class SimulationState {
     }
 
     public double frictionNewtons() {
+        double defaultNewtons = config.massKg * 9.8;
         // https://evilgeniustech.com/idiotsGuideToRailroadPhysics/OtherLocomotiveForces/#rolling-resistance
-        double rollingResistanceNewtons = config.rollingResistanceCoefficient * (config.massKg * 9.8);
+        double rollingResistanceNewtons = config.rollingResistanceCoefficient * defaultNewtons;
         // https://www.arema.org/files/pubs/pgre/PGChapter2.pdf
         // ~15 lb/ton -> 0.01 weight ratio -> 0.001 uS with gravity
-        double startingFriction = velocity == 0 ? 0.005 * config.massKg * 9.8 : 0;
+        double startingFriction = velocity == 0 ? 0.005 * defaultNewtons : 0;
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
 
+        Gauge gauge = config.gauge;
+        double yawDelta = DegreeFuncs.delta(config.stock.getFrontYaw(), config.stock.getRearYaw()) /
+                Math.abs(config.stock.getDefinition().getBogeyFront(gauge) - config.stock.getDefinition().getBogeyRear(gauge));
+        
+        double curveResistanceNewtons = 0.0034 * (0.72 * gauge.value() + 0.47 * config.stock.getDefinition().getRigidWheelbase()) * yawDelta * defaultNewtons;
         
         double brakeCylinderNewtons = Math.max(config.designAdhesionNewtons * calculateBrakePressure(), config.handBrakeNewtons);
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
@@ -482,7 +489,7 @@ public class SimulationState {
         if (brakeCylinderNewtons + dynamicBrakeNewtons> config.maximumAdhesionNewtons && Math.abs(velocity) > 0.01) {
             // WWWWWHHHEEEEE!!! SLIDING!!!!
             double kineticFriction = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.STEEL);
-            brakeCylinderNewtons = config.massKg * kineticFriction * 9.8 * config.stock.getBrakeSystemEfficiency() * calculateBrakePressure();
+            brakeCylinderNewtons = kineticFriction * defaultNewtons * config.stock.getBrakeSystemEfficiency() * calculateBrakePressure();
             dynamicBrakeNewtons *= kineticFriction;
             this.sliding = true;
         }
@@ -494,8 +501,20 @@ public class SimulationState {
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
 
+        if (ConfigDebug.debugLogging) {
+            System.out.println("Rolling Resistance: " + rollingResistanceNewtons);
+            System.out.println("Block Resistance: " + blockResistanceNewtons);
+            System.out.println("Brake Cylinder: " + brakeCylinderNewtons);
+            System.out.println("Direct Resistance: " + directResistance);
+            System.out.println("Starting Resistance: " + startingFriction);
+            System.out.println("Dynamic Brake: " + dynamicBrakeNewtons);
+            System.out.println("Magnetic Brake: " + magnetBrakeNewtons);
+            System.out.println("Curve Resistance: " + curveResistanceNewtons); 
+        }
+        
         return rollingResistanceNewtons + blockResistanceNewtons + brakeCylinderNewtons
-                + directResistance + startingFriction + dynamicBrakeNewtons + magnetBrakeNewtons;
+                + directResistance + startingFriction + dynamicBrakeNewtons + 
+                magnetBrakeNewtons + curveResistanceNewtons;
     }
 
     private boolean checkTileType(TileRailBase base, TrackItems type) {

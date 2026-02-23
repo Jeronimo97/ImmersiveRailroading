@@ -90,7 +90,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
         brakeNotches = properties.getValue("brake_notches").asInteger(25);
         hasBrakeNotches = properties.getValue("has_brake_notches").asBoolean(false);
-        hasCompressor = properties.getValue("has_compressor").asBoolean(false);
+        hasCompressor = properties.getValue("has_compressor").asBoolean(true);
         
         DataBlock sounds = data.getBlock("sounds");
         bell = SoundDefinition.getOrDefault(sounds, "bell");
