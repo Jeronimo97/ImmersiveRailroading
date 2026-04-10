@@ -20,6 +20,7 @@ item.immersiverailroading:item_golden_spike.name=Golden Spike
 item.immersiverailroading:item_radio_control_card.name=Zug-Funksteuerungs-Chip
 item.immersiverailroading:item_switch_key.name=Weichenschlüssel
 item.immersiverailroading:item_track_exchanger.name=Schienenaustausch Werkzeug
+item.immersiverailroading:item_wireless_remotecontrol.name=Funkfernsteuerung
 
 tile.immersiverailroading:block_rail.name=Schiene
 tile.immersiverailroading:block_rail_gag.name=Schiene (Gag)
@@ -63,6 +64,10 @@ chat.immersiverailroading:switch_state.reset=Die zuletzt gesperrte Weiche wurde 
 chat.immersiverailroading:switch_state.cant_reset=Sie haben mit diesem Schlüssel keine Weiche gesperrt!
 chat.immersiverailroading:switch_state.already_reset=Die zuletzt gesperrte Weiche ist bereits entsperrt!
 chat.immersiverailroading:multiblock.select=Ausgewählter Multiblock: %s
+chat.immersiverailroading:wireless.remotecontrol.link=Funksteuerung verlinkt!
+chat.immersiverailroading:wireless.remotecontrol.relink=Funksteuerung verlinkt!
+chat.immersiverailroading:wireless.remotecontrol.unlink=Funksteuerung getrennt!
+chat.immersiverailroading:wireless.remotecontrol.cantlink=Lokomotive hat keine Funksteuerung !
 
 gui.immersiverailroading:label.brake=Zugbremse
 gui.immersiverailroading:label.throttle=Fahrschalter
