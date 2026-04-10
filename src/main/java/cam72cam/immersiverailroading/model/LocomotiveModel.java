@@ -1,5 +1,6 @@
 package cam72cam.immersiverailroading.model;
 
+import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
@@ -22,6 +23,8 @@ import java.util.Set;
 public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends LocomotiveDefinition> extends FreightTankModel<ENTITY, DEFINITION> {
     private List<ModelComponent> components;
     private Bell bell;
+    private Compressor compressor;
+    private PartSound brakePressureSound;
 
     private ModelComponent frameFront;
     private ModelComponent frameRear;
@@ -45,6 +48,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         super(def);
         frontTrackers = new TrackFollowers(s -> new TrackFollower(s, frameFront, drivingWheelsFront != null ? drivingWheelsFront.wheels : null, true));
         rearTrackers = new TrackFollowers(s -> new TrackFollower(s, frameRear, drivingWheelsRear != null ? drivingWheelsRear.wheels : null, false));
+        
+        brakePressureSound = new PartSound(def.brakePressureSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
     }
 
     @Override
@@ -89,15 +94,15 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addGauge(provider, ModelComponentType.GAUGE_REVERSER_X, Readouts.REVERSER);
         addGauge(provider, ModelComponentType.GAUGE_TRAIN_BRAKE_X, Readouts.TRAIN_BRAKE);
         addGauge(provider, ModelComponentType.GAUGE_SANDING_X, Readouts.SANDING);
+        addGauge(provider, ModelComponentType.GAUGE_MAIN_AIR_RESERVOIR_X, Readouts.MAIN_AIR_RESERVOIR);
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);
+        addControl(provider, ModelComponentType.THROTTLE_DYN_BRAKE_X);
         addControl(provider, ModelComponentType.THROTTLE_X);
         addControl(provider, ModelComponentType.REVERSER_X);
         addControl(provider, ModelComponentType.TRAIN_BRAKE_X);
-        if (def.hasIndependentBrake()) {
-            addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
-        }
+        addControl(provider, ModelComponentType.SANDING_CONTROL_X);
     }
 
     @Override
@@ -136,6 +141,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         );
         rocking.include(components);
         bell = Bell.get(provider, rocking, def.bell);
+        compressor = Compressor.get(provider, rocking, def.compressor);
         
         sandParticle = VanillaParticle.get(provider, ModelComponentType.SAND_PARTICLE_X);
 
@@ -146,8 +152,10 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     protected void tick(ENTITY stock) {
         super.tick(stock);
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
- 
-        if (stock.sandingKey) {
+        compressor.effects(stock, stock.isLowAir() && stock.providesElectricalPower() ? 0.2f : 0);
+        brakePressureSound.effects(stock, stock.trainBrakeDelta ? 0.1f : 0);
+        
+        if (stock.isSanding) {
             sandParticle.tick(stock, VanillaParticles.SAND_DUST, 2);
         } 
     }
@@ -164,6 +172,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         }
 
         bell.removed(stock);
+        compressor.removed(stock);
+        brakePressureSound.removed(stock);
     }
 
     @Override

@@ -244,9 +244,9 @@ public class RealBB implements IBoundingBox {
 
             return Pair.of(actualYMin < max.y && actualYMax > min.y, actualYMax);
         }
-        
         return Pair.of(true, this.max.y);
     }
+
     @Override
     public boolean intersects(Vec3d min, Vec3d max) {
         return intersectsAt(min, max, true).getLeft();

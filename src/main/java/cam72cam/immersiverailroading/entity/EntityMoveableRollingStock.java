@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.Config.ImmersionConfig;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ChronoState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
@@ -20,6 +21,7 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
+import cam72cam.mod.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,13 +41,26 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     public List<SimulationState> states = new ArrayList<>();
     private RealBB boundingBox;
     private float[][] heightMapCache;
+    
     @TagSync
     @TagField("IND_BRAKE")
     private float independentBrake = 0;
+    
+    @TagSync
+    @TagField("HAND_BRAKE")
+    private float handBrake = 0;
 
     @TagSync
     @TagField("BRAKE_PRESSURE")
     private float trainBrakePressure = 0;
+
+    @TagSync
+    @TagField("BRAKE_CYLINDER_PRESSURE")
+    private float brakeCylinderPressure = 0;
+    private float cylinderPressureInternal = 0;
+    public boolean brakeCylinderDelta = false;
+    
+    private boolean brakesApply = false;
 
     @TagSync
     @TagField("SLIDING")
@@ -195,9 +210,13 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                     setIndependentBrake(getControlPosition(control));
                 }
                 break;
+            case HAND_BRAKE_X:
+                setHandBrake(getControlPosition(control));
+                break;
         }
+        super.onDrag(control, newValue);
     }
-
+    
     @Override
     public void onDragRelease(Control<?> control) {
         super.onDragRelease(control);
@@ -205,7 +224,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
             setControlPosition(control, 0.5f);
         }
     }
-
+    
     @Override
     protected float defaultControlPosition(Control<?> control) {
         switch (control.part.type) {
@@ -215,12 +234,27 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 return super.defaultControlPosition(control);
         }
     }
+    
+    @Override
+    public boolean playerCanDrag(Player player, Control<?> control) {
+        if (!super.playerCanDrag(player, control)) {
+            return false;
+        }
+        switch (control.part.type) {
+            case INDEPENDENT_BRAKE_X:
+            case HAND_BRAKE_X:
+                return player.hasPermission(Permissions.BRAKE_CONTROL);
+            default:
+                return true;
+        }
+    }
 
     @Override
     public void onTick() {
         super.onTick();
 
         if (getWorld().isServer) {
+            
             if (getDefinition().hasIndependentBrake()) {
                 for (Control<?> control : getDefinition().getModel().getControls()) {
                     if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
@@ -231,7 +265,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
             SimulationState state = getCurrentState();
             if (state != null) {
-                this.trainBrakePressure = state.brakePressure;
+                this.brakeCylinderPressure = state.config.brakeCylinderPressure;
+                this.trainBrakePressure = state.config.trainBrakePressure;
                 this.sliding = state.sliding;
 
                 if (state.collided > 0.1 && getTickCount() - lastCollision > 20) {
@@ -257,6 +292,9 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 
         if (getWorld().isClient) {
             getDefinition().getModel().onClientTick(this);
+            brakesApply();
+            if (getTickCount() % 10 == 0)
+                brakePressureDelta();
         }
 
         // Apply position onTick
@@ -431,6 +469,15 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 case INDEPENDENT_BRAKE_DOWN:
                     setIndependentBrake(getIndependentBrake() - independentBrakeNotch);
                     break;
+                case HAND_BRAKE_UP:
+                    setHandBrake(getHandBrake() + independentBrakeNotch);
+                    break;
+                case HAND_BRAKE_ZERO:
+                    setHandBrake(0);
+                    break;
+                case HAND_BRAKE_DOWN:
+                    setHandBrake(getHandBrake() - independentBrakeNotch);
+                    break;
                 default:
                     super.handleKeyPress(source, key, disableIndependentThrottle);
             }
@@ -438,18 +485,39 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
             super.handleKeyPress(source, key, disableIndependentThrottle);
         }
     }
-
+    
     public float getIndependentBrake() {
         return getDefinition().hasIndependentBrake() ? independentBrake : 0;
     }
+    
     public void setIndependentBrake(float newIndependentBrake) {
-        newIndependentBrake = MathUtil.clamp(newIndependentBrake, 0, 1);
+        setRealIndependentBrake(newIndependentBrake);
+    }
+    
+    private void setRealIndependentBrake(float newIndependentBrake) {
+        newIndependentBrake = Math.min(1, Math.max(0, newIndependentBrake));
         if (this.getIndependentBrake() != newIndependentBrake && getDefinition().hasIndependentBrake()) {
             if (getDefinition().isLinearBrakeControl()) {
                 setControlPositions(ModelComponentType.INDEPENDENT_BRAKE_X, newIndependentBrake);
             }
             independentBrake = newIndependentBrake;
         }
+    }
+
+    public float getHandBrake() {
+        return getDefinition().hasHandBrake() ? handBrake : 0;
+    }
+    
+    public void setHandBrake(float newHandBrake) {
+        newHandBrake = Math.min(1, Math.max(0, newHandBrake));
+        if (this.getHandBrake() != newHandBrake && getDefinition().hasHandBrake()) {
+            setControlPositions(ModelComponentType.HAND_BRAKE_X, newHandBrake);
+            handBrake = newHandBrake;
+        }
+    }
+    
+    public float getBrakeCylinderPressure() {
+        return brakeCylinderPressure;
     }
 
     public float getBrakePressure() {
@@ -461,13 +529,44 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         return getTickPos();
     }
 
-    /**
-     * This assumes that the brake system is designed to apply a percentage of the total adhesion
-     * That percentage was improved over time, with the materials used (friction coefficient) helping inform our guess
-     * Though, I'm going to limit it to 75% of the total possible adhesion
-     */
-    public double getBrakeSystemEfficiency() {
-        return getDefinition().getBrakeShoeFriction();
+    public float getBrakeSystemEfficiency() {
+        float value = getDefinition().getBrakeShoeFriction();
+        if (ImmersionConfig.brakeMode.equals(BrakeMode.REALISTIC)) {
+            switch (getDefinition().getBrakeMaterials()) {
+                case CAST_IRON:
+                    return value *= 0.5f + (float) Math.pow(0.45f, 0.03f * Math.abs(getCurrentSpeed().metric() - 0.7f));
+                case COMPOSITE:
+                    return value *= 0.2f + (float) Math.pow(0.95f, Math.pow(0.75f * Math.abs(getCurrentSpeed().metric()), 0.6f));
+                case WOOD:
+                    return value *= 0.2f + (float) Math.pow(0.6f, 0.05f * Math.abs(getCurrentSpeed().metric()));
+                default:
+                    return value;
+            }
+        }
+        return value;
+    }
+    
+    private void brakesApply() {
+        float pressure = getBrakeCylinderPressure();
+        if (!brakesApply && pressure > 0) {
+            brakesApply = true;
+        } else if (brakesApply && pressure == 0) {
+            brakesApply = false;
+        }
+    }
+    
+    public void brakePressureDelta() {
+        float cylinderPressure = getBrakeCylinderPressure();
+        if (cylinderPressure < this.cylinderPressureInternal) {
+            brakeCylinderDelta = true;
+        } else {
+            brakeCylinderDelta = false;
+        }
+        this.cylinderPressureInternal = cylinderPressure;
+    }
+    
+    public boolean getBrakesApply() {
+        return brakesApply;
     }
 
     public boolean isSliding() {
@@ -486,12 +585,30 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
                 }
             }
         }
+        double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakeCylinderPressure() * newtons;
         double independentNewtons = getDefinition().directFrictionCoefficient * getIndependentBrake() * newtons;
-        double pressureNewtons = getDefinition().directFrictionCoefficient * getBrakePressure() * newtons;
-        return retardedNewtons + independentNewtons + pressureNewtons;
+        double handbrakeNewtons = getDefinition().directFrictionCoefficient * getHandBrake() * newtons;
+        return retardedNewtons + pressureNewtons + independentNewtons + handbrakeNewtons;
     }
 
-    public double getBrakeAdhesionEfficiency() {
-        return 1;
+    public float adhesionCoefficient() {
+        float adhMult = 1;
+        World world = getWorld();
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos))
+                adhMult *= 0.7f;
+            else if (world.isSnowing(blockPos))
+                adhMult *= 0.35f;
+        }
+        return adhMult;
+    }
+
+    public float getBrakeAdhesionEfficiency() {
+        return adhesionCoefficient();
+    }
+    
+    public double getMagnetBrakeNewton() {
+        return getCurrentSpeed().metric() > 50 && getBrakeCylinderPressure() > 0.95 ? this.getDefinition().getMagnetBrakeNewton() : 0;
     }
 }

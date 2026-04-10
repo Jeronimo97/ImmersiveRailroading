@@ -289,9 +289,16 @@ ir_keys.zero_independent_brake=Direkte Bremse zurücksetzen
 ir_keys.decrease_independent_brake=Direkte Bremse reduzieren
 ir_keys.horn=Makrofon
 ir_keys.bell=Glocke
-ir_keys.dead_mans_switch=Todmannsschalter
+ir_keys.dead_mans_switch=Todmannschalter
 ir_keys.start_stop_engine=Motor an-/ausschalten
 ir_keys.config=Config
+ir_keys.sanding=Sanden
+ir_keys.increase_hand_brake=Handbremse erhöhen
+ir_keys.zero_hand_brake=Handbremse zurücksetzen
+ir_keys.decrease_hand_brake=Handbremse reduzieren
+ir_keys.increase_dynamic_brake=Dynamische Bremse erhöhen
+ir_keys.zero_dynamic_brake=Dynamische Bremse zurücksetzen
+ir_keys.decrease_dynamic_brake=Dynamische Bremse reduzieren
 
 # Default pack's train name. Translation is optional.
 immersiverailroading:entity.locomotives.a1_peppercorn=A1 Peppercorn

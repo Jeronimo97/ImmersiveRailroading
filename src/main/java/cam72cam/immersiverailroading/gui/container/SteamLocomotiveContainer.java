@@ -1,5 +1,6 @@
 package cam72cam.immersiverailroading.gui.container;
 
+import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.entity.LocomotiveSteam;
 import cam72cam.mod.fluid.Fluid;

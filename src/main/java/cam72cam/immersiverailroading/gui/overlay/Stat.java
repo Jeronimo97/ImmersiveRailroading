@@ -28,6 +28,7 @@ public enum Stat {
     UNITS_CARGO_FILL,
     CHEST_PRESSURE,
     MAX_CHEST_PRESSURE,
+    BRAKE_CYLINDER_PRESSURE,
     ;
 
     private static final String[] formats = {"%.0f", "%.1f", "%.2f", "%.3f", "%.4f", "%.5f"};
@@ -111,9 +112,14 @@ public enum Stat {
             case UNITS_TEMPERATURE:
                 return ConfigGraphics.temperatureUnit.toUnitString();
             case BRAKE_PRESSURE:
-                if (stock instanceof EntityMoveableRollingStock) {
-                    return String.format("%s", (int)(((EntityMoveableRollingStock) stock).getBrakePressure() * 100));
-                }
+                if (stock instanceof EntityMoveableRollingStock)
+                    return String.format("%s",
+                            (int) (((EntityMoveableRollingStock) stock).getBrakePressure() * 100));
+                return "";
+            case BRAKE_CYLINDER_PRESSURE:
+                if (stock instanceof EntityMoveableRollingStock)
+                    return String.format("%s",
+                            (int) (((EntityMoveableRollingStock) stock).getBrakeCylinderPressure() * 100));
                 return "";
             case MAX_BRAKE_PRESSURE:
                 return "100";

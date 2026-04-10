@@ -65,6 +65,9 @@ public class ConfigSound {
 			@Name("Collision")
 			@Range(min = 0, max = 100)
 			public static int collision = 100;
+	        @Name("Brake")
+	        @Range(min = 0, max = 100)
+	        public static int brake = 100;
 
 			public static float wheel() { return immersive_railroading / 100f * category / 100f * wheel / 100f; }
 			public static float sliding() { return immersive_railroading / 100f * category / 100f * sliding / 100f; }
@@ -72,6 +75,7 @@ public class ConfigSound {
 			public static float clack() { return immersive_railroading / 100f * category / 100f * clack / 100f; }
 			public static float couple() { return immersive_railroading / 100f * category / 100f * couple / 100f; }
 			public static float collision() { return immersive_railroading / 100f * category / 100f * collision / 100f; }
+			public static float brake() { return immersive_railroading / 100f * category / 100f * brake / 100f; }
 		}
 		@Name("Locomotive")
 		public static class Locomotive {
@@ -82,9 +86,13 @@ public class ConfigSound {
 			@Name("Bell")
 			@Range(min = 0, max = 100)
 			public static int bell = 100;
-
 			public static float bell() { return immersive_railroading / 100f * category / 100f * bell / 100f; }
 
+			@Name("Compressor")
+            @Range(min = 0, max = 100)
+			public static int compressor = 100;
+			public static float compressor() { return immersive_railroading / 100f * category / 100f * compressor / 100f; }
+			
 			@Name("Steam")
 			public static class Steam {
 				@Name("Category Steam Locomotive")

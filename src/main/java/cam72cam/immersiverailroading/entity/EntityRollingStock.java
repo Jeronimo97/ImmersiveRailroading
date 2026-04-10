@@ -341,7 +341,7 @@ public class EntityRollingStock extends CustomEntity implements ITickable, IClic
 	}
 
 	public boolean playerCanDrag(Player player, Control<?> control) {
-		return control.part.type != ModelComponentType.INDEPENDENT_BRAKE_X || player.hasPermission(Permissions.BRAKE_CONTROL);
+		return true;
 	}
 
 

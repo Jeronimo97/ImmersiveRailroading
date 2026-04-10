@@ -6,7 +6,6 @@ import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.Coupler
 import cam72cam.immersiverailroading.library.Permissions;
 import cam72cam.immersiverailroading.model.part.Door;
 import cam72cam.immersiverailroading.model.part.Seat;
-import cam72cam.immersiverailroading.render.ExpireableMap;
 import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.custom.IRidable;
@@ -23,9 +22,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class EntityRidableRollingStock extends EntityBuildableRollingStock implements IRidable {
-	public float getRidingSoundModifier() {
-		return getDefinition().dampeningAmount;
-	}
 
 	@TagField(value = "payingPassengerPositions", mapper = PassengerMapper.class)
 	private Map<UUID, Vec3d> payingPassengerPositions = new HashMap<>();
@@ -37,7 +33,9 @@ public abstract class EntityRidableRollingStock extends EntityBuildableRollingSt
 	// Hack to remount players if they were seated
 	private Map<UUID, Vec3d> remount = new HashMap<>();
 
-
+    public float getRidingSoundModifier() {
+        return getDefinition().dampeningAmount;
+    }
 
 	@Override
 	public ClickResult onClick(Player player, Player.Hand hand) {

@@ -13,7 +13,7 @@ public class BurnUtil {
 	}
 
 	public static int getBurnTime(Fluid fluid) {
-		if (ConfigBalance.dieselFuels.containsKey(fluid.ident)) {
+		if (ConfigBalance.dieselFuels.containsKey(fluid.ident) && fluid != null) {
 			return ConfigBalance.dieselFuels.get(fluid.ident);
 		}
 		return 0;

@@ -21,6 +21,7 @@ import cam72cam.mod.render.OptiFine;
 import cam72cam.mod.render.Particle.VanillaParticles;
 import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
+import cam72cam.mod.resource.Identifier;
 import util.Matrix4;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> extends OBJModel {
+
     private final DEFINITION def;
     public final List<ModelComponent> allComponents;
     protected ModelState base;
@@ -61,6 +63,10 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final float sndRand;
     private final PartSound wheel_sound;
     private final PartSound slidingSound;
+    private final PartSound brakeHighSpeedSound;
+    private final PartSound brakeLowSpeedSound;
+    private final PartSound brakeShoeSound;
+    private final PartSound brakePressureSound;
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
 
@@ -151,6 +157,10 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         sndRand = (float) Math.random() / 10;
         wheel_sound = new PartSound(new SoundDefinition(def.wheel_sound), true, 40, ConfigSound.SoundCategories.RollingStock::wheel);
         slidingSound = new PartSound(new SoundDefinition(def.sliding_sound), true, 40, ConfigSound.SoundCategories.RollingStock::sliding);
+        brakeHighSpeedSound = new PartSound(def.brakeHighSpeedSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
+        brakeLowSpeedSound = new PartSound(def.brakeLowSpeedSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
+        brakeShoeSound = new PartSound(def.brakeShoeSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
+        brakePressureSound = new PartSound(def.brakePressureSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         flangeSound = new FlangeSound(def.flange_sound, true, 40);
         sway = new SwaySimulator();
     }
@@ -204,16 +214,19 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         addControl(provider, ModelComponentType.COUPLER_ENGAGED_X);
 
+        if (def.hasHandBrake()) {
+            addControl(provider, ModelComponentType.HAND_BRAKE_X);
+            addGauge(provider, ModelComponentType.GAUGE_HAND_BRAKE_X, Readouts.HAND_BRAKE);
+        }
+        
         if (def.hasIndependentBrake()) {
             addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
-        }
-        addGauge(provider, ModelComponentType.BRAKE_PRESSURE_X, Readouts.BRAKE_PRESSURE);
-        addControl(provider, ModelComponentType.WINDOW_X);
-        addControl(provider, ModelComponentType.WIDGET_X);
-
-        if (def.hasIndependentBrake()) {
             addControl(provider, ModelComponentType.INDEPENDENT_BRAKE_X);
         }
+        addGauge(provider, ModelComponentType.GAUGE_BRAKE_PRESSURE_X, Readouts.BRAKE_PRESSURE);
+        addGauge(provider, ModelComponentType.GAUGE_BRAKE_CYLINDER_PRESSURE_X, Readouts.BRAKE_CYLINDER_PRESSURE);
+        addControl(provider, ModelComponentType.WINDOW_X);
+        addControl(provider, ModelComponentType.WIDGET_X);
 
         addDoor(provider);
         seats.addAll(Seat.get(provider, rocking));
@@ -265,9 +278,15 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
             pitch = (float) (pitch/stock.gauge.scale());
         }
         float volume = 0.01f + adjust;
-
-        wheel_sound.effects(stock, Math.abs(stock.getCurrentSpeed().metric()) > 1 ? volume : 0, pitch + sndRand);
+        float brakePressure = Math.max(stock.getBrakeCylinderPressure(), stock.getHandBrake()) * 5;
+        int v = stock.getDefinition().getSpeedBrakeSqueal();
+        
+        wheel_sound.effects(stock, speed > 1 ? volume : 0, pitch + sndRand);
         slidingSound.effects(stock, stock.sliding ? Math.min(1, adjust*4) : 0);
+        brakeHighSpeedSound.effects(stock, speed > 10 && brakePressure > 0 ? speed < 23 ? 0.77f * (speed - 10) / 10 * brakePressure : brakePressure : 0, speed * 0.0156f + 0.48f);
+        brakeLowSpeedSound.effects(stock, speed > 1 && speed <= v && brakePressure > 0 ? speed > v * 2 / 3 ? ((v / speed) - (speed / v)) * brakePressure : brakePressure : 0, 0.5f - speed / 100);
+        brakeShoeSound.effects(stock, stock.getBrakesApply());
+        brakePressureSound.effects(stock, stock.brakeCylinderDelta ? 0.1f : 0);        
         flangeSound.effects(stock);
         sway.effects(stock);
     }
@@ -286,6 +305,10 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         wheel_sound.removed(stock);
         slidingSound.removed(stock);
         flangeSound.removed(stock);
+        brakeHighSpeedSound.removed(stock);
+        brakeLowSpeedSound.removed(stock);
+        brakeShoeSound.removed(stock);
+        brakePressureSound.removed(stock);
         sway.removed(stock);
     }
 

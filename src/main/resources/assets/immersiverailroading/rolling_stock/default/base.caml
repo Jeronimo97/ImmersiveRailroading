@@ -30,7 +30,7 @@ pivot =                    # Required: Pivot points, legacy name "trucks"
     rear = null                 # Distance in meters (usually negative) from the center of the model to the rear pivot point
 
 # Sound settings
-sound_dampening_percentage = 0.75   # Optional: How much riding this piece of stock reduces sound volumes (percentage)
+sound_dampening_percentage = 0.5    # Optional: How much riding this piece of stock reduces sound volumes (percentage)
 scale_pitch = True                  # Optional: Scale any sounds emitted by this stock by the gauge it's placed on
 
 # Coupler Settings
@@ -90,6 +90,12 @@ sounds = # Optional
     flange = "immersiverailroading:sounds/default/flange.ogg"           # Optional: Played when flange rub occurs
     flange_min_yaw = 2.5                                                # Optional: TODO explain this
     collision = "immersiverailroading:sounds/default/collision.ogg"     # Optional: Played when a collision occurs
+    brake_noise_fast = "immersiverailroading:sounds/default/brake_noise_fast.ogg"
+    brake_noise_slow = "immersiverailroading:sounds/default/brake_noise_slow.ogg"
+    brake_apply =
+        start = "immersiverailroading:sounds/default/brake_apply.ogg"
+        looping = false
+    brake_pressure = "immersiverailroading:sounds/default/pressure.ogg"
 
 #    controls =              # Optional: Map of model controls to sound properties
 #        MODEL_TYPE_ID =         # Example: model group k4_REVERSER_1_Cube would map to REVERSER_1

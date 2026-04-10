@@ -45,7 +45,7 @@ public class GuiBuilder {
     private final String text;
     private final float textHeight;
 
-    private final Readouts readout;
+    private Readouts readout;
     private final String control;
     private final String setting;
     private final String texture_variant;

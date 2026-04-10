@@ -86,8 +86,12 @@ public abstract class EntityRollingStockDefinition {
     private int snowLayers;
     private float interiorLightLevel;
     private boolean hasIndependentBrake;
+    private boolean hasHandBrake;
+    private float handBrakeCoefficient;
     private boolean hasPressureBrake;
-    private final Map<ModelComponentType, List<ModelComponent>> renderComponents;
+    private boolean hasEpBrake;
+    private boolean hasSingleReleaseBrake;
+    private final EnumMap<ModelComponentType, List<ModelComponent>> renderComponents;
     private final List<ItemComponentType> itemComponents;
     private final Function<EntityBuildableRollingStock, float[][]> heightmap;
     private final Map<String, LightDefinition> lights = new HashMap<>();
@@ -100,8 +104,17 @@ public abstract class EntityRollingStockDefinition {
     private double swayMultiplier;
     private double tiltMultiplier;
     private float brakeCoefficient;
+    private PhysicalMaterials brakeMaterials;
     public double rollingResistanceCoefficient;
     public double directFrictionCoefficient;
+    private int magneticTrackBrake;
+    private int speedBrakeSqueal;
+    private float rigidWheelbase;
+    
+    public SoundDefinition brakeHighSpeedSound;
+    public SoundDefinition brakeLowSpeedSound;
+    public SoundDefinition brakeShoeSound;
+    public SoundDefinition brakePressureSound;
 
     public List<AnimationDefinition> animations;
     public Map<String, Float> cgDefaults;
@@ -316,7 +329,7 @@ public abstract class EntityRollingStockDefinition {
         this.model = createModel();
         this.itemGroups = model.groups.keySet().stream().filter(x -> !ModelComponentType.shouldRender(x)).collect(Collectors.toList());
 
-        this.renderComponents = new HashMap<>();
+        this.renderComponents = new EnumMap<>(ModelComponentType.class);
         for (ModelComponent component : model.allComponents) {
             renderComponents.computeIfAbsent(component.type, v -> new ArrayList<>())
                     .add(0, component);
@@ -468,9 +481,9 @@ public abstract class EntityRollingStockDefinition {
         bogeyFront = pivot.getValue("front").asFloat() * (float) internal_model_scale;
         bogeyRear = pivot.getValue("rear").asFloat() * (float) internal_model_scale;
 
-        dampeningAmount = data.getValue("sound_dampening_percentage").asFloat();
+        dampeningAmount = 1 - data.getValue("sound_dampening_percentage").asFloat();
         if (dampeningAmount < 0 || dampeningAmount > 1) {
-            dampeningAmount = 0.75f;
+            dampeningAmount = 0.5f;
         }
         scalePitch = data.getValue("scale_pitch").asBoolean();
 
@@ -484,21 +497,27 @@ public abstract class EntityRollingStockDefinition {
         weight = properties.getValue("weight_kg").asInteger() * internal_inv_scale;
         valveGear = ValveGearConfig.get(properties, "valve_gear");
         hasIndependentBrake = properties.getValue("independent_brake").asBoolean();
+        hasHandBrake = properties.getValue("hand_brake").asBoolean(true);
         hasPressureBrake = properties.getValue("pressure_brake").asBoolean();
+        hasEpBrake = properties.getValue("ep_brake").asBoolean(false);
+        hasSingleReleaseBrake = properties.getValue("single_release_brake").asBoolean(false);
+        magneticTrackBrake = properties.getValue("magnetic_brake_newton").asInteger(0);
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
+        speedBrakeSqueal = properties.getValue("speed_brake_squeal").asInteger(45);
+        rigidWheelbase = properties.getValue("rigid_wheelbase").asFloat(2.5f);
 
-        brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.CAST_IRON);
         try {
-            brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(PhysicalMaterials.valueOf(properties.getValue("brake_shoe_material").asString()));
+            brakeMaterials = PhysicalMaterials.valueOf(properties.getValue("brake_shoe_material").asString(PhysicalMaterials.CAST_IRON.toString()));
         } catch (Exception ex) {
             ImmersiveRailroading.warn("Invalid brake_shoe_material, possible values are: %s", Arrays.toString(PhysicalMaterials.values()));
         }
+        brakeCoefficient = PhysicalMaterials.STEEL.kineticFriction(brakeMaterials);
         brakeCoefficient = properties.getValue("brake_friction_coefficient").asFloat(brakeCoefficient);
         // https://en.wikipedia.org/wiki/Rolling_resistance#Rolling_resistance_coefficient_examples
         rollingResistanceCoefficient = properties.getValue("rolling_resistance_coefficient").asDouble();
         directFrictionCoefficient = properties.getValue("direct_friction_coefficient").asDouble();
-
+        handBrakeCoefficient = properties.getValue("handbrake_coefficient").asFloat(1);
         swayMultiplier = properties.getValue("swayMultiplier").asDouble();
         tiltMultiplier = properties.getValue("tiltMultiplier").asDouble();
 
@@ -521,6 +540,11 @@ public abstract class EntityRollingStockDefinition {
         flange_sound = sounds.getValue("flange").asIdentifier();
         flange_min_yaw = sounds.getValue("flange_min_yaw").asDouble();
         collision_sound = sounds.getValue("collision").asIdentifier();
+        brakeHighSpeedSound = SoundDefinition.getOrDefault(sounds, "brake_noise_fast");
+        brakeLowSpeedSound = SoundDefinition.getOrDefault(sounds, "brake_noise_slow");
+        brakeShoeSound = SoundDefinition.getOrDefault(sounds, "brake_apply");
+        brakePressureSound = SoundDefinition.getOrDefault(sounds, "brake_pressure");
+        
         DataBlock soundControls = sounds.getBlock("controls");
         if (soundControls != null) {
             soundControls.getBlockMap().forEach((key, block) -> controlSounds.put(key, new ControlSoundsDefinition(block)));
@@ -646,13 +670,24 @@ public abstract class EntityRollingStockDefinition {
         }
     }
 
-
     public boolean hasIndependentBrake() {
         return hasIndependentBrake;
     }
 
+    public boolean hasHandBrake() {
+        return hasHandBrake;
+    }
+
     public boolean hasPressureBrake() {
         return hasPressureBrake;
+    }
+    
+    public boolean hasEpBrake() {
+        return hasEpBrake;
+    }
+    
+    public boolean hasSingleRealseBrake() {
+        return hasSingleReleaseBrake;
     }
 
     private static class HeightMapData {
@@ -896,7 +931,7 @@ public abstract class EntityRollingStockDefinition {
     }
 
     protected GuiBuilder getDefaultOverlay(DataBlock data) throws IOException {
-        return hasIndependentBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
+        return hasIndependentBrake() || hasHandBrake() ? GuiBuilder.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/independent.caml")) : null;
     }
 
     public GuiBuilder getOverlay() {
@@ -915,11 +950,35 @@ public abstract class EntityRollingStockDefinition {
         return tiltMultiplier;
     }
 
-    public double getBrakeShoeFriction() {
+    public float getBrakeShoeFriction() {
         return brakeCoefficient;
     }
+    
     public int getSnowLayers() {
         return snowLayers;
     }
+    
+    public float getHandBrakeCoefficient() {
+        return handBrakeCoefficient;
+    }
 
+    public String getName() {
+        return name;
+    }
+    
+    public PhysicalMaterials getBrakeMaterials() {
+        return brakeMaterials;
+    }
+    
+    public int getMagnetBrakeNewton() {
+        return magneticTrackBrake;
+    }
+    
+    public int getSpeedBrakeSqueal() {
+        return speedBrakeSqueal;
+    }
+    
+    public float getRigidWheelbase() {
+        return rigidWheelbase;
+    }
 }

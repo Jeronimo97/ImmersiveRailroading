@@ -10,6 +10,7 @@ import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.model.LocomotiveModel;
 import cam72cam.immersiverailroading.model.StockModel;
+import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.resource.Identifier;
 
@@ -30,6 +31,10 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private double factorOfAdhesion;
     private boolean speedLimiter;
     protected double powerMultiplier;
+    private int brakeNotches;
+    private boolean hasBrakeNotches;
+    public SoundDefinition compressor;
+    private boolean hasCompressor;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -86,6 +91,13 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         toggleBell = properties.getValue("toggle_bell").asBoolean();
         isCog = properties.getValue("cog").asBoolean();
         speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
+        brakeNotches = properties.getValue("brake_notches").asInteger(25);
+        hasBrakeNotches = properties.getValue("has_brake_notches").asBoolean(false);
+        hasCompressor = properties.getValue("has_compressor").asBoolean(true);
+        
+        DataBlock sounds = data.getBlock("sounds");
+        bell = SoundDefinition.getOrDefault(sounds, "bell");
+        compressor = SoundDefinition.getOrDefault(sounds, "compressor");
     }
 
     protected boolean readCabCarFlag(DataBlock data) {
@@ -164,5 +176,21 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
 
     public double getPowerMultiplier() {
         return powerMultiplier;
+    }
+    
+    public String getWorks() {
+        return works;
+    }
+    
+    public int getBrakeNotches() {
+        return brakeNotches;
+    }
+    
+    public boolean hasBrakeNotches() {
+        return hasBrakeNotches;
+    }
+    
+    public boolean hasCompressor() {
+        return hasCompressor;
     }
 }
