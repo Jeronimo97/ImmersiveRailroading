@@ -13,4 +13,9 @@ public class CarPassenger extends CarFreight {
     public void onTick() {
         super.onTick();
     }
+    
+    @Override
+    public boolean hasElectricalPower() {
+        return getDefinition().hasBattery() || super.hasElectricalPower();
+    }
 }

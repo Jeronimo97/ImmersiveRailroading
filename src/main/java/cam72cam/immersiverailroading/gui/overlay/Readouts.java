@@ -2,6 +2,7 @@ package cam72cam.immersiverailroading.gui.overlay;
 
 import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
+import cam72cam.immersiverailroading.library.unit.PressureDisplayType;
 import cam72cam.immersiverailroading.model.LocomotiveModel;
 import cam72cam.immersiverailroading.model.StockModel;
 import cam72cam.immersiverailroading.util.MathUtil;
@@ -34,6 +35,10 @@ public enum Readouts {
     CYLINDER_DRAIN,
     CARGO_FILL,
     ENGINE_RPM,
+    CHEST_PRESSURE,
+    ROLLING_STOCK_PITCH,
+    TRACTIVE_EFFORT,
+    SANDING,
     ;
 
     public float getValue(EntityRollingStock stock) {
@@ -60,7 +65,7 @@ public enum Readouts {
                 return 0;
             case BOILER_PRESSURE:
                 return stock instanceof LocomotiveSteam ?
-                        ((LocomotiveSteam) stock).getBoilerPressure() / ((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge) : 0;
+                        ((LocomotiveSteam) stock).getBoilerPressureBar() / (((LocomotiveSteam) stock).getDefinition().getMaxPSI(stock.gauge) * PressureDisplayType.psiToBar) : 0;
             case THROTTLE:
                 return stock instanceof Locomotive ? ((Locomotive) stock).getThrottle() : 0;
             case REVERSER:
@@ -108,6 +113,17 @@ public enum Readouts {
                 return stock instanceof Freight ? ((Freight) stock).getPercentCargoFull() / 100f : 0;
             case ENGINE_RPM:
                 return stock instanceof LocomotiveDiesel ? ((LocomotiveDiesel) stock).getRelativeRPM() : 0;
+            case CHEST_PRESSURE:
+                return stock instanceof LocomotiveSteam
+                        ? ((LocomotiveSteam) stock).getChestPressurePercent()
+                        : 0;
+            case ROLLING_STOCK_PITCH:
+                return stock.getRotationPitch();
+            case TRACTIVE_EFFORT:
+                return stock instanceof Locomotive ?
+                        ((Locomotive) stock).getCurrentTractiveEffort() : 0;
+            case SANDING:
+                return stock instanceof Locomotive && ((Locomotive)stock).sandingKey ? 1 : 0;
         }
         return 0;
     }

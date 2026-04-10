@@ -6,11 +6,13 @@ import cam72cam.immersiverailroading.inventory.SlotFilter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.Permissions;
+import cam72cam.immersiverailroading.library.unit.PressureDisplayType;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
 import cam72cam.immersiverailroading.util.BurnUtil;
 import cam72cam.immersiverailroading.util.FluidQuantity;
 import cam72cam.immersiverailroading.util.LiquidUtil;
+import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
@@ -28,8 +30,13 @@ import java.util.stream.Collectors;
 public class LocomotiveSteam extends Locomotive {
 	// PSI
 	@TagSync
-	@TagField("boiler_psi")
-	private float boilerPressure = 0;
+	@TagField("boiler_bar")
+	private float boilerPressureBar = 0;
+	
+    // BAR
+    @TagSync
+    @TagField("chest_bar")
+    private float chestPressureBar = 0;
 
 	// Celsius
 	@TagSync
@@ -71,16 +78,56 @@ public class LocomotiveSteam extends Locomotive {
 	public float getBoilerTemperature() {
 		return boilerTemperature;
 	}
+	
 	private void setBoilerTemperature(float temp) {
 		boilerTemperature = temp;
 	}
 	
+	private float getMaxBoilerPSI( ) {
+	    return getDefinition().getMaxPSI(gauge);
+	}
+	
+	public float getBoilerPressureBar() {
+		return boilerPressureBar;
+	}
+	
 	public float getBoilerPressure() {
-		return boilerPressure;
+	    return boilerPressureBar * PressureDisplayType.BarToPsi / getMaxBoilerPSI();
 	}
-	private void setBoilerPressure(float temp) {
-		boilerPressure = temp;
+	
+	private void setBoilerPressureBar(float pressure) {
+	    boilerPressureBar = pressure;
 	}
+	
+	private void setChestPressureBar(float pressure) {
+	    chestPressureBar = pressure;
+	}
+	
+	public float getChestPressureBar() {
+        return chestPressureBar;
+    }
+
+    public float getChestPressurePsi() {
+        return chestPressureBar * PressureDisplayType.BarToPsi;
+    }
+
+    public float getMaxChestPressure() {
+        if (Config.isFuelRequired(gauge)) {
+            if (getBoilerPressureBar() > 0.5f)
+                return getBoilerPressureBar() - 0.5f;
+            else
+                return 0;
+        } else
+            return getMaxBoilerPSI() * PressureDisplayType.psiToBar - 0.5f;
+    }
+
+    public float getMaxChestPressurePsi() {
+        return getMaxChestPressure() * PressureDisplayType.BarToPsi;
+    }
+
+    public float getChestPressurePercent() {
+        return chestPressureBar / (getMaxBoilerPSI() * PressureDisplayType.psiToBar);
+    }
 
 	public Map<Integer, Integer> getBurnTime() {
 		return burnTime;
@@ -90,65 +137,68 @@ public class LocomotiveSteam extends Locomotive {
 	}
 
 	@Override
-	public double getAppliedTractiveEffort(Speed speed) {
-		if (getDefinition().isCabCar()) {
-			return 0;
-		}
+    public double getAppliedTractiveEffort(final Speed speed) {
+        LocomotiveSteamDefinition def = getDefinition();
+        if (def.isCabCar())
+            return 0;
+        
+        double reverser = getReverser();
+        if (reverser == 0 || getBoilerPressureBar() == 0 && ConfigBalance.FuelRequired)
+            return 0;
 
-		// This is terrible, but allows wheel slip for both legacy and updated hp vs te
-		double traction_N = Math.max(
-				this.getDefinition().getStartingTractionNewtons(gauge),
-				this.getDefinition().getWatt(gauge) * 0.5 / Math.max(Math.abs(speed.imperial()), 1.0)
-		);
-		if (Config.isFuelRequired(gauge)) {
-			traction_N = traction_N / this.getDefinition().getMaxPSI(gauge) * this.getBoilerPressure();
-		}
+        double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
+        double expansionPressure = getChestPressureBar() / expansion * (1 + Math.log(expansion));
+        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
+                * Math.abs(reverser) * (def.getCylinderCount() == 3 ? 1.15 : 1));
+        double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
 
-		// Cap the max "effective" reverser.  At high speeds having a fully open reverser just damages equipment
-		double reverser = getReverser();
-		double reverserCap = 0.25;
-		double maxReverser = 1 - Math.abs(getCurrentSpeed().metric()) / getDefinition().getMaxSpeed(gauge).metric() * reverserCap;
-
-		// This should probably be tuned...
-		double multiplier = Math.copySign(Math.abs(Math.pow(getThrottle() * Math.min(Math.abs(reverser), maxReverser), 3)), reverser);
-
-		return traction_N * multiplier;
-	}
-	
-	
+        if (pressurePercent <= 0)
+            return 0;
+        
+        return 50445 * def.getCylinderCount() * def.getPistonDiameter(gauge) * def.getPistonDiameter(gauge)
+                * def.getPistonStroke(gauge) * getMaxChestPressure() / def.getWheelDiameter(gauge)
+                * def.getPowerMultiplier() * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7))
+                * ConfigBalance.powerMultiplier * Math.copySign(1, reverser);
+    }
+    
 	@Override
 	public void onDissassemble() {
 		super.onDissassemble();
 		this.setBoilerTemperature(ambientTemperature());
-		this.setBoilerPressure(0);
+		this.setBoilerPressureBar(0);
 		
 		for (Integer slot : burnTime.keySet()) {
 			burnTime.put(slot, 0);
 		}
 	}
+    
+    private void chestPressureCalc() {
+        float pressure = getChestPressureBar();
+        float throttle = getThrottle();
+        if (throttle == 0 && pressure == 0)
+            return;
+        
+        double speedPercent = speedPercent(super.getCurrentSpeed());
+        pressure += 0.06f * Math.pow(Config.isFuelRequired(gauge) ? getBoilerPressureBar() : (getMaxBoilerPSI() * PressureDisplayType.psiToBar), 0.5f) * throttle * (1 + Math.max(speedPercent, 0.01f));
+
+        if (cylinderDrainsEnabled()) {
+            pressure -= 0.07f;
+        }
+        
+        pressure -= (0.015f * pressure
+                * Math.abs(getReverser()) * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge)) + 0.005f;
+
+        if (slipping) {
+            pressure -= Math.abs(0.3f * simulateWheelSlip());
+        }
+        
+        setChestPressureBar(MathUtil.clamp(pressure, 0, getMaxChestPressure()));
+    }
 
 	@Override
 	public double getTractiveEffortNewtons(Speed speed) {
 		return (getDefinition().cab_forward ? -1 : 1) * super.getTractiveEffortNewtons(speed);
 	}
-
-    @Override
-    public double slipCoefficient(Speed speed) {
-		double slipMult = super.slipCoefficient(speed);
-		// Wheel balance messing with friction
-		if (speed.metric() != 0) {
-			double balance = 1d/(Math.abs(speed.metric())+300) / (1d/300);
-			slipMult *= balance;
-		}
-
-		// TODO better approximation
-		// assume wheel diameter == 5m
-		double ratio = 0.35;
-		double hammer = ratio + (slipping ? 0 : Math.abs(Math.sin(Math.toRadians(360 * distanceTraveled / (5f * gauge.scale()/ 2))) * (1-ratio)));
-		slipMult *= hammer;
-
-		return slipMult;
-    }
 
     @Override
 	protected double simulateWheelSlip() {
@@ -217,14 +267,10 @@ public class LocomotiveSteam extends Locomotive {
 		}
 		
 		float boilerTemperature = getBoilerTemperature();
-		float boilerPressure = getBoilerPressure();
+		float boilerPressurePSI = getBoilerPressureBar() * PressureDisplayType.BarToPsi;
 		float waterLevelMB = this.getLiquidAmount();
 		int burningSlots = 0;
 		float waterUsed = 0;
-
-		if (boilerPressure < 0) {
-			boilerPressure = 0;
-		}
 		
 		if (this.getLiquidAmount() > 0) {
 			for (int slot = 2; slot < this.cargoItems.getSlotCount(); slot ++) {
@@ -276,26 +322,26 @@ public class LocomotiveSteam extends Locomotive {
 			boilerTemperature += energyKCalDeltaTick / ((waterLevelMB + 1) / 1000);
 		}
 		
+	    float maxPSI = getMaxBoilerPSI();
 		if (boilerTemperature > 100) {
 			// Assume linear relationship between temperature and pressure
 			float heatTransfer = boilerTemperature - 100;
-			boilerPressure += heatTransfer;
+			boilerPressurePSI += heatTransfer;
 
 			if (this.getPercentLiquidFull() > 25) {
 				boilerTemperature -= heatTransfer;
 			}
 			
 			// Pressure relief valve
-			int maxPSI = (int) this.getDefinition().getMaxPSI(gauge);
-			pressureValve = boilerPressure > maxPSI;
-			if (boilerPressure > maxPSI) {
-				waterUsed += boilerPressure - maxPSI;
-				boilerPressure = maxPSI;
+			pressureValve = boilerPressurePSI > maxPSI;
+			if (pressureValve) {
+				waterUsed += boilerPressurePSI - maxPSI;
+				boilerPressurePSI = maxPSI;
 			}
 		} else {
-			if (boilerPressure > 0) {
+			if (boilerPressurePSI > 0) {
 				// Reduce pressure by needed temperature
-				boilerPressure = Math.max(0, boilerPressure - (100 - boilerTemperature));
+			    boilerPressurePSI = Math.max(0, boilerPressurePSI - (100 - boilerTemperature));
 				boilerTemperature = 100;
 			}
 
@@ -303,7 +349,7 @@ public class LocomotiveSteam extends Locomotive {
 		}
 		
 		float throttle = getThrottle() * Math.abs(getReverser());
-		if (throttle != 0 && boilerPressure > 0) {
+		if (throttle != 0 && boilerPressurePSI > 0) {
 			double burnableSlots = this.cargoItems.getSlotCount()-2;
 			double maxKCalTick = burnableSlots * coalEnergyKCalTick();
 			double maxPressureTick = maxKCalTick / (this.getTankCapacity().MilliBuckets() / 1000);
@@ -311,38 +357,43 @@ public class LocomotiveSteam extends Locomotive {
 			
 			float delta = (float) (throttle * maxPressureTick);
 			
-			boilerPressure = Math.max(0, boilerPressure - delta);
+			boilerPressurePSI = MathUtil.clamp(boilerPressurePSI, 0, boilerPressurePSI - delta);
 			waterUsed += delta;
 		}
 		
 		if (waterUsed != 0) {
-			waterUsed *= Config.ConfigBalance.locoWaterUsage;
-			waterUsed += drainRemainder;
-			if (waterUsed > 0 && theTank.getContents() != null) {
-				theTank.drain(new FluidStack(theTank.getContents().getFluid(), (int) Math.floor(waterUsed)), false);
-				drainRemainder = waterUsed % 1;
-			}
-		}
+            waterUsed *= Config.ConfigBalance.locoWaterUsage;
+            waterUsed += drainRemainder;
+            if (waterUsed > 0 && theTank.getContents() != null) {
+                theTank.drain(new FluidStack(theTank.getContents().getFluid(), (int) Math.floor(waterUsed)), false);
+                drainRemainder = waterUsed % 1;
+            }
+        }
 		
-		setBoilerPressure(boilerPressure);
+		setBoilerPressureBar(boilerPressurePSI * PressureDisplayType.psiToBar);
 		setBoilerTemperature(Math.max(boilerTemperature, ambientTemperature()));
-
-		if (boilerPressure > this.getDefinition().getMaxPSI(gauge) * 1.1 || (boilerPressure > this.getDefinition().getMaxPSI(gauge) * 0.5 && boilerTemperature > 150)) {
+		
+		// EXPLOSION
+		if (boilerPressurePSI > maxPSI * 1.1 || (boilerPressurePSI > maxPSI * 0.5 && boilerTemperature > 150)) {
 			// 10% over max pressure OR
 			// Half max pressure and high boiler temperature
 			//EXPLODE
 
 			Vec3d pos = this.getPosition();
 			if (Config.ConfigDamage.explosionsEnabled) {
-				this.createExplosion(pos, boilerPressure/5, Config.ConfigDamage.explosionEnvDamageEnabled);
+				this.createExplosion(pos, boilerPressurePSI / 5, Config.ConfigDamage.explosionEnvDamageEnabled);
 			}
 			getWorld().removeEntity(this);
 		}
+        
+        if (boilerPressurePSI > 0 || !Config.isFuelRequired(gauge)) {
+            chestPressureCalc();
+        }
 	}
 
 	@Override
 	public boolean providesElectricalPower() {
-		return getBoilerPressure() > 0 || !ConfigBalance.FuelRequired;
+		return getBoilerPressureBar() > 0 || !ConfigBalance.FuelRequired;
 	}
 
     @Override
@@ -367,12 +418,13 @@ public class LocomotiveSteam extends Locomotive {
 		cargoItems.filter.clear();
 		this.cargoItems.filter.put(0, SlotFilter.FLUID_CONTAINER);
 		this.cargoItems.filter.put(1, SlotFilter.FLUID_CONTAINER);
+		this.cargoItems.filter.put(2, SlotFilter.SAND);
 		this.cargoItems.defaultFilter = SlotFilter.BURNABLE;
 	}
 
 	@Override
 	public int getInventorySize() {
-		return this.getDefinition().getInventorySize(gauge) + 2;
+		return this.getDefinition().getInventorySize(gauge) + 3;
 	}
 
 	@Override
@@ -433,11 +485,11 @@ public class LocomotiveSteam extends Locomotive {
 		// This could be optimized to once-per-tick, but I'm not sure that is necessary
 		List<Control<?>> drains = getDefinition().getModel().getControls().stream().filter(x -> x.part.type == ModelComponentType.CYLINDER_DRAIN_CONTROL_X).collect(Collectors.toList());
 		if (drains.isEmpty()) {
-			double csm = Math.abs(getCurrentSpeed().metric()) / gauge.scale();
+			double csm = Math.abs(super.getCurrentSpeed().metric()) / gauge.scale();
 			return csm < 20;
 		}
 
-		return drains.stream().anyMatch(c -> getControlPosition(c) == 1);
+		return drains.stream().anyMatch(c -> getControlPosition(c) > 0.9f);
 	}
 
 	public void setCylinderDrains(boolean enabled) {

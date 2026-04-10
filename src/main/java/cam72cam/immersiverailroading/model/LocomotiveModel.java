@@ -13,6 +13,7 @@ import cam72cam.immersiverailroading.model.part.TrackFollower.TrackFollowers;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
 import cam72cam.mod.entity.ItemEntity;
 import cam72cam.mod.math.Vec3d;
+import cam72cam.mod.render.Particle.VanillaParticles;
 import util.Matrix4;
 
 import java.util.List;
@@ -37,6 +38,8 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     protected ModelState rearLocomotiveRocking;
     private final TrackFollowers frontTrackers;
     private final TrackFollowers rearTrackers;
+    
+    private VanillaParticle sandParticle;
 
     public LocomotiveModel(DEFINITION def) throws Exception {
         super(def);
@@ -85,9 +88,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addGauge(provider, ModelComponentType.GAUGE_THROTTLE_X, Readouts.THROTTLE);
         addGauge(provider, ModelComponentType.GAUGE_REVERSER_X, Readouts.REVERSER);
         addGauge(provider, ModelComponentType.GAUGE_TRAIN_BRAKE_X, Readouts.TRAIN_BRAKE);
-        if (def.hasIndependentBrake()) {
-            addGauge(provider, ModelComponentType.GAUGE_INDEPENDENT_BRAKE_X, Readouts.INDEPENDENT_BRAKE);
-        }
+        addGauge(provider, ModelComponentType.GAUGE_SANDING_X, Readouts.SANDING);
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);
@@ -134,18 +135,21 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
                 new ModelComponentType[]{ModelComponentType.CAB}
         );
         rocking.include(components);
-        bell = Bell.get(
-                provider, rocking,
-                def.bell);
+        bell = Bell.get(provider, rocking, def.bell);
+        
+        sandParticle = VanillaParticle.get(provider, ModelComponentType.SAND_PARTICLE_X);
 
         super.parseComponents(provider, def);
     }
-
-    // TODO rename to tick
+    
     @Override
-    protected void effects(ENTITY stock) {
-        super.effects(stock);
+    protected void tick(ENTITY stock) {
+        super.tick(stock);
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
+ 
+        if (stock.sandingKey) {
+            sandParticle.tick(stock, VanillaParticles.SAND_DUST, 2);
+        } 
     }
 
     @Override

@@ -16,14 +16,16 @@ import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.item.ClickResult;
+import cam72cam.mod.item.ItemStack;
+import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
 
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.UUID;
-
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.*;
+import java.util.stream.Collectors;
 
 public abstract class Locomotive extends FreightTank {
 	private static final float trainBrakeNotch = 0.04f;
@@ -67,6 +69,13 @@ public abstract class Locomotive extends FreightTank {
 	private boolean cogging = false;
 
 	protected boolean slipping = false;
+	
+    @TagSync
+    @TagField("sanding")
+    public boolean sandingKey = false;
+    public boolean isSanding = false;
+    protected int sandTime = 0;
+    protected int sandingKeyTimeout = 0;
 
 	/*
 	 * 
@@ -209,8 +218,21 @@ public abstract class Locomotive extends FreightTank {
 				this.deadManChangeTimeout = 5;
 			}
 			break;
-			default:
-				super.handleKeyPress(source, key, disableIndependentThrottle);
+		case SANDING:
+            if (sandingKeyTimeout == 0) {
+                sandingKey = !sandingKey;
+                sandingKeyTimeout = 5;
+
+                List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                        .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                        .collect(Collectors.toList());
+                for (Control<?> sand : sanding) {
+                    setControlPosition(sand, sandingKey ? 1 : 0);
+                }
+            }
+            break;
+		default:
+			super.handleKeyPress(source, key, disableIndependentThrottle);
 		}
 	}
 
@@ -284,6 +306,7 @@ public abstract class Locomotive extends FreightTank {
 			case WHISTLE_CONTROL_X:
 			case HORN_CONTROL_X:
 			case ENGINE_START_X:
+            case SANDING_CONTROL_X:
 				return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
 			default:
 				return true;
@@ -373,87 +396,128 @@ public abstract class Locomotive extends FreightTank {
 			}
 		}
 
-		this.distanceTraveled += simulateWheelSlip();
-
 		if (getWorld().isServer) {
 			setControlPosition("REVERSERFORWARD", getReverser() > 0 ? 1 : 0);
 			setControlPosition("REVERSERNEUTRAL", getReverser() == 0 ? 1 : 0);
 			setControlPosition("REVERSERBACKWARD", getReverser() < 0 ? 1 : 0);
+			
+            if (getDefinition().isCog() && getTickCount() % 20 == 0) {
+                SimulationState state = getCurrentState();
+                if (state != null) {
+                    ITrack found = MovementTrack.findTrack(getWorld(), state.couplerPositionFront, state.yaw, gauge.value());
+                    if (found instanceof TileRailBase) {
+                        TileRailBase onTrack = (TileRailBase) found;
+                        cogging = onTrack.isCog();
+                    }
+                }
+            }
 		}
 
-		if (getWorld().isServer) {
-			if (getDefinition().isCog() && getTickCount() % 20 == 0) {
-				SimulationState state = getCurrentState();
-				if (state != null) {
-					ITrack found = MovementTrack.findTrack(getWorld(), state.couplerPositionFront, state.yaw, gauge.value());
-					if (found instanceof TileRailBase) {
-						TileRailBase onTrack = (TileRailBase) found;
-						cogging = onTrack.isCog();
-					}
-				}
-			}
-		}
+        this.distanceTraveled += simulateWheelSlip();
+		
+		if (sandingKeyTimeout > 0) {
+            sandingKeyTimeout--;
+        }
+        isSanding = false;
+        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
+        if (sandingKey) {
+            ItemStack stack = this.cargoItems.get(2);
+            if (sandTime == 0) {
+                stack.setCount(stack.getCount() - 1);
+                sandTime = maxSandTime();
+            }
+            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
+                sandTime--;
+                isSanding = true;
+            }
+        }
 	}
-
+    
+    public float getSandTimePercentage() {
+        return (float) sandTime / maxSandTime();
+    }
+    
+    private int maxSandTime() {
+        return 1000 * Config.ConfigBalance.SandEfficiency;
+    }
+    
+    public boolean isSanding() {
+        List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
+                .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
+                .collect(Collectors.toList());
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+    }
+    
+    public void setSanding(boolean sanding) {
+        sandingKey = sanding;
+    }
+	
+	@Override
+    public Speed getCurrentSpeed() {
+        return slipping ? Speed.fromMinecraft((super.getCurrentSpeed().minecraft()
+                + simulateWheelSlip())) : super.getCurrentSpeed();
+    }
+	
+	public double speedPercent(Speed speed) {
+        return Math.abs(speed.metric() / getDefinition().getMaxSpeed(gauge).metric());
+    }
+	
 	/** Force applied between the wheels and the rails */
 	public abstract double getAppliedTractiveEffort(Speed speed);
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
-	protected final double getStaticTractiveEffort(Speed speed) {
-		return (Config.ConfigBalance.FuelRequired ? this.getWeight() : this.getMaxWeight()) // KG
-				* 9.8 // M/S/S
-				* (slipping ? STEEL.kineticFriction(STEEL)/2 : STEEL.staticFriction(STEEL))
-				* slipCoefficient(speed)
-				* (4/getDefinition().factorOfAdhesion()) // Physics are tuned to an adhesion factor of 4
-				* Config.ConfigBalance.tractionMultiplier;
-	}
+	protected final double getStaticTractiveEffort() {        
+        return getDefinition().getStartingTractionNewtons(gauge)
+                * Config.ConfigBalance.tractionMultiplier * adhesionCoefficient();
+    }
 	
-	protected double simulateWheelSlip() {
-		if (cogging) {
-			return 0;
-		}
+	public float adhesionCoefficient() {
+        float adhMult = 1;
+        World world = getWorld();
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos))
+                adhMult *= 0.7f;
+            if (world.isSnowing(blockPos))
+                adhMult *= 0.35f;
+        }
+        if (isSanding)
+            adhMult *= 3;
+        if (slipping)
+            adhMult *= 0.5f;
+        return adhMult;
+    }
+	
+    protected double simulateWheelSlip() {
+        double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
+        double staticTractiveEffort = getStaticTractiveEffort();
+        slipping = appliedTractiveEffort > staticTractiveEffort;
 
-		double adhesionFactor = Math.abs(getAppliedTractiveEffort(getCurrentSpeed())) /
-								getStaticTractiveEffort(getCurrentSpeed());
-		slipping = adhesionFactor > 1;
-		if (slipping) {
-			return Math.copySign((adhesionFactor-1)/5, getReverser());
-		}
-		return 0;
-	}
+        if (cogging || !slipping)
+            return 0;
 
-	public double getTractiveEffortNewtons(Speed speed) {
-		if (!this.isBuilt()) {
-			return 0;
-		}
+        double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
+        return Math.copySign((adhesionFactor) / 5, getReverser());
+    }
 
-		if (Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()) {
-			return 0;
-		}
+    public double getTractiveEffortNewtons(Speed speed) {
+        if (!this.isBuilt()
+                || Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()
+                        && this.getDefinition().isSpeedLimiter())
+            return 0;
 
-		double appliedTractiveEffort = getAppliedTractiveEffort(speed);
+        double appliedTractiveEffort = getAppliedTractiveEffort(speed);
 
-		if (!cogging && Math.abs(appliedTractiveEffort) > 0) {
-			double staticTractiveEffort = getStaticTractiveEffort(speed);
-
-			if (Math.abs(appliedTractiveEffort) > staticTractiveEffort) {
-				// This is a guess, but seems to be fairly accurate
-
-				// Reduce tractive effort to max static translated into kinetic
-				double tractiveEffortNewtons = staticTractiveEffort /
-						STEEL.staticFriction(STEEL) *
-						STEEL.kineticFriction(STEEL);
-
-				// How badly tractive effort is overwhelming static effort
-				tractiveEffortNewtons *= staticTractiveEffort / tractiveEffortNewtons;
-
-				return Math.copySign(tractiveEffortNewtons, appliedTractiveEffort);
-			}
-		}
-
-		return appliedTractiveEffort;
-	}
-
+        if (slipping) {
+            appliedTractiveEffort *= 0.5;
+        }
+        return appliedTractiveEffort;
+    }
+    
+    public float getCurrentTractiveEffort() {
+        return (float) (getAppliedTractiveEffort(getCurrentSpeed()) / getStaticTractiveEffort());
+    }
+    
 	@Override
 	public double getBrakeSystemEfficiency() {
 		if (cogging) {
@@ -500,9 +564,10 @@ public abstract class Locomotive extends FreightTank {
 			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrake())/2);
 		}
 	}
+	
 	public float getThrottleDelta() {
-		return 0.04F;
-	};
+        return 0.04f;
+    }
 
 	public float getReverser() {
 		return reverser;
@@ -605,26 +670,12 @@ public abstract class Locomotive extends FreightTank {
 		super.setIndependentBrake(newIndependentBrake);
 	}
 
-
 	public int getBell() {
 		return bellTime;
 	}
+	
 	public void setBell(int newBell) {
 		this.bellTime = newBell;
-	}
-
-	public double slipCoefficient(Speed speed) {
-		double slipMult = 0.5; //TODO Assumes dirty rails.  Set this back to 1.0 and adjust physics coefficients
-		World world = getWorld();
-		if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
-			if (world.isRaining(getBlockPosition())) {
-				slipMult *= 0.6;
-			}
-			if (world.isSnowing(getBlockPosition())) {
-				slipMult *= 0.4;
-			}
-		}
-		return slipMult;
 	}
 
 	public abstract boolean providesElectricalPower();

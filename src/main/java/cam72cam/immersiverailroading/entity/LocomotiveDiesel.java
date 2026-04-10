@@ -1,6 +1,7 @@
 package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.Config;
+import cam72cam.immersiverailroading.inventory.SlotFilter;
 import cam72cam.immersiverailroading.library.GuiTypes;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
@@ -42,11 +43,25 @@ public class LocomotiveDiesel extends Locomotive {
 	public LocomotiveDiesel() {
 		engineTemperature = ambientTemperature();
 	}
+	
+    @Override
+    public int getInventorySize() {
+        return 3;
+    }
 
 	@Override
 	public int getInventoryWidth() {
-		return getDefinition().isCabCar() ? 0 : 2;
+		return getDefinition().isCabCar() ? 0 : 3;
 	}
+	
+	@Override
+    protected void initContainerFilter() {
+        cargoItems.filter.clear();
+        cargoItems.filter.put(0, SlotFilter.FLUID_CONTAINER);
+        cargoItems.filter.put(1, SlotFilter.FLUID_CONTAINER);
+        cargoItems.filter.put(2, SlotFilter.SAND);
+        cargoItems.defaultFilter = SlotFilter.NONE;
+    }
 
 	public float getEngineTemperature() {
 		return engineTemperature;
@@ -158,24 +173,22 @@ public class LocomotiveDiesel extends Locomotive {
 	}
 
 	@Override
-	public double getAppliedTractiveEffort(Speed speed) {
-		if (isRunning() && (getEngineTemperature() > 75 || !Config.isFuelRequired(gauge))) {
-			double maxPower_W = this.getDefinition().getWatt(gauge);
-			double efficiency = 0.82; // Similar to a *lot* of imperial references
-			double speed_M_S = (Math.abs(speed.metric())/3.6);
-			double maxPowerAtSpeed = maxPower_W * efficiency / Math.max(0.001, speed_M_S);
-			double applied = maxPowerAtSpeed * relativeRPM * getReverser();
-			if (getDefinition().hasDynamicTractionControl) {
-				double max = getStaticTractiveEffort(speed);
-				if (Math.abs(applied) > max) {
-					return Math.copySign(max, applied) * 0.95;
-				}
-
-			}
-			return applied;
-		}
-		return 0;
-	}
+    public double getAppliedTractiveEffort(Speed speed) {
+        if (isRunning() && (getEngineTemperature() > 75 || !Config.isFuelRequired(gauge))) {
+            double maxPower_W = this.getDefinition().getWatt(gauge);
+            double efficiency = 0.82; // Similar to a *lot* of imperial references
+            double maxPowerAtSpeed = maxPower_W * efficiency / Math.max(1, Math.abs(speed.metersPerSecond()));
+            double applied = maxPowerAtSpeed * relativeRPM * getReverser();
+            if (getDefinition().hasDynamicTractionControl) {
+                double max = getStaticTractiveEffort();
+                if (Math.abs(applied) > max) {
+                    return Math.copySign(max, applied) * 0.95;
+                }
+            }
+            return applied;
+        }
+        return 0;
+    }
 
 	@Override
 	public void onTick() {

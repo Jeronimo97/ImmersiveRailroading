@@ -9,6 +9,7 @@ import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
+import cam72cam.mod.render.Particle.VanillaParticles;
 
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
     private ModelComponent firebox;
 
     private final PartSound idleSounds;
+    
+    private VanillaParticle fireParticle;
 
     public SteamLocomotiveModel(LocomotiveSteamDefinition def) throws Exception {
         super(def);
@@ -33,6 +36,7 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         if (!def.isCabCar()) {
             addGauge(provider, ModelComponentType.GAUGE_TEMPERATURE_X, Readouts.TEMPERATURE);
             addGauge(provider, ModelComponentType.GAUGE_BOILER_PRESSURE_X, Readouts.BOILER_PRESSURE);
+            addGauge(provider, ModelComponentType.GAUGE_CHEST_PRESSURE_X, Readouts.CHEST_PRESSURE);
         }
 
         addControl(provider, ModelComponentType.WHISTLE_CONTROL_X);
@@ -62,6 +66,8 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
 
         chimney = SteamChimney.get(provider);
         pressureValve = PressureValve.get(provider, def.pressure);
+        
+        fireParticle = VanillaParticle.get(provider, ModelComponentType.FIRE_PARTICLE_X);
 
         super.parseComponents(provider, def);
     }
@@ -72,8 +78,8 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
     }
 
     @Override
-    protected void effects(LocomotiveSteam stock) {
-        super.effects(stock);
+    protected void tick(LocomotiveSteam stock) {
+        super.tick(stock);
 
         if (drivingWheels != null) {
             drivingWheels.effects(stock);
@@ -90,9 +96,13 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
                     (drivingWheelsRear != null && drivingWheelsRear.isEndStroke(stock));
             chimney.effects(stock, isEndStroke);
         }
-        pressureValve.effects(stock, stock.isOverpressure() && Config.isFuelRequired(stock.gauge));
+        pressureValve.effects(stock, stock.isOverpressure());
         idleSounds.effects(stock, stock.getBoilerTemperature() > stock.ambientTemperature() + 5 ? 0.1f : 0);
-        whistle.effects(stock, stock.getBoilerPressure() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
+        whistle.effects(stock, stock.getBoilerPressureBar() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
+        
+        if(stock.getBoilerTemperature() > stock.ambientTemperature()) {
+            fireParticle.tick(stock, VanillaParticles.FLAME, 5);
+        }
     }
 
     @Override
