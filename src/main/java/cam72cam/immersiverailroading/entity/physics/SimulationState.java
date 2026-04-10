@@ -501,7 +501,7 @@ public class SimulationState {
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
 
-        if (ConfigDebug.debugLogging) {
+        if (ConfigDebug.debugLog) {
             System.out.println("Rolling Resistance: " + rollingResistanceNewtons);
             System.out.println("Block Resistance: " + blockResistanceNewtons);
             System.out.println("Brake Cylinder: " + brakeCylinderNewtons);
