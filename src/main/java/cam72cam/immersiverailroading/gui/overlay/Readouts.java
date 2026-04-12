@@ -38,6 +38,7 @@ public enum Readouts {
     DYNAMIC_BRAKE,
     MAIN_AIR_RESERVOIR,
     MAGNETIC_BRAKE,
+    SANDING
     ;
 
     public float getValue(EntityRollingStock stock) {
@@ -129,6 +130,8 @@ public enum Readouts {
                 return stock instanceof EntityMoveableRollingStock ?
                         ((EntityMoveableRollingStock) stock).getMagnetBrakeNewton() > 0 ?
                                 1 : 0 : 0;
+            case SANDING:
+                return stock instanceof Locomotive && ((Locomotive)stock).isSanding ? 1 : 0;
         }
         return 0;
     }

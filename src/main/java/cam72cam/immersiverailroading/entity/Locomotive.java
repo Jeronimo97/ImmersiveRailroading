@@ -85,10 +85,10 @@ public abstract class Locomotive extends FreightTank{
 	
     @TagSync
     @TagField("sanding")
-    public boolean sandingKey = false;
     public boolean isSanding = false;
-    protected int sandTime = 0;
-    protected int sandingKeyTimeout = 0;
+    private boolean sandingKey = false;
+    private int sandingKeyTimeout = 0;
+    private int sandTime = 0;
 
 	/*
 	 * 
@@ -244,7 +244,7 @@ public abstract class Locomotive extends FreightTank{
             if (sandingKeyTimeout == 0) {
                 sandingKey = !sandingKey;
                 sandingKeyTimeout = 5;
-
+                
                 List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                         .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                         .collect(Collectors.toList());
@@ -420,29 +420,10 @@ public abstract class Locomotive extends FreightTank{
 				}
 			}
 			
-			if (sandingKeyTimeout > 0) {
-	            sandingKeyTimeout--;
-	        }
-	        isSanding = false;
-	        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
-	        if (sandingKey) {
-	            ItemStack stack = this.cargoItems.get(2);
-	            if (sandTime == 0) {
-	                stack.setCount(stack.getCount() - 1);
-	                sandTime = 60 * Config.ConfigBalance.SandEfficiency;
-	            }
-	            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
-	                sandTime--;
-	                isSanding = true;
-	            }
-	        }
-		}
-
-		if (getWorld().isServer) {
-			setControlPosition("REVERSERFORWARD", getReverser() > 0 ? 1 : 0);
-			setControlPosition("REVERSERNEUTRAL", getReverser() == 0 ? 1 : 0);
-			setControlPosition("REVERSERBACKWARD", getReverser() < 0 ? 1 : 0);
-			
+            setControlPosition("REVERSERFORWARD", getReverser() > 0 ? 1 : 0);
+            setControlPosition("REVERSERNEUTRAL", getReverser() == 0 ? 1 : 0);
+            setControlPosition("REVERSERBACKWARD", getReverser() < 0 ? 1 : 0);
+            
             if (getDefinition().isCog() && getTickCount() % 20 == 0) {
                 SimulationState state = getCurrentState();
                 if (state != null) {
@@ -452,35 +433,37 @@ public abstract class Locomotive extends FreightTank{
                         cogging = onTrack.isCog();
                     }
                 }
-            }			
-			
-	        // Compressor
-	        if(providesElectricalPower()) {
-	            raiseMainAirReservoir();
-	        }
+            }           
+            
+            // Compressor
+            if (providesElectricalPower()) {
+                raiseMainAirReservoir();
+            }
 		}
 
         this.distanceTraveled += simulateWheelSlip();
-		
-		if (sandingKeyTimeout > 0) {
+        
+        isSanding = (sandingKey || isSandingWidgetActive()) && !(this instanceof HandCar);
+        if (sandingKeyTimeout > 0) {
             sandingKeyTimeout--;
         }
-        isSanding = false;
-        sandingKey = (sandingKey || isSanding()) && !(this instanceof HandCar);
-        if (sandingKey) {
-            ItemStack stack = this.cargoItems.get(2);
-            if (sandTime == 0) {
-                stack.setCount(stack.getCount() - 1);
-                sandTime = maxSandTime();
+        
+        if (getWorld().isClient) {
+            if (isSanding) {
+                ItemStack stack = this.cargoItems.get(2);
+                if (sandTime == 0) {
+                    stack.setCount(stack.getCount() - 1);
+                    sandTime = maxSandTime();
+                }
+                if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
+                    sandTime--;
+                }
             }
-            if (stack.getCount() > 0 || !Config.isFuelRequired(gauge)) {
-                sandTime--;
-                isSanding = true;
+            
+            if (getTickCount() % 10 == 0) {
+                trainBrakeDelta();
             }
         }
-        
-        if (getWorld().isClient && getTickCount() % 10 == 0)
-            trainBrakeDelta();
 	}
     
     public float getSandTimePercentage() {
@@ -786,14 +769,14 @@ public abstract class Locomotive extends FreightTank{
 		return internal != null ? getWorld().getTemperature(getBlockPosition()) : 0f;
 	}
 	
-	public boolean isSanding() {
+    public boolean isSandingWidgetActive() {
         List<Control<?>> sanding = getDefinition().getModel().getControls().stream()
                 .filter(x -> x.part.type == ModelComponentType.SANDING_CONTROL_X)
                 .collect(Collectors.toList());
-        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5);
+        return sanding.stream().anyMatch(c -> getControlPosition(c) > 0.5f);
     }
 
     public void setSanding(boolean sanding) {
-        sandingKey = sanding;
+        isSanding = sanding;
     }
 }
