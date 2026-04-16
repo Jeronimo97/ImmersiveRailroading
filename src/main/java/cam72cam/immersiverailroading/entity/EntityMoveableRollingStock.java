@@ -2,11 +2,13 @@ package cam72cam.immersiverailroading.entity;
 
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.Config.ImmersionConfig;
+import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ChronoState;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.library.Augment;
 import cam72cam.immersiverailroading.library.BrakeMode;
+import cam72cam.immersiverailroading.library.ChatText;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.Permissions;
@@ -18,8 +20,10 @@ import cam72cam.immersiverailroading.util.RealBB;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
+import cam72cam.mod.entity.Player.Hand;
 import cam72cam.mod.entity.custom.ICollision;
 import cam72cam.mod.entity.sync.TagSync;
+import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
@@ -59,6 +63,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     @TagSync
     @TagField("BRAKE_PRESSURE")
     private float trainBrakePressure = 0;
+    public boolean locked = true;
 
     @TagSync
     @TagField("BRAKE_CYLINDER_PRESSURE")
@@ -205,6 +210,20 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         }
         // Skew
         return TickPos.skew(current, next, tick);
+    }
+    
+    @Override
+    public ClickResult onClick(Player player, Hand hand) {
+        if (player.getHeldItem(Hand.PRIMARY).is(IRItems.ITEM_SWITCH_KEY) && player.hasPermission(Permissions.COUPLING_HOOK)) {
+            if (locked) {
+                locked = false;
+            } else {
+                locked = true;
+            }
+            player.sendMessage(ChatText.LOCKED_BRAKE.getMessage(locked));
+            return ClickResult.ACCEPTED;
+        }
+        return super.onClick(player, hand);
     }
 
     @Override

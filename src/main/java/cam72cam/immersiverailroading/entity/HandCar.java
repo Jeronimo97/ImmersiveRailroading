@@ -53,7 +53,7 @@ public class HandCar extends Locomotive {
 			return;
 		}
 
-		if (getTrainBrake() > 0) {
+		if (getTrainBrakePos() > 0) {
 			this.setTrainBrake(0);
 		}
 

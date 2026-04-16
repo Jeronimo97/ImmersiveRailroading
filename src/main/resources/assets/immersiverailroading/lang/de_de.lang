@@ -40,7 +40,24 @@ chat.immersiverailroading:augment.set=Erweitung reagiert nun nur noch auf %s
 chat.immersiverailroading:augment.reset=Erweiterung reagiert nun auf alle Fahrzeuge
 chat.immersiverailroading:misc.wood_planks=Holzbretter
 chat.immersiverailroading:build.invalid_block=Ungültiger Block: x=%s y=%s z=%s
-chat.immersiverailroading:brush.no.variants=
+chat.immersiverailroading:radio.link=Lokomotive mit Chip verbunden
+chat.immersiverailroading:radio.relink=Neue Lokomotive mit Chip verbunden
+chat.immersiverailroading:radio.unlink=Lokomotive von Chip getrennt
+chat.immersiverailroading:radio.nolink=Chip hat keine Verbindung
+chat.immersiverailroading:radio.cant_link=Lokomotive %s hat kein Fernsteuerungsausstattung
+chat.immersiverailroading:brush.no.variants=Dieses Fahrzeug hat keine Lackierungsvarianten.
+chat.immersiverailroading:brush.next_debug=Die Lackierung dieses Fahrzeugs wurde mit %s auf %s eingestellt.
+chat.immersiverailroading:brush.mode.set=Modus geändert zu: %s
+chat.immersiverailroading:brush.mode.gui=Auswahlmenü
+chat.immersiverailroading:brush.mode.random_single=Zufällig (Fahrzeug)
+chat.immersiverailroading:brush.mode.random_coupled=Zufällig (Zug)
+chat.immersiverailroading:switch_state.unlocked=Weiche entsperrt
+chat.immersiverailroading:switch_state.locked=Weiche nach %s gesperrt
+chat.immersiverailroading:switch_state.reset=Die zuletzt gesperrte Weiche wurde per Fernzugriff entsperrt!
+chat.immersiverailroading:switch_state.cant_reset=Sie haben mit diesem Schlüssel keine Weiche gesperrt!
+chat.immersiverailroading:switch_state.already_reset=Die zuletzt gesperrte Weiche ist bereits entsperrt!
+chat.immersiverailroading:multiblock.select=Ausgewählter Multiblock: %s
+chat.immersiverailroading:brake.locked=Bremse abgesperrt: %s
 
 gui.immersiverailroading:label.brake=Bremse
 gui.immersiverailroading:label.throttle=Fahrschalter

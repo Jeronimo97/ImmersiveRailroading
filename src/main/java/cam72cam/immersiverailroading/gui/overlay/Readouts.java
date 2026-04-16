@@ -4,6 +4,7 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
 import cam72cam.immersiverailroading.model.LocomotiveModel;
 import cam72cam.immersiverailroading.model.StockModel;
+import cam72cam.immersiverailroading.util.MathUtil;
 
 public enum Readouts {
     LIQUID,
@@ -71,7 +72,7 @@ public enum Readouts {
             case REVERSER:
                 return stock instanceof Locomotive ? (((Locomotive) stock).getReverser() + 1) / 2 : 0;
             case TRAIN_BRAKE:
-                return stock instanceof Locomotive ? ((Locomotive) stock).getTrainBrake() : 0;
+                return stock instanceof Locomotive ? ((Locomotive) stock).getTrainBrakePos() : 0;
             case TRAIN_BRAKE_LEVER:
                 return stock.getDefinition().isLinearBrakeControl() ? TRAIN_BRAKE.getValue(stock) : lever;
             case INDEPENDENT_BRAKE:
@@ -171,7 +172,7 @@ public enum Readouts {
                 } else {
                     if (stock instanceof Locomotive) {
                         // Logic duplicated in Locomotive#onTick
-                        ((Locomotive) stock).setTrainBrake(Math.max(0, Math.min(1, ((Locomotive) stock).getTrainBrake() + (value - 0.5f) / 80)));
+                        ((Locomotive) stock).setTrainBrake(MathUtil.clamp(((Locomotive) stock).getTrainBrakePos() + (value - 0.5f) / 80, 0, 1));
                     }
                 }
                 break;

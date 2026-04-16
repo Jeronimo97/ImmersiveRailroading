@@ -496,8 +496,8 @@ public class Consist {
                     float desiredBrakePressure = (float) linked.stream()
                             .filter(s -> s.config.desiredBrakePressure != null)
                             .mapToDouble(s -> s.config.desiredBrakePressure)
-                            .max().orElse(1);
-
+                            .max().orElse(0);
+                    
                     boolean needsBrakeEqualization = linked.stream().anyMatch(s -> s.config.hasPressureBrake && Math.abs(s.config.trainBrakePressure - desiredBrakePressure) > 0.0001);
                     
                     if (needsBrakeEqualization) {

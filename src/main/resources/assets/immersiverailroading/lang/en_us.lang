@@ -62,6 +62,7 @@ chat.immersiverailroading:switch_state.locked=Switch locked to %s
 chat.immersiverailroading:switch_state.reset=The last-locked switch has been wirelessly unlocked!
 chat.immersiverailroading:switch_state.cant_reset=You haven't locked any switches with this key!
 chat.immersiverailroading:switch_state.already_reset=The last-locked switch is already unlocked!
+chat.immersiverailroading:brake.locked=Brake locked: %s
 chat.immersiverailroading:multiblock.select=Select multiblock: %s
 
 gui.immersiverailroading:label.brake=Brake

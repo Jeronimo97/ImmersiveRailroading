@@ -150,11 +150,12 @@ public class SimulationState {
             this.massKg = stock.getWeight();
 
             if (stock instanceof Locomotive) {
+                trainBrakePosition = ((Locomotive) stock).getTrainBrakePos();
                 Locomotive locomotive = (Locomotive) stock;
                 tractiveEffortNewtons = locomotive::getTractiveEffortNewtons;
                 tractiveEffortFactors = locomotive.getThrottle() + (locomotive.getReverser() * 10);
                 desiredBrakePressure = Math.min(locomotive.getMainAirReservoir() * 2 ,Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
-                        1 - locomotive.getTrainBrake() : locomotive.getTrainBrake() == 1 ? 0 : 1 - 0.31 * (double)locomotive.getTrainBrake());
+                        1 - trainBrakePosition : trainBrakePosition == 1 ? 0 : 1 - 0.31 * (double)trainBrakePosition);
                 isSanding = locomotive.isSanding;
             } else {
                 tractiveEffortNewtons = speed -> 0d;
@@ -177,8 +178,6 @@ public class SimulationState {
             this.magnetBrakeNewtons = stock.getMagnetBrakeNewton();
             this.directResistanceNewtons = stock::getDirectFrictionNewtons;
             this.hasPressureBrake = stock.getDefinition().hasPressureBrake();
-            if (stock instanceof Locomotive)
-                this.trainBrakePosition = ((Locomotive) stock).getTrainBrake();
             this.trainBrakePressure = stock.getBrakePressure();
             this.brakeCylinderPressure = stock.getBrakeCylinderPressure();
 
@@ -443,6 +442,16 @@ public class SimulationState {
     }
     
     private float calculateBrakePressure() {
+        float cylinderPressure = config.brakeCylinderPressure;
+        cylinderPressure = Math.max(config.hasPressureBrake ? Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                1 - config.trainBrakePressure :
+                    (1 - config.trainBrakePressure) / 0.3f, 1) : 0, config.independentBrake);
+        if (!config.stock.locked && config.independentBrake == 0 && config.handBrakeNewtons == 0) {
+            cylinderPressure = 0;
+        }
+        if (config.stock.locked && config.trainBrakePressure == 0) {
+            cylinderPressure = 1;
+        }
         if (config.stock.getDefinition().hasSingleRealseBrake()) {
             float currTrainBrake = config.trainBrakePressure;
             if (currTrainBrake > trainBrake && !singleReleaseBrake) {
@@ -450,18 +459,14 @@ public class SimulationState {
             }
             if (singleReleaseBrake && config.trainBrakePressure >= 1) {
                 singleReleaseBrake = false;
-            }
+            }  
             trainBrake = currTrainBrake;
             if (singleReleaseBrake) {
-                config.brakeCylinderPressure = Math.max(config.brakeCylinderPressure - 0.01f, 0);
-                return config.brakeCylinderPressure;
+                cylinderPressure = Math.max(config.brakeCylinderPressure - 0.01f, 0);
             }
         }
-
-        config.brakeCylinderPressure = Math.max(config.hasPressureBrake ? Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
-                1 - config.trainBrakePressure :
-                    (1 - config.trainBrakePressure) / 0.3f, 1) : 0, config.independentBrake);
-        return config.brakeCylinderPressure;
+            
+        return config.brakeCylinderPressure = cylinderPressure;
     }
 
     public double frictionNewtons() {
