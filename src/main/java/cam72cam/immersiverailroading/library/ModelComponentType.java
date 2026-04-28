@@ -113,6 +113,7 @@ public enum ModelComponentType {
 	COUPLER_ENGAGED_X("COUPLER_ENGAGED_#ID#"),
 	CYLINDER_DRAIN_CONTROL_X("(CYLINDER|DRAIN)_(COCK|EXHAUST)_CONTROL_#ID#"),
 	SANDING_CONTROL_X("(SANDING|SAND)_CONTROL_#ID#"),
+	COMPRESSOR_CONTROL_X("COMPRESSOR_CONTROL_#ID#"),
 
 	// Gauges
 	GAUGE_LIQUID_X("GAUGE_LIQUID_#ID#"),
@@ -171,6 +172,8 @@ public enum ModelComponentType {
 			case THROTTLE_BRAKE_X:
 			case THROTTLE_DYN_BRAKE_X:
 			case ENGINE_START_X:
+			case SANDING_CONTROL_X:
+			case COMPRESSOR_CONTROL_X:
 				return TextUtil.translate("part.immersiverailroading:controls." + primary.toLowerCase(Locale.ROOT));
             default:
 				//Unexpected behaviour

@@ -228,6 +228,8 @@ part.immersiverailroading:controls.throttle=节流阀
 part.immersiverailroading:controls.reverser=换向器
 part.immersiverailroading:controls.throttle_brake=制动机
 part.immersiverailroading:controls.engine_start=启动/停止发动机
+part.immersiverailroading:controls.sanding_control=撒砂
+part.immersiverailroading:controls.compressor_control=压缩机控制系统
 
 multiblock.immersiverailroading:boiler_machine=锅炉卷板机
 multiblock.immersiverailroading:casting=铸造盆

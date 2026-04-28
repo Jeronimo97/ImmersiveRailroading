@@ -184,6 +184,24 @@ part.immersiverailroading:component.walcherts_linkage=Distribution Walschaerts
 part.immersiverailroading:component.smokebox=Boite à fumée
 part.immersiverailroading:component.gearbox=Boite de vitesse
 
+part.immersiverailroading:controls.cylinder_drain=[Need translate]
+part.immersiverailroading:controls.bell=[Need translate]
+part.immersiverailroading:controls.whistle=[Need translate]
+part.immersiverailroading:controls.horn=[Need translate]
+part.immersiverailroading:controls.train_brake=[Need translate]
+part.immersiverailroading:controls.independent_brake=[Need translate]
+part.immersiverailroading:controls.throttle=[Need translate]
+part.immersiverailroading:controls.reverser=[Need translate]
+part.immersiverailroading:controls.throttle_brake=[Need translate]
+part.immersiverailroading:controls.engine_start=[Need translate]
+part.immersiverailroading:controls.sanding_control=Sablage
+part.immersiverailroading:controls.compressor_control=Commande du compresseur
+
+multiblock.immersiverailroading:boiler_machine=[Need translate]
+multiblock.immersiverailroading:casting=[Need translate]
+multiblock.immersiverailroading:plate_machine=[Need translate]
+multiblock.immersiverailroading:rail_machine=[Need translate]
+multiblock.immersiverailroading:steam_hammer=[Need translate]
 
 immersiverailroading:crafting_type.casting=Coulage
 immersiverailroading:crafting_type.casting_hammer=Coulage, Marteau-pilon

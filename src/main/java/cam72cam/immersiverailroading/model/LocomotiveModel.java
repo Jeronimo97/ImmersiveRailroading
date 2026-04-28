@@ -101,6 +101,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addControl(provider, ModelComponentType.REVERSER_X);
         addControl(provider, ModelComponentType.TRAIN_BRAKE_X);
         addControl(provider, ModelComponentType.SANDING_CONTROL_X);
+        addControl(provider, ModelComponentType.COMPRESSOR_CONTROL_X);
     }
 
     @Override
@@ -150,12 +151,9 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
     protected void tick(ENTITY stock) {
         super.tick(stock);
         bell.effects(stock, stock.getBell() > 0 ? 0.8f : 0);
-        compressor.effects(stock, stock.isLowAir() && stock.providesElectricalPower() ? 0.2f : 0);
+        compressor.effects(stock, stock.compressorActive && stock.isLowAir() && stock.providesElectricalPower() ? 0.2f : 0);
         brakePressureSound.effects(stock, stock.trainBrakeDelta ? 0.1f : 0);
-        
-        if (stock.isSanding) {
-            sandParticle.tick(stock, VanillaParticles.SAND_DUST, 2);
-        } 
+        sandParticle.tick(stock, stock.isSanding, VanillaParticles.SAND_DUST, 2);
     }
 
     @Override

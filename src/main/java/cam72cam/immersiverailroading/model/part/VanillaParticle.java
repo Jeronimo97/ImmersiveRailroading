@@ -27,8 +27,8 @@ public class VanillaParticle {
         this.components = components;
     }
 
-    public void tick(EntityMoveableRollingStock stock, VanillaParticles particle, float size) {
-        if (ConfigGraphics.particlesEnabled) {
+    public void tick(EntityMoveableRollingStock stock, boolean active, VanillaParticles particle, float size) {
+        if (ConfigGraphics.particlesEnabled && active) {
             Vec3d fakeMotion = stock.getVelocity();
             double scale = stock.gauge.scale();
             for (ModelComponent comp : components) {

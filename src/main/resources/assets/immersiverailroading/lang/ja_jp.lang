@@ -157,6 +157,24 @@ part.immersiverailroading:component.walcherts_linkage=ヴァルスハールツ�
 part.immersiverailroading:component.smokebox=煙室
 part.immersiverailroading:component.gearbox=ギアボックス
 
+part.immersiverailroading:controls.cylinder_drain=ドレイン
+part.immersiverailroading:controls.bell=ベル
+part.immersiverailroading:controls.whistle=汽笛
+part.immersiverailroading:controls.horn=タイフォン
+part.immersiverailroading:controls.train_brake=自弁
+part.immersiverailroading:controls.independent_brake=単弁
+part.immersiverailroading:controls.throttle=加減弁
+part.immersiverailroading:controls.reverser=逆転機
+part.immersiverailroading:controls.throttle_brake=エンジンブレーキ
+part.immersiverailroading:controls.engine_start=エンジンスイッチ
+part.immersiverailroading:controls.sanding_control=撒砂
+part.immersiverailroading:controls.compressor_control=コンプレッサ制御装置
+
+multiblock.immersiverailroading:boiler_machine=ボイラーマシーン
+multiblock.immersiverailroading:casting=鋳造機
+multiblock.immersiverailroading:plate_machine=プレート鍛造機
+multiblock.immersiverailroading:rail_machine=レール鍛造機
+multiblock.immersiverailroading:steam_hammer=蒸気ハンマー
 
 immersiverailroading:crafting_type.casting=鋳造機
 immersiverailroading:crafting_type.casting_hammer=鋳造機,パワーハンマー

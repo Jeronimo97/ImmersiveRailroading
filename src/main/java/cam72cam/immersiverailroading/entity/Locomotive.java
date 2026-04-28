@@ -56,6 +56,9 @@ public abstract class Locomotive extends FreightTank{
     @TagSync
     @TagField("COMPRESSOR")
     private boolean isLowAir = false;
+    @TagSync
+    @TagField("COMPRESSOR_ACTIVE")
+    public boolean compressorActive = true;
 
 	@TagSync
 	@TagField("HORN")
@@ -284,16 +287,24 @@ public abstract class Locomotive extends FreightTank{
 				setTrainBrake(1 - getControlPosition(component)*2);
 				setThrottle(getControlPosition(component)*2 - 1);
 				break;
+            case COMPRESSOR_CONTROL_X:
+                compressorActive = getControlPosition(component) > 0.5f;
+                break;
 		}
 	}
 
 	@Override
 	public void onDragRelease(Control<?> control) {
 		super.onDragRelease(control);
-		if (!getDefinition().isLinearBrakeControl()
-                && control.part.type == ModelComponentType.TRAIN_BRAKE_X) {
-			setControlPosition(control, 0.5f);
-		}
+		switch (control.part.type) {
+            case TRAIN_BRAKE_X:
+                if (!getDefinition().isLinearBrakeControl())
+                    setControlPosition(control, 0.5f);
+            case COMPRESSOR_CONTROL_X:
+                compressorActive = getControlPosition(control) > 0.5f;
+            default:
+                break;
+        }
 	}
 
 	@Override
@@ -304,6 +315,8 @@ public abstract class Locomotive extends FreightTank{
 				return 0.5f;
 			case TRAIN_BRAKE_X:
 				return getDefinition().isLinearBrakeControl() ? 0 : 0.5f;
+			case COMPRESSOR_CONTROL_X:
+			    return 1;
 			default:
 				return super.defaultControlPosition(control);
 		}
@@ -324,6 +337,7 @@ public abstract class Locomotive extends FreightTank{
 			case HORN_CONTROL_X:
 			case ENGINE_START_X:
 			case SANDING_CONTROL_X:
+			case COMPRESSOR_CONTROL_X:
 				return player.hasPermission(Permissions.LOCOMOTIVE_CONTROL);
 			default:
 				return true;
@@ -698,6 +712,9 @@ public abstract class Locomotive extends FreightTank{
             return;
         if (!getDefinition().hasCompressor()) {
             mainAirReservoir = 1;
+            return;
+        }
+        if (!compressorActive) {
             return;
         }
         if (!isLowAir() && getMainAirReservoir() < 0.85) {

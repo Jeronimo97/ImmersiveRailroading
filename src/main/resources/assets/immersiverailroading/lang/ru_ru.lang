@@ -127,6 +127,9 @@ gui.immersiverailroading:stock.weight=Вес: %s кг
 gui.immersiverailroading:stock.modeler=Создатель: %s
 gui.immersiverailroading:stock.pack=Пакет моделей: %s
 
+gui.immersiverailroading:label.brake=Тормоз
+gui.immersiverailroading:label.throttle=Тяга
+
 immersiverailroading:gauge.brunel=Сверхширокая (3000/≈2,88)
 immersiverailroading:gauge.standard=Стандартная советская (1524/≈1,55)
 immersiverailroading:gauge.narrow=Узкая (1196/≈1,25)
@@ -182,8 +185,26 @@ part.immersiverailroading:component.reach_rod=Шток дистанционно�
 part.immersiverailroading:component.walcherts_linkage=Парораспределительный механизм Вальсхарта
 part.immersiverailroading:component.smokebox=Дымовая коробка
 part.immersiverailroading:component.gearbox=Трансмиссия
-gui.immersiverailroading:label.brake=Тормоз
-gui.immersiverailroading:label.throttle=Тяга
+part.immersiverailroading:component.valve_rod=Клапанный стержень
+
+part.immersiverailroading:controls.cylinder_drain=Цилиндр сухой
+part.immersiverailroading:controls.bell=Колокол
+part.immersiverailroading:controls.whistle=Свисток
+part.immersiverailroading:controls.horn=Гудок
+part.immersiverailroading:controls.train_brake=Тормоз поезда
+part.immersiverailroading:controls.independent_brake=Независимый тормоз
+part.immersiverailroading:controls.throttle=Дроссель
+part.immersiverailroading:controls.reverser=Реверсор
+part.immersiverailroading:controls.throttle_brake=Дроссельный тормоз
+part.immersiverailroading:controls.engine_start=Пуск двигателя
+part.immersiverailroading:controls.sanding_control=пескование
+part.immersiverailroading:controls.compressor_control=управление компрессором
+
+multiblock.immersiverailroading:boiler_machine=Котловой вальцовочный стан
+multiblock.immersiverailroading:casting=Литейный бассейн
+multiblock.immersiverailroading:plate_machine=Прокатный стан
+multiblock.immersiverailroading:rail_machine=Рельсопрокатный стан
+multiblock.immersiverailroading:steam_hammer=Паровой молот
 
 immersiverailroading:crafting_type.casting=Литьё
 immersiverailroading:crafting_type.casting_hammer=Литьё, мех. молот

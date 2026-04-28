@@ -166,8 +166,28 @@ part.immersiverailroading:component.eccentric_crank=Gegenkurbel
 part.immersiverailroading:component.reversing_arm=Reversing Arm
 part.immersiverailroading:component.lifting_link=Lifting Link
 part.immersiverailroading:component.reach_rod=Steuerstange
-part.immersiverailroading:component.walcherts_linkage=Walcherts Linkage
 part.immersiverailroading:component.smokebox=Rauchkammer
+part.immersiverailroading:component.walcherts_linkage=Walcherts Gelenk
+part.immersiverailroading:component.valve_rod=Ventilsteuerungskomponente
+
+part.immersiverailroading:controls.cylinder_drain=Zylinderhähne
+part.immersiverailroading:controls.bell=Glocke
+part.immersiverailroading:controls.whistle=Pfeife
+part.immersiverailroading:controls.horn=Makrofon
+part.immersiverailroading:controls.train_brake=Zugbremse
+part.immersiverailroading:controls.independent_brake=Direkte Bremse
+part.immersiverailroading:controls.throttle=Leistungsregler
+part.immersiverailroading:controls.reverser=Richtungswender
+part.immersiverailroading:controls.throttle_brake=Fahr-Bremshebel
+part.immersiverailroading:controls.engine_start=Motorstart
+part.immersiverailroading:controls.sanding_control=Sanden
+part.immersiverailroading:controls.compressor_control=Kompressorsteuerung
+
+multiblock.immersiverailroading:boiler_machine=Kessel Maschine
+multiblock.immersiverailroading:casting=Gußbecken
+multiblock.immersiverailroading:plate_machine=Plattenwalze
+multiblock.immersiverailroading:rail_machine=Schienenwalze
+multiblock.immersiverailroading:steam_hammer=Dampfhammer
 
 immersiverailroading:crafting_type.casting=Gießen
 immersiverailroading:crafting_type.casting_hammer=Gießen, Dampfhammer
