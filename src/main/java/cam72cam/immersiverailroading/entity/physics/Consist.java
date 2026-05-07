@@ -2,7 +2,6 @@ package cam72cam.immersiverailroading.entity.physics;
 
 import cam72cam.immersiverailroading.Config.ImmersionConfig;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
-import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
  * */
 public class Consist {
     static boolean debug = false;
-    private static int trainLength = 0;
+    private static int trainLength;
 
     public static class Particle {
         public SimulationState state;
@@ -508,7 +507,7 @@ public class Consist {
                                 brakePressureDelta = 0.1f / linked.stream().filter(s -> s.config.hasPressureBrake).count();
                                 break;
                             case REALISTIC:
-                                linked.forEach(s -> {trainLength += s.config.stock.getDefinition().hasEpBrake() ? 1 :
+                                linked.forEach(s -> {trainLength += s.config.hasEpBrake ? 1 :
                                      s.config.length;
                                 });
                                 
@@ -529,8 +528,10 @@ public class Consist {
                                 } else if (p.config.trainBrakePressure < desiredBrakePressure - brakePressureDelta) {
                                     // pressure increase
                                     p.config.trainBrakePressure += brakePressureDelta * 0.75;
-                                    if (p.config.stock instanceof Locomotive)
-                                        ((Locomotive) p.config.stock).mainAirReservoir(-0.000003f * (float) Math.pow(trainLength, ((Locomotive) p.config.stock).getMainAirReservoir()));
+                                    if (p.config.isLocomotive) {
+                                        p.config.delta = -0.000003f * (float) Math.pow(trainLength, p.config.mainAirReservoir);
+                                    }
+                                        
                                 } else {
                                     p.config.trainBrakePressure = desiredBrakePressure;
                                 }
