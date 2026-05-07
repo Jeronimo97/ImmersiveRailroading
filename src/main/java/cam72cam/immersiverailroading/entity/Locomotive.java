@@ -84,7 +84,7 @@ public abstract class Locomotive extends FreightTank{
 
 	@TagSync
     @TagField("slipping")
-	protected boolean slipping = false;
+    public boolean slipping = false;
 	
     @TagSync
     @TagField("sanding")
@@ -444,6 +444,10 @@ public abstract class Locomotive extends FreightTank{
             // Compressor
             if (providesElectricalPower()) {
                 raiseMainAirReservoir();
+            }
+            
+            if (!providesElectricalPower() && getTrainBrakePos() == 1) {
+                mainAirReservoir(-0.001f);
             }
 		}
 
