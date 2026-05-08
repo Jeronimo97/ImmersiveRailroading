@@ -245,17 +245,10 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     @Override
     public void onDragRelease(Control<?> control) {
         super.onDragRelease(control);
-        switch (control.part.type) {
-            case INDEPENDENT_BRAKE_X:
-                if (!getDefinition().isLinearBrakeControl()) {
-                    setControlPosition(control, 0.5f);
-                }
-            case HAND_BRAKE_X:
-                if (control.toggle) {
-                    setHandBrake(getControlPosition(control));
-                }
-            default:
-                break;
+        if (control.part.type.equals(ModelComponentType.INDEPENDENT_BRAKE_X) && !getDefinition().isLinearBrakeControl()) {
+            setControlPosition(control, 0.5f);
+        } else if (control.part.type.equals(ModelComponentType.HAND_BRAKE_X) && control.toggle) {
+            setHandBrake(getControlPosition(control));
         }
     }
     
