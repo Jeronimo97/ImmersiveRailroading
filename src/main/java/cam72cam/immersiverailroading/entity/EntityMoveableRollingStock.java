@@ -284,7 +284,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         if (getWorld().isServer) {
             
             if (getDefinition().hasIndependentBrake()) {
-                for (Control<?> control : getDefinition().getModel().getIndBrakeControls()) {
+                for (Control<?> control : getDefinition().getModel().getControls(ModelComponentType.INDEPENDENT_BRAKE_X)) {
                     if (!getDefinition().isLinearBrakeControl()) {
                         setIndependentBrake(MathUtil.clamp(getIndependentBrake() + (getControlPosition(control) - 0.5f) / 8, 0, 1));
                     }
@@ -524,7 +524,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         float newIndependentBrake = MathUtil.clamp(independentBrake, 0, 1);
         if (this.getIndependentBrake() != newIndependentBrake && getDefinition().hasIndependentBrake()) {
             if (getDefinition().isLinearBrakeControl()) {
-                getDefinition().getModel().getIndBrakeControls().stream().forEach(c -> setControlPosition(c, newIndependentBrake));
+                getDefinition().getModel().getControls(ModelComponentType.INDEPENDENT_BRAKE_X).stream().forEach(c -> setControlPosition(c, newIndependentBrake));
             }
             this.independentBrake = newIndependentBrake;
         }
@@ -537,7 +537,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     public void setHandBrake(float handBrake) {
         float newHandBrake = MathUtil.clamp(handBrake, 0, 1);
         if (this.getHandBrake() != newHandBrake && getDefinition().hasHandBrake()) {
-            getDefinition().getModel().getIndBrakeControls().stream().forEach(c -> setControlPosition(c, newHandBrake));
+            getDefinition().getModel().getControls(ModelComponentType.HAND_BRAKE_X).stream().forEach(c -> setControlPosition(c, newHandBrake));
             this.handBrake = newHandBrake;
         }
     }

@@ -24,6 +24,7 @@ import cam72cam.mod.math.Vec3i;
 import cam72cam.immersiverailroading.Config.ConfigDebug;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.library.ChatText;
+import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.util.VecUtil;
 
 public abstract class EntityCoupleableRollingStock extends EntityMoveableRollingStock {
@@ -162,7 +163,7 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 			// Only couple server side
 			return;
 		}
-        for (Control<?> control : getDefinition().getModel().getCouplerControls()) {
+        for (Control<?> control : getDefinition().getModel().getControls(ModelComponentType.COUPLER_ENGAGED_X)) {
             if (control.part.pos.contains(ModelPosition.FRONT)) {
                 if (isCouplerEngaged(CouplerType.FRONT) ^ (getControlPosition(control) < 0.5)) {
                     setCouplerEngaged(CouplerType.FRONT, getControlPosition(control) < 0.5);
@@ -316,7 +317,7 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 	}
 	
 	public void setCouplerEngaged(CouplerType coupler, boolean engaged) {
-	    for (Control<?> control : getDefinition().getModel().getCouplerControls()) {
+	    for (Control<?> control : getDefinition().getModel().getControls(ModelComponentType.COUPLER_ENGAGED_X)) {
 	        switch (coupler) {
 	            case FRONT:
 	                frontCouplerEngaged = engaged;

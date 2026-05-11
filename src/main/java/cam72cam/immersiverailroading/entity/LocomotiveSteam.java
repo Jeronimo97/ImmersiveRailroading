@@ -169,7 +169,7 @@ public class LocomotiveSteam extends Locomotive {
 		}
 
 
-		OptionalDouble control = getDefinition().getModel().getWhistleControls().stream().mapToDouble(this::getControlPosition).max();;
+		OptionalDouble control = getDefinition().getModel().getControls(ModelComponentType.WHISTLE_CONTROL_X).stream().mapToDouble(this::getControlPosition).max();;
 		if (control.isPresent() && control.getAsDouble() > 0) {
 			this.setHorn(10, hornPlayer);
 		}
@@ -427,12 +427,12 @@ public class LocomotiveSteam extends Locomotive {
 	}
 
 	public boolean cylinderDrainsEnabled() {
-	    List<?> drains = getDefinition().getModel().getCylinderDrainControls();
+	    List<?> drains = getDefinition().getModel().getControls(ModelComponentType.CYLINDER_DRAIN_CONTROL_X);
 	    return drains.isEmpty() ? Math.abs(super.getCurrentSpeed().metric()) / gauge.scale() < 20 :
 	        drains.stream().anyMatch(c -> getControlPosition((Control<?>) c) > 0.9);
 	}
 
 	public void setCylinderDrains(boolean enabled) {
-	    getDefinition().getModel().getCylinderDrainControls().stream().forEach(c -> setControlPosition(c, enabled ? 1 : 0));
+	    getDefinition().getModel().getControls(ModelComponentType.CYLINDER_DRAIN_CONTROL_X).stream().forEach(c -> setControlPosition(c, enabled ? 1 : 0));
 	}
 }
