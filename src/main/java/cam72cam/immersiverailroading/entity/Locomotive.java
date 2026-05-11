@@ -248,7 +248,7 @@ public abstract class Locomotive extends FreightTank{
                 sandingKey = !sandingKey;
                 sandingKeyTimeout = 5;
                 
-                setControlPositions(ModelComponentType.SANDING_CONTROL_X, sandingKey ? 1 : 0);
+                getDefinition().getModel().getSandControls().stream().forEach(c -> setControlPosition(c, sandingKey ? 1 : 0));
             }
             break;
 		default:
@@ -378,9 +378,9 @@ public abstract class Locomotive extends FreightTank{
 		
 		if (getWorld().isServer) {
 			sync.setInterval(5);
-			for (Control<?> control : getDefinition().getModel().getControls()) {
+			for (Control<?> control : getDefinition().getModel().getTrainBrakeControls()) {
 				// Logic duplicated in Readouts#setValue
-				if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.TRAIN_BRAKE_X) {
+				if (!getDefinition().isLinearBrakeControl()) {
 					setTrainBrake(MathUtil.clamp(getTrainBrakePos() + (getControlPosition(control) - 0.5f) / 8, 0, 1));
 				}
 			}
@@ -410,7 +410,7 @@ public abstract class Locomotive extends FreightTank{
 			if (hornTime == 0) {
 				hornPull = 0;
 			}
-			OptionalDouble control = getMaxControlPositions(ModelComponentType.BELL_CONTROL_X);
+			OptionalDouble control = getDefinition().getModel().getBellControls().stream().mapToDouble(this::getControlPosition).max();
 			if (control.isPresent() && control.getAsDouble() > 0) {
 				bellTime = 10;
 				bellControl = true;
@@ -601,12 +601,13 @@ public abstract class Locomotive extends FreightTank{
 			this.mapTrain(this, true, false, this::copySettings);
 		}
 	}
-	public void setRealThrottle(float newThrottle) {
-		newThrottle = Math.min(1, Math.max(0, newThrottle));
+	
+	protected void setRealThrottle(float throttle) {
+		float newThrottle = MathUtil.clamp(throttle, 0, 1);
 		if (this.getThrottle() != newThrottle) {
-			setControlPositions(ModelComponentType.THROTTLE_X, newThrottle);
-			throttle = newThrottle;
-			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrakePos())/2);
+		    getDefinition().getModel().getThrottleControls().stream().forEach(c -> setControlPosition(c, newThrottle));
+			this.throttle = newThrottle;
+			getDefinition().getModel().getThrottleBrakeControls().stream().forEach(c -> setControlPosition(c, getThrottle() / 2 + (1 - getTrainBrakePos()) / 2));
 		}
 	}
 	public float getThrottleDelta() {
@@ -626,12 +627,12 @@ public abstract class Locomotive extends FreightTank{
 			this.mapTrain(this, true, false, this::copySettings);
 		}
 	}
-	private void setRealReverser(float newReverser){
-		newReverser = Math.min(1, Math.max(-1, newReverser));
+	private void setRealReverser(float reverser){
+		float newReverser = MathUtil.clamp(reverser, -1, 1);
 
 		if (this.getReverser() != newReverser) {
-			setControlPositions(ModelComponentType.REVERSER_X, newReverser/-2 + 0.5f);
-			reverser = newReverser;
+		    getDefinition().getModel().getReverserControls().stream().forEach(c -> setControlPosition(c, newReverser / -2 + 0.5f));
+			this.reverser = newReverser;
 		}
 	}
 
@@ -671,10 +672,8 @@ public abstract class Locomotive extends FreightTank{
 		if (getHornPlayer() != null) {
 			return (getHornPlayer().getRotationPitch() + 90) / 180;
 		}
-		double control = this.getDefinition().getModel().getControls().stream()
-				.filter(x -> x.part.type == ModelComponentType.WHISTLE_CONTROL_X)
-				.mapToDouble(this::getControlPosition)
-				.max().orElse(0);
+		double control = getDefinition().getModel().getWhistleControls().stream()
+		        .mapToDouble(this::getControlPosition).max().orElse(0);
 
 		return Math.max((float)control, hornPull);
 	}
@@ -688,14 +687,14 @@ public abstract class Locomotive extends FreightTank{
 		this.mapTrain(this, true, false, this::copyBrakeSetting);
 	}
 	
-	private void setRealTrainBrake(float newTrainBrake) {
-		newTrainBrake = MathUtil.clamp(newTrainBrake, 0, 1);
+	private void setRealTrainBrake(float trainBrake) {
+		float newTrainBrake = MathUtil.clamp(trainBrake, 0, 1);
 		if (this.getTrainBrakePos() != newTrainBrake) {
 			if (getDefinition().isLinearBrakeControl()) {
-				setControlPositions(ModelComponentType.TRAIN_BRAKE_X, newTrainBrake);
+			    getDefinition().getModel().getTrainBrakeControls().stream().forEach(c -> setControlPosition(c, newTrainBrake));
 			}
-			trainBrakePosition = newTrainBrake;
-			setControlPositions(ModelComponentType.THROTTLE_BRAKE_X, getThrottle()/2 + (1- getTrainBrakePos())/2);
+			this.trainBrakePosition = newTrainBrake;
+            getDefinition().getModel().getThrottleBrakeControls().stream().forEach(c -> setControlPosition(c, getThrottle() / 2 + (1 - getTrainBrakePos()) / 2));
 		}
 	}
 	
@@ -781,7 +780,7 @@ public abstract class Locomotive extends FreightTank{
 	}
 	
     public boolean isSandingWidgetActive() {
-        return getControls(ModelComponentType.SANDING_CONTROL_X).stream().anyMatch(c -> getControlPosition(c) > 0.5f);
+        return getDefinition().getModel().getSandControls().stream().anyMatch(c -> getControlPosition(c) > 0.5f);
     }
 
     public void setSanding(boolean sanding) {

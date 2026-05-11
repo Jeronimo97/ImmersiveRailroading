@@ -51,6 +51,23 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     protected final List<Seat<ENTITY>> seats;
 
     protected List<LightFlare<ENTITY>> headlights;
+    
+    //TODO Performance Testing
+    private List<Control<ENTITY>> couplerControls;
+    private List<Control<ENTITY>> indBrakeControls;
+    private List<Control<ENTITY>> trainBrakeControls;
+    private List<Control<ENTITY>> engineStartControls;
+    private List<Control<ENTITY>> sandControls;
+    private List<Control<ENTITY>> cylinderDrainControls;
+    private List<Control<ENTITY>> bellControls;
+    private List<Control<ENTITY>> hornControls;
+    private List<Control<ENTITY>> handBrakeControls;
+    private List<Control<ENTITY>> reverserControls;
+    private List<Control<ENTITY>> throttleControls;
+    private List<Control<ENTITY>> dynBrakeControls;
+    private List<Control<ENTITY>> throttleDynBrakeControls;
+    private List<Control<ENTITY>> throttleBrakeControls;
+    private List<Control<ENTITY>> whistleControls;
 
     private final TrackFollowers frontTrackers;
     private final TrackFollowers rearTrackers;
@@ -161,6 +178,43 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         brakePressureSound = new PartSound(def.brakePressureSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         flangeSound = new FlangeSound(def.flange_sound, true, 40);
         sway = new SwaySimulator();
+        
+        //TODO Performance Testing
+        this.couplerControls = new ArrayList<>();
+        this.indBrakeControls = new ArrayList<>();
+        
+        this.trainBrakeControls = new ArrayList<>();
+        this.engineStartControls = new ArrayList<>();
+        this.sandControls = new ArrayList<>();
+        this.cylinderDrainControls = new ArrayList<>();
+        this.bellControls = new ArrayList<>();
+        this.hornControls = new ArrayList<>();
+        this.handBrakeControls = new ArrayList<>();
+        this.reverserControls = new ArrayList<>();
+        this.throttleControls = new ArrayList<>();
+        this.dynBrakeControls = new ArrayList<>();
+        this.throttleDynBrakeControls = new ArrayList<>();
+        this.throttleBrakeControls = new ArrayList<>();
+        this.whistleControls = new ArrayList<>();
+        couplerControls.addAll(filterControls(ModelComponentType.COUPLER_ENGAGED_X));
+        indBrakeControls.addAll(filterControls(ModelComponentType.INDEPENDENT_BRAKE_X));
+        trainBrakeControls.addAll(filterControls(ModelComponentType.TRAIN_BRAKE_X));
+        engineStartControls.addAll(filterControls(ModelComponentType.ENGINE_START_X));
+        sandControls.addAll(filterControls(ModelComponentType.SANDING_CONTROL_X));
+        cylinderDrainControls.addAll(filterControls(ModelComponentType.CYLINDER_DRAIN_CONTROL_X));
+        bellControls.addAll(filterControls(ModelComponentType.BELL_CONTROL_X));
+        hornControls.addAll(filterControls(ModelComponentType.HORN_CONTROL_X));
+        handBrakeControls.addAll(filterControls(ModelComponentType.HAND_BRAKE_X));
+        reverserControls.addAll(filterControls(ModelComponentType.REVERSER_X));
+        throttleControls.addAll(filterControls(ModelComponentType.THROTTLE_X));
+        dynBrakeControls.addAll(filterControls(ModelComponentType.DYNAMIC_BRAKE_X));
+        throttleDynBrakeControls.addAll(filterControls(ModelComponentType.THROTTLE_DYN_BRAKE_X));
+        throttleBrakeControls.addAll(filterControls(ModelComponentType.THROTTLE_BRAKE_X));
+        whistleControls.addAll(filterControls(ModelComponentType.WHISTLE_CONTROL_X));
+    }
+    
+    protected List<Control<ENTITY>> filterControls(ModelComponentType type) {
+        return controls.stream().filter(x -> x.part.type == type).collect(Collectors.toList());
     }
 
     public ModelState addRoll(ModelState state) {
@@ -385,12 +439,69 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         headlights.forEach(x -> x.postRender(stock, state));
     }
 
-    public List<Control<ENTITY>> getControls() {
-        return controls;
-    }
-
     public List<Door<ENTITY>> getDoors() {
         return doors;
+    }
+    
+    // TODO Performance Testing
+    public List<Control<ENTITY>> getCouplerControls() {
+        return couplerControls;
+    }
+    
+    public List<Control<ENTITY>> getIndBrakeControls() {
+        return indBrakeControls;
+    }
+    
+    public List<Control<ENTITY>> getTrainBrakeControls() {
+        return trainBrakeControls;
+    }
+    
+    public List<Control<ENTITY>> getEngineStartControls() {
+        return engineStartControls;
+    }
+    
+    public List<Control<ENTITY>> getSandControls() {
+        return sandControls;
+    }
+    
+    public List<Control<ENTITY>> getCylinderDrainControls() {
+        return cylinderDrainControls;
+    }
+    
+    public List<Control<ENTITY>> getBellControls() {
+        return bellControls;
+    }
+    
+    public List<Control<ENTITY>> getHornControls() {
+        return hornControls;
+    }
+    
+    public List<Control<ENTITY>> getHandBrakeControls() {
+        return handBrakeControls;
+    }
+    
+    public List<Control<ENTITY>> getReverserControls() {
+        return reverserControls;
+    }
+    
+    public List<Control<ENTITY>> getThrottleControls() {
+        return throttleControls;
+    }
+
+    public List<Control<ENTITY>> getDynBrakeControls() {
+        return dynBrakeControls;
+    }
+    
+    public List<Control<ENTITY>> getThrottleDynBrakeControls() {
+        return throttleDynBrakeControls;
+    }
+
+    public List<Control<ENTITY>> getThrottleBrakeControls() {
+        return throttleBrakeControls;
+    }
+    
+    public List<Control<ENTITY>> getWhistleControls() {
+        return whistleControls;
     }
 
     public List<Control<ENTITY>> getDraggable() {

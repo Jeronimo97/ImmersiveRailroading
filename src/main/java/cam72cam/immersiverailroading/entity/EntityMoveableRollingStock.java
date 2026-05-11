@@ -16,6 +16,7 @@ import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
 import cam72cam.immersiverailroading.physics.TickPos;
 import cam72cam.immersiverailroading.tile.TileRailBase;
+import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.immersiverailroading.util.RealBB;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.entity.Entity;
@@ -283,9 +284,9 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         if (getWorld().isServer) {
             
             if (getDefinition().hasIndependentBrake()) {
-                for (Control<?> control : getDefinition().getModel().getControls()) {
-                    if (!getDefinition().isLinearBrakeControl() && control.part.type == ModelComponentType.INDEPENDENT_BRAKE_X) {
-                        setIndependentBrake(Math.max(0, Math.min(1, getIndependentBrake() + (getControlPosition(control) - 0.5f) / 8)));
+                for (Control<?> control : getDefinition().getModel().getIndBrakeControls()) {
+                    if (!getDefinition().isLinearBrakeControl()) {
+                        setIndependentBrake(MathUtil.clamp(getIndependentBrake() + (getControlPosition(control) - 0.5f) / 8, 0, 1));
                     }
                 }
             }
@@ -519,25 +520,25 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         setRealIndependentBrake(newIndependentBrake);
     }
     
-    private void setRealIndependentBrake(float newIndependentBrake) {
-        newIndependentBrake = Math.min(1, Math.max(0, newIndependentBrake));
+    private void setRealIndependentBrake(float independentBrake) {
+        float newIndependentBrake = MathUtil.clamp(independentBrake, 0, 1);
         if (this.getIndependentBrake() != newIndependentBrake && getDefinition().hasIndependentBrake()) {
             if (getDefinition().isLinearBrakeControl()) {
-                setControlPositions(ModelComponentType.INDEPENDENT_BRAKE_X, newIndependentBrake);
+                getDefinition().getModel().getIndBrakeControls().stream().forEach(c -> setControlPosition(c, newIndependentBrake));
             }
-            independentBrake = newIndependentBrake;
+            this.independentBrake = newIndependentBrake;
         }
     }
 
     public float getHandBrake() {
         return getDefinition().hasHandBrake() ? handBrake : 0;
     }
-    
-    public void setHandBrake(float newHandBrake) {
-        newHandBrake = Math.min(1, Math.max(0, newHandBrake));
+
+    public void setHandBrake(float handBrake) {
+        float newHandBrake = MathUtil.clamp(handBrake, 0, 1);
         if (this.getHandBrake() != newHandBrake && getDefinition().hasHandBrake()) {
-            setControlPositions(ModelComponentType.HAND_BRAKE_X, newHandBrake);
-            handBrake = newHandBrake;
+            getDefinition().getModel().getIndBrakeControls().stream().forEach(c -> setControlPosition(c, newHandBrake));
+            this.handBrake = newHandBrake;
         }
     }
     

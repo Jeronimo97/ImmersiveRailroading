@@ -169,7 +169,7 @@ public class LocomotiveSteam extends Locomotive {
 		}
 
 
-		OptionalDouble control = getMaxControlPositions(ModelComponentType.WHISTLE_CONTROL_X);
+		OptionalDouble control = getDefinition().getModel().getWhistleControls().stream().mapToDouble(this::getControlPosition).max();;
 		if (control.isPresent() && control.getAsDouble() > 0) {
 			this.setHorn(10, hornPlayer);
 		}
@@ -427,18 +427,12 @@ public class LocomotiveSteam extends Locomotive {
 	}
 
 	public boolean cylinderDrainsEnabled() {
-		// This could be optimized to once-per-tick, but I'm not sure that is necessary
-	    List<Control<?>> drains = getControls(ModelComponentType.CYLINDER_DRAIN_CONTROL_X);
-		if (drains.isEmpty()) {
-			double csm = Math.abs(getCurrentSpeed().metric()) / gauge.scale();
-			return csm < 20;
-		}
-
-		return drains.stream().anyMatch(c -> getControlPosition(c) == 1);
+	    List<?> drains = getDefinition().getModel().getCylinderDrainControls();
+	    return drains.isEmpty() ? Math.abs(super.getCurrentSpeed().metric()) / gauge.scale() < 20 :
+	        drains.stream().anyMatch(c -> getControlPosition((Control<?>) c) > 0.9);
 	}
 
 	public void setCylinderDrains(boolean enabled) {
-		// This could be optimized to once-per-tick, but I'm not sure that is necessary
-	    setControlPositions(ModelComponentType.CYLINDER_DRAIN_CONTROL_X, enabled ? 1 : 0);
+	    getDefinition().getModel().getCylinderDrainControls().stream().forEach(c -> setControlPosition(c, enabled ? 1 : 0));
 	}
 }
