@@ -152,13 +152,12 @@ public class LocomotiveDiesel extends Locomotive {
                     break;
             }
             if (getDefinition().isLinkedBrakeDynBrake()) {
-                boolean hasBrakeNotches = getDefinition().hasBrakeNotches();
                 switch (key) {
                     case TRAIN_BRAKE_UP:
                         if (brakeCooldown > 0) {
                             break;
                         }
-                        brakeCooldown = hasBrakeNotches ? 2 : 0;
+                        brakeCooldown = hasBrakeNotches() ? 3 : 0;
                         setDynamicBrake(getDynamicBrake() + dynamicBrakeNotch);
                         break;
                     case TRAIN_BRAKE_ZERO:
@@ -168,7 +167,7 @@ public class LocomotiveDiesel extends Locomotive {
                         if (brakeCooldown > 0) {
                             break;
                         }
-                        brakeCooldown = hasBrakeNotches ? 2 : 0;
+                        brakeCooldown = hasBrakeNotches() ? 3 : 0;
                         setDynamicBrake(getDynamicBrake() - dynamicBrakeNotch);
                         break;
                     default:

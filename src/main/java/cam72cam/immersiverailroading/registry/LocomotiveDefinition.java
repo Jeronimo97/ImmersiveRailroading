@@ -31,9 +31,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     private double factorOfAdhesion;
     private boolean speedLimiter;
     private int brakeNotches;
-    private boolean hasBrakeNotches;
     public SoundDefinition compressor;
     private boolean hasCompressor;
+    private float mainAirSizeFactor;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -88,9 +88,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         toggleBell = properties.getValue("toggle_bell").asBoolean();
         isCog = properties.getValue("cog").asBoolean();
         speedLimiter = properties.getValue("speed_limiter").asBoolean(true);
-        brakeNotches = properties.getValue("brake_notches").asInteger(25);
-        hasBrakeNotches = properties.getValue("has_brake_notches").asBoolean(false);
+        brakeNotches = properties.getValue("brake_notches").asInteger(0);
         hasCompressor = properties.getValue("has_compressor").asBoolean(true);
+        mainAirSizeFactor = properties.getValue("main_reservoir_size_factor").asFloat(1f);
         
         DataBlock sounds = data.getBlock("sounds");
         bell = SoundDefinition.getOrDefault(sounds, "bell");
@@ -179,11 +179,11 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         return brakeNotches;
     }
     
-    public boolean hasBrakeNotches() {
-        return hasBrakeNotches;
-    }
-    
     public boolean hasCompressor() {
         return hasCompressor;
+    }
+    
+    public float getMainReservoirSizeFactor() {
+        return mainAirSizeFactor;
     }
 }

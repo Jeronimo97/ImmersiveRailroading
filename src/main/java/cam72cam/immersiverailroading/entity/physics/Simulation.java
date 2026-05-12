@@ -109,7 +109,7 @@ public class Simulation {
                 }
 
                 SimulationState state = stateMap.get(stock.getUUID());
-                if (stock instanceof Locomotive && state.config.delta!= 0) {
+                if (stock instanceof Locomotive && state.config.delta != 0) {
                     ((Locomotive) stock).mainAirReservoir(state.config.delta);
                 }
 

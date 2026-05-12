@@ -18,13 +18,13 @@ import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.Sound
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
-import cam72cam.mod.render.Particle.VanillaParticles;
 import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
-import cam72cam.mod.resource.Identifier;
 import util.Matrix4;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;

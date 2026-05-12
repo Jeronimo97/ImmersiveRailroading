@@ -125,6 +125,7 @@ public class SimulationState {
         public boolean isLocomotive;
         public float delta;
         public float mainAirReservoir;
+        public float mainReservoirSizeFactor;
 
         public Configuration(EntityCoupleableRollingStock stock) {
             id = stock.getUUID();
@@ -163,12 +164,14 @@ public class SimulationState {
                 isSanding = locomotive.isSanding;
                 this.mainAirReservoir = locomotive.getMainAirReservoir();
                 this.isLocomotive = true;
+                this.mainReservoirSizeFactor = locomotive.getDefinition().getMainReservoirSizeFactor();
             } else {
                 tractiveEffortNewtons = speed -> 0d;
                 tractiveEffortFactors = 0;
                 desiredBrakePressure = null;
                 isSanding = false;
                 this.isLocomotive = false;
+                this.mainReservoirSizeFactor = 1f;
             }
 
 
