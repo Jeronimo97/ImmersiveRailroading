@@ -224,7 +224,6 @@ public abstract class Locomotive extends FreightTank{
 		    }
 
 		    float current = getTrainBrakePos() + getBrakeDelta();
-		    
 		    if (!fullBrake) {
 		        if (current >= 1.0f) {
 		            setTrainBrake(0.99f);
@@ -232,10 +231,10 @@ public abstract class Locomotive extends FreightTank{
 		            brakeCooldown = 20;
 		            break;
 		        }
-	            if (brakeCooldown > 0) {
-	                break;
-	            }
                 if (hasBrakeNotches()) {
+                    if (brakeCooldown > 0) {
+                        break;
+                    }
                     brakeCooldown = 3;
                 }
 		        setTrainBrake(current);
@@ -254,10 +253,10 @@ public abstract class Locomotive extends FreightTank{
 			fullBrake = false;
 			break;
 		case TRAIN_BRAKE_DOWN:
-		    if (brakeCooldown > 0) {
-                break;
-            }
 		    if (hasBrakeNotches()) {
+	            if (brakeCooldown > 0) {
+	                break;
+	            }
                 brakeCooldown = 3;
             }
 			setTrainBrake(getTrainBrakePos() - getBrakeDelta());
