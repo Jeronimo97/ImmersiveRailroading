@@ -317,23 +317,26 @@ public abstract class EntityCoupleableRollingStock extends EntityMoveableRolling
 	}
 	
 	public void setCouplerEngaged(CouplerType coupler, boolean engaged) {
-	    for (Control<?> control : getDefinition().getModel().getControls(ModelComponentType.COUPLER_ENGAGED_X)) {
-	        switch (coupler) {
-	            case FRONT:
-	                frontCouplerEngaged = engaged;
-	                if (control.part.pos.contains(ModelPosition.FRONT)) {
+	    switch (coupler) {
+            case FRONT:
+                frontCouplerEngaged = engaged;
+                for (Control<?> control : getDefinition().getModel().getControls(ModelComponentType.COUPLER_ENGAGED_X)) {
+                    if (control.part.pos.contains(ModelPosition.FRONT)) {
                         setControlPosition(control, engaged ? 0 : 1);
                     }
-	                break;
-	            case BACK:
-	                backCouplerEngaged = engaged;
-	                if (control.part.pos.contains(ModelPosition.REAR)) {
+                }
+                break;
+            case BACK:
+                backCouplerEngaged = engaged;
+                for (Control<?> control : getDefinition().getModel().getControls(ModelComponentType.COUPLER_ENGAGED_X)) {
+                    if (control.part.pos.contains(ModelPosition.REAR)) {
                         setControlPosition(control, engaged ? 0 : 1);
                     }
-	                break;
-	        }
+                break;
+                }
 	    }
 	}
+	    
 
 	/*
 	 * Checkers
