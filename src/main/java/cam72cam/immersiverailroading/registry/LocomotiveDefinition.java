@@ -34,6 +34,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     public SoundDefinition compressor;
     private boolean hasCompressor;
     private float mainAirSizeFactor;
+    protected double powerMultiplier;
 
     LocomotiveDefinition(Class<? extends EntityRollingStock> type, String defID, DataBlock data) throws Exception {
         super(type, defID, data);
@@ -187,5 +188,9 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
     
     public float getMainReservoirSizeFactor() {
         return mainAirSizeFactor;
+    }
+
+    public double getPowerMultiplier() {
+        return powerMultiplier;
     }
 }

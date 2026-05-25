@@ -43,6 +43,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     private Float rearYaw;
     @TagField("distanceTraveled")
     public double distanceTraveled = 0;
+    public double distanceTraveledReal = 0;
     private Speed currentSpeed;
     @TagField(value = "positions", mapper = TickPos.ListTagMapper.class)
     public List<TickPos> positions = new ArrayList<>();
@@ -345,6 +346,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
             distanceTraveled += (float) this.currentSpeed.minecraft() * getTickSkew();
             distanceTraveled = distanceTraveled % 32000;// Wrap around to prevent double float issues
         }
+        distanceTraveledReal += (float) Math.abs(this.currentSpeed.minecraft()) * getTickSkew();
+        distanceTraveledReal = distanceTraveledReal % 32000;
 
         this.setPosition(currentPos.position);
         this.setVelocity(getPosition().subtract(prevPosX, prevPosY, prevPosZ));

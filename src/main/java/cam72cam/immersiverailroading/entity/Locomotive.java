@@ -17,6 +17,7 @@ import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.item.ItemStack;
+import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import cam72cam.mod.world.World;
@@ -24,8 +25,7 @@ import cam72cam.mod.world.World;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.UUID;
-
-import static cam72cam.immersiverailroading.library.PhysicalMaterials.*;
+import java.util.stream.Collectors;
 
 public abstract class Locomotive extends FreightTank{
 	private static final float throttleDelta = 0.04f;
@@ -543,17 +543,21 @@ public abstract class Locomotive extends FreightTank{
 	public abstract double getAppliedTractiveEffort(Speed speed);
 
 	/** Maximum force that can be between the wheels and the rails before it slips */
-	protected final double getStaticTractiveEffort(Speed speed) {
-		return (Config.ConfigBalance.FuelRequired ? this.getWeight() : this.getMaxWeight()) // KG
-				* 9.8 // M/S/S
-				* (slipping ? STEEL.kineticFriction(STEEL)/2 : STEEL.staticFriction(STEEL))
-				* slipCoefficient(speed)
-				* (4/getDefinition().factorOfAdhesion()) // Physics are tuned to an adhesion factor of 4
-				* Config.ConfigBalance.tractionMultiplier;
-	}
-
-    public float adhesionCoefficient() {
-        float adhMult = super.adhesionCoefficient();
+	protected final double getStaticTractiveEffort() {        
+        return getDefinition().getStartingTractionNewtons(gauge)
+                * Config.ConfigBalance.tractionMultiplier * adhesionCoefficient();
+    }
+	
+	public float adhesionCoefficient() {
+        float adhMult = 1;
+        World world = getWorld();
+        Vec3i blockPos = getBlockPosition();
+        if (world.isPrecipitating() && world.canSeeSky(blockPos)) {
+            if (world.isRaining(blockPos))
+                adhMult *= 0.7f;
+            if (world.isSnowing(blockPos))
+                adhMult *= 0.35f;
+        }
         if (isSanding)
             adhMult *= 3;
         if (slipping)
@@ -563,55 +567,34 @@ public abstract class Locomotive extends FreightTank{
 	
     protected double simulateWheelSlip() {
         double appliedTractiveEffort = Math.abs(getAppliedTractiveEffort(super.getCurrentSpeed()));
-        double staticTractiveEffort = getStaticTractiveEffort(super.getCurrentSpeed());
+        double staticTractiveEffort = getStaticTractiveEffort();
         slipping = appliedTractiveEffort > staticTractiveEffort;
-        
+
         if (cogging || !slipping)
             return 0;
-        
+
         double adhesionFactor = appliedTractiveEffort / staticTractiveEffort;
         return Math.copySign((adhesionFactor) / 5, getReverser());
     }
 
-	public double getTractiveEffortNewtons(Speed speed) {
-		if (!this.isBuilt()) {
-			return 0;
-		}
+    public double getTractiveEffortNewtons(Speed speed) {
+        if (!this.isBuilt()
+                || Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()
+                        && this.getDefinition().isSpeedLimiter())
+            return 0;
 
-		if (Math.abs(speed.minecraft()) > this.getDefinition().getMaxSpeed(gauge).minecraft()) {
-			return 0;
-		}
+        double appliedTractiveEffort = getAppliedTractiveEffort(speed);
 
-		double appliedTractiveEffort = getAppliedTractiveEffort(speed);
-
-		if (!cogging && Math.abs(appliedTractiveEffort) > 0) {
-			double staticTractiveEffort = getStaticTractiveEffort(speed);
-
-			if (Math.abs(appliedTractiveEffort) > staticTractiveEffort) {
-				// This is a guess, but seems to be fairly accurate
-
-				// Reduce tractive effort to max static translated into kinetic
-				double tractiveEffortNewtons = staticTractiveEffort /
-						STEEL.staticFriction(STEEL) *
-						STEEL.kineticFriction(STEEL);
-
-				// How badly tractive effort is overwhelming static effort
-				tractiveEffortNewtons *= staticTractiveEffort / tractiveEffortNewtons;
-
-				return Math.copySign(tractiveEffortNewtons, appliedTractiveEffort);
-			}
-		}
-		if (slipping) {
+        if (slipping) {
             appliedTractiveEffort *= 0.5;
         }
         return appliedTractiveEffort;
-	}
-
+    }
     
     public float getCurrentTractiveEffort() {
-        return (float) Math.min(1, Math.abs((getAppliedTractiveEffort(super.getCurrentSpeed()) / getDefinition().getStartingTractionNewtons(gauge))));
+        return (float) (getAppliedTractiveEffort(getCurrentSpeed()) / getStaticTractiveEffort());
     }
-
+    
 	@Override
 	public float getBrakeSystemEfficiency() {
 		if (cogging) {
@@ -665,6 +648,7 @@ public abstract class Locomotive extends FreightTank{
 			getDefinition().getModel().getControls(ModelComponentType.THROTTLE_BRAKE_X).stream().forEach(c -> setControlPosition(c, getThrottle() / 2 + (1 - getTrainBrakePos()) / 2));
 		}
 	}
+	
 	public float getThrottleDelta() {
 	    return throttleDelta;
 	}
@@ -810,20 +794,6 @@ public abstract class Locomotive extends FreightTank{
 	
 	public void setBell(int newBell) {
 		this.bellTime = newBell;
-	}
-
-	public double slipCoefficient(Speed speed) {
-		double slipMult = 0.5; //TODO Assumes dirty rails.  Set this back to 1.0 and adjust physics coefficients
-		World world = getWorld();
-		if (world.isPrecipitating() && world.canSeeSky(getBlockPosition())) {
-			if (world.isRaining(getBlockPosition())) {
-				slipMult *= 0.6;
-			}
-			if (world.isSnowing(getBlockPosition())) {
-				slipMult *= 0.4;
-			}
-		}
-		return slipMult;
 	}
 
 	public abstract boolean providesElectricalPower();

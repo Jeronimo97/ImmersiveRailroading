@@ -18,6 +18,7 @@ import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.Sound
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.model.obj.OBJModel;
 import cam72cam.mod.render.OptiFine;
+import cam72cam.mod.render.Particle.VanillaParticles;
 import cam72cam.mod.render.obj.OBJRender;
 import cam72cam.mod.render.opengl.RenderState;
 import util.Matrix4;
@@ -73,6 +74,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private final FlangeSound flangeSound;
     private final SwaySimulator sway;
     
+    private VanillaParticle steamParticle;
+
     public StockModel(DEFINITION def) throws Exception {
         super(def.modelLoc, def.darken, def.internal_model_scale, def.textureNames.keySet(), ConfigGraphics.textureCacheSeconds, i -> {
             List<Integer> lodSizes = new ArrayList<>();
@@ -256,6 +259,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         this.shell = provider.parse(ModelComponentType.SHELL);
         rocking.include(shell);
+
+        steamParticle = VanillaParticle.get(provider, ModelComponentType.STEAM_PARTICLE_X);
     }
 
     protected boolean unifiedBogies() {
@@ -273,6 +278,11 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         doors.forEach(c -> c.effects(stock));
         gauges.forEach(c -> c.effects(stock));
         animations.forEach(c -> c.effects(stock));
+
+        if (stock.hasElectricalPower()) {
+            // TODO idk, if this is so good ~ Jeronimo
+            steamParticle.tickSteam(stock);
+        }
         
         float speed = (float) Math.abs(stock.getCurrentSpeed().metric());
         float adjust = speed / 300;

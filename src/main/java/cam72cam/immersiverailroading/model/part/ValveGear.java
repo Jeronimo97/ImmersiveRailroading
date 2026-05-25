@@ -12,6 +12,7 @@ import cam72cam.immersiverailroading.library.ValveGearConfig;
 import cam72cam.immersiverailroading.model.ModelState;
 import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
+import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
 import cam72cam.immersiverailroading.render.ExpireableMap;
 import cam72cam.immersiverailroading.render.SmokeParticle;
 import cam72cam.immersiverailroading.util.VecUtil;
@@ -149,16 +150,26 @@ public abstract class ValveGear {
         public void effects(EntityMoveableRollingStock stock) {
             boolean drains_enabled = isEndStroke(stock) && stock instanceof LocomotiveSteam && ((LocomotiveSteam) stock).cylinderDrainsEnabled();
 
-            if (stock instanceof Locomotive && (((LocomotiveSteam)stock).getBoilerPressure() <= 0 && Config.ConfigBalance.FuelRequired)) {
+            if (stock instanceof Locomotive && (((LocomotiveSteam)stock).getBoilerPressureBar() <= 0 && Config.ConfigBalance.FuelRequired)) {
                 return;
             }
 
             Pair<Matrix4, Vec3d> particlePos = null; //Lazy eval
-            if (ConfigGraphics.particlesEnabled && drains_enabled) {
+            if (ConfigGraphics.particlesEnabled && ((LocomotiveSteam) stock).getChestPressureBar() > 0) {
                 particlePos = particlePos(stock);
                 double accell = 0.3 * stock.gauge.scale();
                 Vec3d sideMotion = stock.getVelocity().add(VecUtil.rotateWrongYaw(particlePos.getLeft().apply(direction).scale(accell), stock.getRotationYaw()+180));
-                Particles.SMOKE.accept(new SmokeParticle.SmokeParticleData(stock.getWorld(), particlePos.getRight(), new Vec3d(sideMotion.x, sideMotion.y+0.01 * stock.gauge.scale(), sideMotion.z), 80, 0, 0.6f, 0.2 * stock.gauge.scale(), stock.getDefinition().steamParticleTexture));
+                float thickness = 0;
+                float diameter = 0;
+                if (((LocomotiveSteamDefinition) stock.getDefinition()).getBasicChestDrain()) {
+                    thickness = 0.1f;
+                    diameter = 0.1f;
+                }
+                if (drains_enabled) {
+                    thickness = 0.6f;
+                    diameter = 0.2f;
+                }
+                Particles.SMOKE.accept(new SmokeParticle.SmokeParticleData(stock.getWorld(), particlePos.getRight(), new Vec3d(sideMotion.x, sideMotion.y+0.01 * stock.gauge.scale(), sideMotion.z), 80, 0, thickness, diameter * stock.gauge.scale(), stock.getDefinition().steamParticleTexture));
             }
 
             if (stock instanceof LocomotiveSteam) {
@@ -184,9 +195,8 @@ public abstract class ValveGear {
             float delta = 0.03f;
             if (stock instanceof LocomotiveSteam) {
                 LocomotiveSteam loco = (LocomotiveSteam) stock;
-                if (Math.abs(loco.getThrottle() * loco.getReverser()) <= 0.01) {
+                if (Math.abs(Math.max(loco.getChestPressurePercent(), loco.getThrottle()) * loco.getReverser()) <= 0.01)
                     return false;
-                }
 
                 delta = Math.abs(loco.getReverser())/4;
             }
@@ -228,7 +238,7 @@ public abstract class ValveGear {
 
         public void update(Vec3d particlePos, boolean enteredStroke, boolean drain_enabled) {
             if (!chuffOn) {
-                if (enteredStroke && Math.abs(stock.getThrottle() * stock.getReverser()) > 0) {
+                if (enteredStroke && Math.abs(Math.max(stock.getChestPressurePercent(), stock.getThrottle()) * stock.getReverser()) > 0) {
                     chuffOn = true;
                     pitchStroke = !pitchStroke;
 
@@ -237,7 +247,7 @@ public abstract class ValveGear {
                     if (maxSpeed == 0) {
                         maxSpeed = 200;
                     }
-                    float volume = (float) Math.max(1-speed/maxSpeed, 0.3) * Math.abs(stock.getThrottle() * stock.getReverser());
+                    float volume = (float) Math.max(1 - speed / maxSpeed, 0.3) * Math.abs(Math.max(stock.getChestPressurePercent(), stock.getThrottle()) * stock.getReverser());
                     volume = (float) Math.sqrt(volume);
                     double fraction = 3;
                     float pitch = 0.8f + (float) (speed/maxSpeed/fraction * 0.2);
@@ -272,14 +282,14 @@ public abstract class ValveGear {
 
             if (drain_volume > 0 && !cylinder_drain.isPlaying()) {
                 cylinder_drain.setPitch(1 - pitchOffset*5);
-                cylinder_drain.setVolume(drain_volume * stock.getThrottle());
+                cylinder_drain.setVolume(drain_volume * Math.max(stock.getChestPressurePercent(), stock.getThrottle()));
                 cylinder_drain.play(particlePos);
             }
             if (drain_volume <= 0 && cylinder_drain.isPlaying()) {
                 cylinder_drain.stop();
             }
             if (cylinder_drain.isPlaying()) {
-                cylinder_drain.setVolume(drain_volume * stock.getThrottle());
+                cylinder_drain.setVolume(drain_volume * Math.max(stock.getChestPressurePercent(), stock.getThrottle()));
                 cylinder_drain.setPosition(particlePos);
                 cylinder_drain.setVelocity(stock.getVelocity());
             }

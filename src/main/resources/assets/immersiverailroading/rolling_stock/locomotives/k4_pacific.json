@@ -10,7 +10,12 @@
 		"tractive_effort_lbf": 44460,
 		"max_speed_kmh": 152,
 		"valve_gear": "walschaerts",
-		"weight_kg": 140110
+		"weight_kg": 140110,
+		"piston_diameter": 0.686,
+		"piston_stroke": 0.711,
+		"wheel_diameter": 2.032,
+		"cylinder_count": 2,
+		"power_multiplier": 1.52
 	},
 	"firebox": {
 		"slots": 12,
@@ -34,10 +39,8 @@
 	"sounds": {
 		"whistle": "sounds/steam/k4_sounds/whistle.ogg",
 		"idle": "sounds/steam/k4_sounds/idle.ogg",
-		"chuff": "sounds/steam/k4_sounds/chuff.ogg"
-	},
-		"sounds": {
-			"quilling": [
+		"chuff": "sounds/steam/k4_sounds/chuff.ogg",
+		"quilling": [
 			{
 				"pull_start": 0.25,
 				"pull_end": 0.55,

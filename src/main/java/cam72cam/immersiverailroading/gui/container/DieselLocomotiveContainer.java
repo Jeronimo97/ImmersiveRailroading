@@ -47,7 +47,6 @@ public class DieselLocomotiveContainer extends BaseContainer {
         currY = container.drawPlayerInventoryConnector(0, currY, horizSlots);
         currY = container.drawPlayerInventory(currY, horizSlots);
         drawName(container, stock);
-
         int Ysand = 0;
         Ysand = container.drawTopBar(horizSlots * 20, Ysand, 1);
         container.drawCenteredString("Sand", horizSlots * 12, Ysand - 12);

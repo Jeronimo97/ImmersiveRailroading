@@ -36,6 +36,7 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         if (!def.isCabCar()) {
             addGauge(provider, ModelComponentType.GAUGE_TEMPERATURE_X, Readouts.TEMPERATURE);
             addGauge(provider, ModelComponentType.GAUGE_BOILER_PRESSURE_X, Readouts.BOILER_PRESSURE);
+            addGauge(provider, ModelComponentType.GAUGE_CHEST_PRESSURE_X, Readouts.CHEST_PRESSURE);
         }
 
         addControl(provider, ModelComponentType.WHISTLE_CONTROL_X);
@@ -97,7 +98,11 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         }
         pressureValve.effects(stock, stock.isOverpressure());
         idleSounds.effects(stock, stock.getBoilerTemperature() > stock.ambientTemperature() + 5 ? 0.1f : 0);
-        whistle.effects(stock, stock.getBoilerPressure() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
+        whistle.effects(stock, stock.getBoilerPressureBar() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
+        
+        if(stock.getBoilerTemperature() > stock.ambientTemperature()) {
+            fireParticle.tick(stock, VanillaParticles.FLAME, 5);
+        }
     }
 
     @Override
