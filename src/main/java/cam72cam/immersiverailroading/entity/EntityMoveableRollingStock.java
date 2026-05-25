@@ -12,6 +12,7 @@ import cam72cam.immersiverailroading.library.ChatText;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.Permissions;
+import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.net.SoundPacket;
 import cam72cam.immersiverailroading.physics.TickPos;
@@ -36,10 +37,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class EntityMoveableRollingStock extends EntityRidableRollingStock implements ICollision {
-
-    public static final String DAMAGE_SOURCE_HIT = "immersiverailroading:hitByTrain";
-    public static final String DAMAGE_SOURCE_HIT_IN_DARKNESS = "immersiverailroading:hitByTrainInDarkness";
-
     @TagField("frontYaw")
     private Float frontYaw;
     @TagField("rearYaw")
@@ -398,7 +395,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
 				    boolean isBlockDark = getWorld().getBlockLightLevel(entity.getBlockPosition()) < 0.5;
 				    boolean isNightime = getWorld().getTime() > 13000 && getWorld().getTime() < 23000;
 				    boolean isDark = isBlockDark && isNightime;
-				    entity.directDamage(isDark ? DAMAGE_SOURCE_HIT_IN_DARKNESS : DAMAGE_SOURCE_HIT, speedDamage);
+				    entity.directDamage(isDark ? DamageTypes.HIT_IN_DARKNESS : DamageTypes.HIT, speedDamage);
 				}
 			}
 	
@@ -605,7 +602,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         for (Vec3i bp : track) {
             TileRailBase te = getWorld().getBlockEntity(bp, TileRailBase.class);
             if (te != null) {
-                if (te.getAugment() == Augment.SPEED_RETARDER) {
+                if (te.getAugment() == Augment.SPEED_RETARDER && te.canInteractWith(this)) {
                     double red = getWorld().getRedstone(bp);
                     retardedNewtons += red / 15f / track.size() * newtons;
                 }

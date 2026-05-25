@@ -18,6 +18,7 @@ import cam72cam.mod.render.Particle.VanillaParticles;
 import util.Matrix4;
 
 import java.util.List;
+import java.util.Set;
 
 public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends LocomotiveDefinition> extends FreightTankModel<ENTITY, DEFINITION> {
     private List<ModelComponent> components;
@@ -172,6 +173,28 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         bell.removed(stock);
         compressor.removed(stock);
         brakePressureSound.removed(stock);
+    }
+
+    @Override
+    public Set<ItemEntity> filterItems(EntityMoveableRollingStock stock, List<ItemEntity> entities) {
+        Set<ItemEntity> result = super.filterItems(stock, entities);
+        if (this.cargoFillFront != null) {
+            Matrix4 inverted = getFrontLocomotiveMatrix(stock);
+            inverted.invert();
+            entities.stream().filter(entity -> {
+                final Vec3d point1 = inverted.apply(entity.getPosition());
+                return this.cargoFillFront.boxes.stream().anyMatch(box -> box.contains(point1));
+            }).forEach(result::add);
+        }
+        if (this.cargoFillRear != null) {
+            Matrix4 inverted = getRearLocomotiveMatrix(stock);
+            inverted.invert();
+            entities.stream().filter(entity -> {
+                final Vec3d point1 = inverted.apply(entity.getPosition());
+                return this.cargoFillRear.boxes.stream().anyMatch(box -> box.contains(point1));
+            }).forEach(result::add);
+        }
+        return result;
     }
 
     private Matrix4 getFrontLocomotiveMatrix(EntityMoveableRollingStock s) {
