@@ -28,7 +28,6 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact remapJar
-            artifact sourcesJar
             artifactId archive_base_name
         }
     }
