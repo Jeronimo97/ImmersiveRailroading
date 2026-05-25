@@ -8,6 +8,7 @@ import cam72cam.immersiverailroading.entity.LocomotiveDiesel;
 import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.util.DataBlock;
+import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.immersiverailroading.util.MergedBlocks;
 import cam72cam.mod.MinecraftClient;
 import cam72cam.mod.config.ConfigFile;
@@ -388,7 +389,7 @@ public class GuiBuilder {
                         && Character.isDigit(out.charAt(decimalIndex + 1))) {
                         // [stat].[digit(0~5)]
                         int dig = Character.getNumericValue(out.charAt(decimalIndex + 1));
-                        dig = Math.min(5, Math.max(0, dig));
+                        dig = MathUtil.clamp(dig, 0, 5);
 
                         out = out.replace(out.substring(index, decimalIndex + 2), stat.getValue(stock, dig));
                     } else {
