@@ -99,10 +99,6 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         pressureValve.effects(stock, stock.isOverpressure());
         idleSounds.effects(stock, stock.getBoilerTemperature() > stock.ambientTemperature() + 5 ? 0.1f : 0);
         whistle.effects(stock, stock.getBoilerPressureBar() > 0 || !Config.isFuelRequired(stock.gauge) ? stock.getHornTime() : 0, stock.getHornPull());
-        
-        if(stock.getBoilerTemperature() > stock.ambientTemperature()) {
-            fireParticle.tick(stock, VanillaParticles.FLAME, 5);
-        }
     }
 
     @Override
