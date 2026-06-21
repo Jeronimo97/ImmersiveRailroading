@@ -4,8 +4,6 @@ import cam72cam.immersiverailroading.ConfigSound;
 import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.sound.ISound;
-import cam72cam.mod.util.DegreeFuncs;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -35,9 +33,7 @@ public class FlangeSound {
         }
 
         void effects() {
-            double yawDelta = DegreeFuncs.delta(stock.getFrontYaw(), stock.getRearYaw()) /
-                    Math.abs(stock.getDefinition().getBogeyFront(stock.gauge) - stock.getDefinition().getBogeyRear(stock.gauge));
-            
+            float yawDelta = stock.getAngle();
             double startingFlangeSpeed = 5;
             double kmh = Math.abs(stock.getCurrentSpeed().metric());
             double flangeMinYaw = stock.getDefinition().flange_min_yaw;

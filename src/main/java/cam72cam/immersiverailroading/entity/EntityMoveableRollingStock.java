@@ -30,6 +30,7 @@ import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
 import cam72cam.mod.serialization.TagCompound;
 import cam72cam.mod.serialization.TagField;
+import cam72cam.mod.util.DegreeFuncs;
 import cam72cam.mod.world.World;
 
 import java.util.ArrayList;
@@ -62,7 +63,8 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     @TagSync
     @TagField("BRAKE_PRESSURE")
     private float trainBrakePressure = 0;
-    public boolean locked = true;
+    public boolean locked = true;    
+    public boolean isSingleRelease;
 
     @TagSync
     @TagField("BRAKE_CYLINDER_PRESSURE")
@@ -293,6 +295,7 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
             if (state != null) {
                 this.brakeCylinderPressure = state.config.brakeCylinderPressure;
                 this.trainBrakePressure = state.config.trainBrakePressure;
+                this.isSingleRelease = state.config.isSingleRelease;
                 this.sliding = state.sliding;
 
                 if (state.collided > 0.1 && getTickCount() - lastCollision > 20) {
@@ -636,5 +639,11 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
     
     public double getMagnetBrakeNewton() {
         return getCurrentSpeed().metric() > 50 && getBrakeCylinderPressure() > 0.95 ? this.getDefinition().getMagnetBrakeNewton() : 0;
+    }
+    
+    public float getAngle() {
+        float yawDelta = DegreeFuncs.delta(getFrontYaw(), getRearYaw()) /
+                Math.abs(getDefinition().getBogeyFront(gauge) - getDefinition().getBogeyRear(gauge));
+        return yawDelta;
     }
 }

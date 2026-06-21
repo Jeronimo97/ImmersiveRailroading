@@ -109,7 +109,8 @@ public abstract class EntityRollingStockDefinition {
     public double directFrictionCoefficient;
     private int magneticTrackBrake;
     private int speedBrakeSqueal;
-    private float rigidWheelbase;
+    private float curveResistanceCoefficient;
+    public float dragCoefficient;
     
     public SoundDefinition brakeHighSpeedSound;
     public SoundDefinition brakeLowSpeedSound;
@@ -505,7 +506,8 @@ public abstract class EntityRollingStockDefinition {
         // Locomotives default to linear brake control
         isLinearBrakeControl = properties.getValue("linear_brake_control").asBoolean();
         speedBrakeSqueal = properties.getValue("speed_brake_squeal").asInteger(45);
-        rigidWheelbase = properties.getValue("rigid_wheelbase").asFloat(2.5f);
+        curveResistanceCoefficient = properties.getValue("curve_friction_coefficient").asFloat(1.0f);
+        dragCoefficient = properties.getValue("drag_friction_coefficient").asFloat(0.1f);
 
         try {
             brakeMaterials = PhysicalMaterials.valueOf(properties.getValue("brake_shoe_material").asString(PhysicalMaterials.CAST_IRON.toString()));
@@ -978,7 +980,11 @@ public abstract class EntityRollingStockDefinition {
         return speedBrakeSqueal;
     }
     
-    public float getRigidWheelbase() {
-        return rigidWheelbase;
+    public float getCurveCoefficient() {
+        return curveResistanceCoefficient;
+    }
+    
+    public float getDragCoefficient() {
+        return dragCoefficient;
     }
 }
