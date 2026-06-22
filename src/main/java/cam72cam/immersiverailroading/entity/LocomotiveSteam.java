@@ -142,14 +142,17 @@ public class LocomotiveSteam extends Locomotive {
         if (def.isCabCar())
             return 0;
         
-        double reverser = getReverser();
+        float reverser = getReverser();
         if (reverser == 0 || getBoilerPressureBar() == 0 && ConfigBalance.FuelRequired)
             return 0;
-
-        double expansion = 1.05 / (Math.abs(reverser) * (Math.abs(reverser) + 0.05));
+        
+        double speedPerc = speedPercent(speed);
+        float absReverser = getAbsReverser(speedPerc, Math.abs(reverser));
+        
+        double expansion = 1.05 / (absReverser * (absReverser + 0.05));
         double expansionPressure = getChestPressureBar() / expansion * (1 + Math.log(expansion));
-        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPercent(speed)
-                * Math.abs(reverser) * (def.getCylinderCount() == 3 ? 1.15 : 1));
+        double backPressure = expansionPressure * Math.log(1 + 2.67 * speedPerc
+                * absReverser * (def.getCylinderCount() == 3 ? 1.15 : 1));
         double pressurePercent = (expansionPressure - backPressure) / getMaxChestPressure();
 
         if (pressurePercent <= 0)
@@ -157,8 +160,12 @@ public class LocomotiveSteam extends Locomotive {
         
         return 50445 * def.getCylinderCount() * def.getPistonDiameter(gauge) * def.getPistonDiameter(gauge)
                 * def.getPistonStroke(gauge) * getMaxChestPressure() / def.getWheelDiameter(gauge)
-                * def.getPowerMultiplier() * Math.pow(pressurePercent, 1.5 * (0.3 * Math.abs(reverser) + 0.7))
+                * def.getPowerMultiplier() * Math.pow(pressurePercent, 1.5 * (0.3 * absReverser + 0.7))
                 * ConfigBalance.powerMultiplier * Math.copySign(1, reverser);
+    }
+    
+    private float getAbsReverser(double speed, float reverser) {
+    	return Config.ImmersionConfig.automaticReverser && speed > 0.05 ? Math.min((float) (-0.3f * Math.log(speed) + 0.28f), reverser) : reverser;
     }
     
 	@Override
@@ -185,8 +192,7 @@ public class LocomotiveSteam extends Locomotive {
             pressure -= 0.07f;
         }
         
-        pressure -= (0.015f * pressure
-                * Math.abs(getReverser()) * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge)) + 0.005f;
+        pressure -= (0.015f * pressure * getAbsReverser(speedPercent, Math.abs(getReverser()))) * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge) + 0.005f;
 
         if (slipping) {
             pressure -= Math.abs(0.3f * simulateWheelSlip());

@@ -100,6 +100,9 @@ public class Config {
 
         @Comment("Enable CARGO_FILL and CARGO_ITEMS load items dropped to the world")
         public static boolean allowCargoLoadDroppedItem = true;
+        
+        @Comment("[Server] Enable automatic reverser for steam engines (old style)")
+        public static boolean automaticReverser = false;
     }
 
 	@Name("balance")
