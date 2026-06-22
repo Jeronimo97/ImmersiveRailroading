@@ -36,7 +36,6 @@ import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.mod.util.SingleCache;
 import org.apache.commons.lang3.ArrayUtils;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -160,7 +159,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 		this.markDirty();
 	}
 
-	public void setAugmentProperties(@Nonnull Augment.Properties properties) {
+	public void setAugmentProperties(Augment.Properties properties) {
 		this.positive = properties.positiveFilter;
 		this.negative = properties.negativeFilter;
 		this.actuatorFilter = properties.doorActuatorFilter;
@@ -285,9 +284,8 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 				railHeight = bedHeight;
 			}
 		case 4:
-			if (this instanceof TileRail) {
-				TileRail tr = ((TileRail) this);
-				if (tr.info.settings.type == TrackItems.SLOPE && tr.info.customInfo != null && tr.info.customInfo.placementPosition != null) {
+			if (this instanceof TileRail tr) {
+                if (tr.info.settings.type == TrackItems.SLOPE && tr.info.customInfo != null && tr.info.customInfo.placementPosition != null) {
 					// Force to 1 block offset
 					tr.info = tr.info.with(mod -> {
 						Vec3d placement = mod.customInfo.placementPosition;
@@ -315,7 +313,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 						.replace(".json", "")
 						.replace(".caml", "");
 				String tag = "stock:" + stockName;
-				if (builder.length() != 0) {
+				if (!builder.isEmpty()) {
 					tag = " && " + tag;
 				}
 				builder.append(tag);
@@ -532,17 +530,12 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
     }
 
 	private boolean canOperate() {
-		switch (this.redstoneMode) {
-			case ENABLED:
-				return true;
-			case REQUIRED:
-				return isPowered;
-			case INVERTED:
-				return !isPowered;
-			case DISABLED:
-			default:
-				return false;
-		}
+        return switch (this.redstoneMode) {
+            case ENABLED -> true;
+            case REQUIRED -> isPowered;
+            case INVERTED -> !isPowered;
+            default -> false;
+        };
 	}
 
 	@Override
@@ -935,9 +928,8 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			return null;
 		}
 
-		if (cur instanceof TileRail) {
-			TileRail curTR = (TileRail) cur;
-			if (curTR.info.settings.type.equals(TrackItems.SWITCH)) {
+		if (cur instanceof TileRail curTR) {
+            if (curTR.info.settings.type.equals(TrackItems.SWITCH)) {
 				return curTR;
 			}
 		}
