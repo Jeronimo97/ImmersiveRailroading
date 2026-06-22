@@ -90,6 +90,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         super.parseControllable(provider, def);
 
         addGauge(provider, ModelComponentType.GAUGE_SPEED_X, Readouts.SPEED);
+        addGauge(provider, ModelComponentType.GAUGE_REAL_SPEED_X, Readouts.REAL_SPEED);
         addGauge(provider, ModelComponentType.GAUGE_THROTTLE_X, Readouts.THROTTLE);
         addGauge(provider, ModelComponentType.GAUGE_REVERSER_X, Readouts.REVERSER);
         addGauge(provider, ModelComponentType.GAUGE_TRAIN_BRAKE_X, Readouts.TRAIN_BRAKE);

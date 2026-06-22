@@ -504,8 +504,7 @@ public class SimulationState {
         // r = 60 / angle -> R ~= 0.012 * angle * c * N
         double curveResistanceNewtons = 0.012f * config.angle * config.curveResistanceCoefficient * defaultNewtons;
 
-        // R = 0.5 * Cd * rho * A * v^2 = 0.5 * Cd * 1.25 * gauge / 1.435 * 10 * v^2 =
-        // 4.355 * Cd * gauge * v^2
+        // R = 0.5 * Cd * rho * A * v^2 = 0.5 * Cd * 1.25 * gauge / 1.435 * 10 * v^2 = 4.355 * Cd * gauge * v^2
         double dragResistanceNewtons = 4.355f * config.dragCoefficient * config.gauge.value()  * Math.pow(Math.abs(Speed.fromMinecraft(velocity).metric()), 2);
 
         float brakePressure = calculateBrakePressure();

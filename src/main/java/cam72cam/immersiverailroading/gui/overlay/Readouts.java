@@ -10,6 +10,7 @@ import cam72cam.immersiverailroading.util.MathUtil;
 public enum Readouts {
     LIQUID,
     SPEED,
+    REAL_SPEED,
     TEMPERATURE,
     BOILER_PRESSURE,
     THROTTLE,
@@ -61,6 +62,12 @@ public enum Readouts {
                     maxSpeed = 200;
                 }
                 return (float)Math.abs(((EntityMoveableRollingStock)stock).getCurrentSpeed().metric() / maxSpeed);
+            case REAL_SPEED:
+                double maxRealSpeed = (stock instanceof Locomotive ? ((Locomotive) stock).getDefinition().getScriptedMaxSpeed(stock.gauge, (Locomotive) stock).metric() : 0);
+                if (maxRealSpeed == 0) {
+                    maxRealSpeed = 200;
+                }
+            	return (float)Math.abs(((EntityMoveableRollingStock)stock).getRealSpeed().metric() / maxRealSpeed);
             case TEMPERATURE:
                 if (stock instanceof LocomotiveSteam) {
                     return ((LocomotiveSteam) stock).getBoilerTemperature() / 100f;

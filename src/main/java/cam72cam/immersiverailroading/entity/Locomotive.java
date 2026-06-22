@@ -538,6 +538,16 @@ public abstract class Locomotive extends FreightTank{
     public double speedPercent(Speed speed) {
         return Math.abs(speed.metric() / getDefinition().getMaxSpeed(gauge).metric());
     }
+	@Override
+	public Speed getCurrentSpeed() {
+	    return slipping ? Speed.fromMinecraft((super.getCurrentSpeed().minecraft()
+	            + simulateWheelSlip())) : super.getCurrentSpeed();
+	}
+	
+	@Override
+	public Speed getRealSpeed() {
+		return super.getCurrentSpeed();
+	}
 
 	/** Force applied between the wheels and the rails */
 	public abstract double getAppliedTractiveEffort(Speed speed);

@@ -143,6 +143,10 @@ public abstract class EntityMoveableRollingStock extends EntityRidableRollingSto
         }
         return currentSpeed;
     }
+    
+    public Speed getRealSpeed() {
+    	return getCurrentSpeed();
+    }
 
     public void setCurrentSpeed(Speed newSpeed) {
         this.currentSpeed = newSpeed;
