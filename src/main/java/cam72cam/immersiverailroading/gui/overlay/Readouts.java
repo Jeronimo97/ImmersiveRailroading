@@ -43,7 +43,6 @@ public enum Readouts {
     MAGNETIC_BRAKE,
     SANDING,
     SLIPPING,
-    CHEST_PRESSURE,
     ROLLING_STOCK_PITCH,
     TRACTIVE_EFFORT,
     ;
@@ -63,7 +62,7 @@ public enum Readouts {
                 }
                 return (float)Math.abs(((EntityMoveableRollingStock)stock).getCurrentSpeed().metric() / maxSpeed);
             case REAL_SPEED:
-                double maxRealSpeed = (stock instanceof Locomotive ? ((Locomotive) stock).getDefinition().getScriptedMaxSpeed(stock.gauge, (Locomotive) stock).metric() : 0);
+                double maxRealSpeed = (stock instanceof Locomotive ? ((Locomotive) stock).getDefinition().getMaxSpeed(stock.gauge).metric() : 0);
                 if (maxRealSpeed == 0) {
                     maxRealSpeed = 200;
                 }
@@ -141,10 +140,6 @@ public enum Readouts {
                 return stock instanceof Locomotive && ((Locomotive)stock).isSanding ? 1 : 0;
             case SLIPPING:
                 return stock instanceof Locomotive && ((Locomotive)stock).slipping ? 1 : 0;
-            case CHEST_PRESSURE:
-                return stock instanceof LocomotiveSteam
-                        ? ((LocomotiveSteam) stock).getChestPressurePercent()
-                        : 0;
             case ROLLING_STOCK_PITCH:
                 return stock.getRotationPitch();
             case TRACTIVE_EFFORT:

@@ -28,11 +28,6 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     private double width;
     public boolean tender_auto_feed;
     public boolean cab_forward;
-    private double pistonDiameter;
-    private double pistonStroke;
-    private double wheelDiameter;
-    private int cylinderCount;
-    private boolean basicChestDrain;
 
     public LocomotiveSteamDefinition(String defID, DataBlock data) throws Exception {
         super(LocomotiveSteam.class, defID, data);
@@ -53,11 +48,6 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
             numSlots = 0;
             width = 0;
             tender_auto_feed = false;
-            pistonDiameter = 0;
-            pistonStroke = 0;
-            wheelDiameter = 0;
-            cylinderCount = 0;
-            powerMultiplier = 0;
         } else {
             DataBlock firebox = data.getBlock("firebox");
 
@@ -74,12 +64,6 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
             numSlots = Math.ceil(firebox.getValue("slots").asInteger() * internal_inv_scale);
             width = Math.ceil(firebox.getValue("width").asInteger() * internal_inv_scale);
             tender_auto_feed = properties.getValue("tender_auto_feed").asBoolean(true);
-            pistonDiameter = properties.getValue("piston_diameter").asDouble(0.6);
-            pistonStroke = properties.getValue("piston_stroke").asDouble(0.66);
-            wheelDiameter = properties.getValue("wheel_diameter").asDouble(1.4);
-            cylinderCount = properties.getValue("cylinder_count").asInteger(2);
-            powerMultiplier = properties.getValue("power_multiplier").asDouble(1.5);
-            basicChestDrain = properties.getValue("basic_chest_drain").asBoolean(false);
         }
         cab_forward = properties.getValue("cab_forward").asBoolean(false);
 
@@ -132,24 +116,5 @@ public class LocomotiveSteamDefinition extends LocomotiveDefinition {
     public int getInventoryWidth(Gauge gauge) {
         return (int) Math.max(3, Math.ceil(width * gauge.scale()));
     }
-    
-    public double getPistonDiameter(final Gauge gauge) {
-        return pistonDiameter * gauge.scale() * internal_inv_scale;
-    }
 
-    public double getPistonStroke(final Gauge gauge) {
-        return pistonStroke * gauge.scale() * internal_inv_scale;
-    }
-
-    public double getWheelDiameter(final Gauge gauge) {
-        return wheelDiameter * gauge.scale() * internal_inv_scale;
-    }
-
-    public int getCylinderCount() {
-        return cylinderCount;
-    }
-    
-    public boolean getBasicChestDrain() {
-        return basicChestDrain;
-    }
 }

@@ -9,8 +9,6 @@ import cam72cam.immersiverailroading.model.components.ComponentProvider;
 import cam72cam.immersiverailroading.model.components.ModelComponent;
 import cam72cam.immersiverailroading.model.part.*;
 import cam72cam.immersiverailroading.registry.LocomotiveSteamDefinition;
-import cam72cam.mod.render.Particle.VanillaParticles;
-
 import java.util.List;
 
 public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, LocomotiveSteamDefinition> {
@@ -36,7 +34,6 @@ public class SteamLocomotiveModel extends LocomotiveModel<LocomotiveSteam, Locom
         if (!def.isCabCar()) {
             addGauge(provider, ModelComponentType.GAUGE_TEMPERATURE_X, Readouts.TEMPERATURE);
             addGauge(provider, ModelComponentType.GAUGE_BOILER_PRESSURE_X, Readouts.BOILER_PRESSURE);
-            addGauge(provider, ModelComponentType.GAUGE_CHEST_PRESSURE_X, Readouts.CHEST_PRESSURE);
         }
 
         addControl(provider, ModelComponentType.WHISTLE_CONTROL_X);

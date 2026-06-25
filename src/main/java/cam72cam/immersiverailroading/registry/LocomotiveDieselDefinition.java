@@ -24,7 +24,6 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
     private int fuelEfficiency;
     private Map<Fluid, Integer> overriddenFuels;
     private boolean hornSus;
-    private int notches;
     private float enginePitchRange;
     public boolean hasDynamicTractionControl;
     private int dynamicBrake;
@@ -76,7 +75,6 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
             fuelCapacity_l = 0;
             overriddenFuels = Collections.emptyMap();
         }
-        notches = properties.getValue("throttle_notches").asInteger();
         hornSus = properties.getValue("horn_sustained").asBoolean();
         dynamicBrake = properties.getValue("dynamic_brake_newton").asInteger(0);
         isLinkedDynBrakeThrottle = properties.getValue("isLinkedDynamicBrakeThrottle").asBoolean(false);
@@ -123,10 +121,6 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
 
     public ValveGearConfig getValveGear() {
         return super.getValveGear() == null ? new ValveGearConfig(ValveGearConfig.ValveGearType.CONNECTING, null) : super.getValveGear();
-    }
-
-    public int getThrottleNotches() {
-        return notches;
     }
 
     public float getEnginePitchRange() {

@@ -28,7 +28,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public abstract class Locomotive extends FreightTank{
-	private static final float throttleDelta = 0.04f;
 	public int brakeCooldown;
 	
 	@TagField("deadMansSwitch")
@@ -293,7 +292,7 @@ public abstract class Locomotive extends FreightTank{
 
 
 	protected float getReverserDelta() {
-		return 0.04f;
+		return 1f / getDefinition().getReverserNotches();
 	}
 
 	public void onDrag(Control<?> component, double newValue) {
@@ -660,7 +659,7 @@ public abstract class Locomotive extends FreightTank{
 	}
 	
 	public float getThrottleDelta() {
-	    return throttleDelta;
+	    return 1f / getDefinition().getThrottleNotches();
 	}
 	
 	public float getBrakeDelta() {
