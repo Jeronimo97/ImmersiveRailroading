@@ -531,7 +531,8 @@ public class SimulationState {
         if (config.trainBrakePressure > 0.9999)
             config.trainBrakePressure = 1;
 
-        if (ConfigDebug.debugLog) {
+        if (ConfigDebug.debugLogging) {
+        	System.out.println("Stock: " + config.debugID);
             System.out.println("Rolling Resistance: " + rollingResistanceNewtons);
             System.out.println("Block Resistance: " + blockResistanceNewtons);
             System.out.println("Brake Cylinder: " + brakeCylinderNewtons);
@@ -541,6 +542,7 @@ public class SimulationState {
             System.out.println("Magnetic Brake: " + magnetBrakeNewtons);
             System.out.println("Curve Resistance: " + curveResistanceNewtons);
             System.out.println("Drag Resistance: " + dragResistanceNewtons);
+            System.out.println("--------");
         }
         
         return rollingResistanceNewtons + blockResistanceNewtons + brakeCylinderNewtons

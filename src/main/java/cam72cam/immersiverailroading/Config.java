@@ -243,9 +243,9 @@ public class Config {
         @Range(min = 1, max = 10)
         public static int SandEfficiency = 1;
         
-        @Comment("Drag resistance exponent. Default: 1.6")
+        @Comment("Drag resistance exponent. Default: 1.7")
         @Range(min = 0, max = 10)
-        public static float dragResistanceExponent = 1.6f;
+        public static float dragResistanceExponent = 1.7f;
         
         @Comment("Drag resistance multiplier. Default: 1.0")
         @Range(min = 0, max = 10)
