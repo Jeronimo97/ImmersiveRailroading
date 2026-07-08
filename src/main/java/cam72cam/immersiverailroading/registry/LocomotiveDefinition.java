@@ -96,7 +96,7 @@ public abstract class LocomotiveDefinition extends FreightDefinition {
         throttleNotches = properties.getValue("throttle_notches").asInteger(25);
         hasCompressor = properties.getValue("has_compressor").asBoolean(true);
         mainAirSizeFactor = properties.getValue("main_reservoir_size_factor").asFloat(1f);
-        dragCoefficient = properties.getValue("drag_friction_coefficient").asFloat(0.35f);
+        dragCoefficient = properties.getValue("drag_friction_coefficient").asFloat(0.15f);
         
         DataBlock sounds = data.getBlock("sounds");
         bell = SoundDefinition.getOrDefault(sounds, "bell");

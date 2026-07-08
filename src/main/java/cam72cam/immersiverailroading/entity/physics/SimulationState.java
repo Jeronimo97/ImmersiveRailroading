@@ -501,16 +501,12 @@ public class SimulationState {
         double startingFriction = velocity == 0 ? 0.005 * defaultNewtons : 0;
         // TODO This is kinda directional?
         double blockResistanceNewtons = interferingResistance * 1000 * Config.ConfigDamage.blockHardness;
-
-        // R = 573 / r [feet] = 0.765 / r [meters]
-        // r = 60 / angle -> R ~= 0.012 * angle * c * N
-        double curveResistanceNewtons = 0.012f * config.angle * config.curveResistanceCoefficient * defaultNewtons;
-
+        // r = 60 / angle -> R ~= 0.012 [0.005] * angle * c * N
+        double curveResistanceNewtons = 0.005f * config.angle * config.curveResistanceCoefficient * defaultNewtons;
         // R = 0.5 * Cd * rho * A * v^2 = 0.5 * Cd * 1.25 * gauge / 1.435 * 10 * v^2 = 4.355 * Cd * gauge * v^2 [^1.6]
         double dragResistanceNewtons = 4.355f * config.dragCoefficient * config.gauge.value() * Math.pow(Math.abs(Speed.fromMinecraft(velocity).metric()), config.dragExponent);
 
         float brakePressure = calculateBrakePressure();
-
         double brakeCylinderNewtons = Math.max(config.designAdhesionNewtons * brakePressure, config.handBrakeNewtons);
         double dynamicBrakeNewtons = config.dynamicBrakeNewtons;
         double magnetBrakeNewtons = config.magnetBrakeNewtons;
