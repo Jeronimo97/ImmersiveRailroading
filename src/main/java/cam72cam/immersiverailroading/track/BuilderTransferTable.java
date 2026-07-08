@@ -38,6 +38,7 @@ public class BuilderTransferTable extends BuilderBase {
                 if(i == vertMin || i == vertMax - 1 || j == -halfGauge -1 -width / 2 || j == width - 1 -width / 2) {
                     gag1.setBedHeight(1);
                     gag1.setFlexible();
+                    gag1.setScaleModel(false);
                 }
                 tracks.add(gag1);
             }
@@ -64,18 +65,18 @@ public class BuilderTransferTable extends BuilderBase {
     }
 
     @Override
-    public List<VecYawPitch> getRenderData() {
-        List<VecYawPitch> list = new ArrayList<>();
+    public List<VecYPR> getRenderData() {
+        List<VecYPR> list = new ArrayList<>();
 
         if (info.itemHeld) {
             for (int i = 0; i < info.settings.transfertableEntryCount; i++) {
                 Vec3i head = new Vec3i(-i * info.settings.transfertableEntrySpacing, 1, 0)
                         .rotate(Rotation.from(info.placementInfo.facing()));
-                list.add(new VecYawPitch(head.x, head.y, head.z, info.placementInfo.facing().getAngle()));
+                list.add(new VecYPR(head.x, head.y, head.z, info.placementInfo.facing().getAngle()));
 
                 Vec3i tail = new Vec3i(-i * info.settings.transfertableEntrySpacing, 1, info.settings.length - 1)
                         .rotate(Rotation.from(info.placementInfo.facing()));
-                list.add(new VecYawPitch(tail.x, tail.y, tail.z, info.placementInfo.facing().getAngle()));
+                list.add(new VecYPR(tail.x, tail.y, tail.z, info.placementInfo.facing().getAngle()));
             }
         }
 
