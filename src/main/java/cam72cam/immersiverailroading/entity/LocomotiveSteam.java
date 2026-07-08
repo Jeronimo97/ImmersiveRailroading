@@ -184,16 +184,18 @@ public class LocomotiveSteam extends Locomotive {
         float throttle = getThrottle();
         if (throttle == 0 && pressure == 0)
             return;
-        
         double speedPercent = speedPercent(super.getCurrentSpeed());
-        pressure += 0.06f * Math.pow(Config.isFuelRequired(gauge) ? getBoilerPressureBar() : (getMaxBoilerPSI() * PressureDisplayType.psiToBar), 0.5f) * throttle * (1 + Math.max(speedPercent, 0.01f));
-
+        // Chest pressure inflow; Idk why but the "* (1 + speedPercent)" is needed
+        pressure += 0.06f * Math.sqrt(Config.isFuelRequired(gauge) ? getBoilerPressureBar() : (getMaxBoilerPSI() * PressureDisplayType.psiToBar)) * throttle * (1 + speedPercent);
+        // Chest pressure outflow through cylinder drains
         if (cylinderDrainsEnabled()) {
-            pressure -= 0.07f;
+            pressure -= 0.05f;
         }
-        
-        pressure -= (0.015f * pressure * getAbsReverser(speedPercent, Math.abs(getReverser()))) * speedPercent * Math.PI * getDefinition().getWheelDiameter(gauge) + 0.005f;
-
+        // Chest pressure outflow through reverser and speed
+        pressure -= 0.095f * pressure * getAbsReverser(speedPercent, Math.abs(getReverser())) * speedPercent;
+        // Default chest pressure leakage
+        pressure -= 0.005f;
+        // Chest pressure outflow through slipping wheels (fast cylinder movement)
         if (slipping) {
             pressure -= Math.abs(0.3f * simulateWheelSlip());
         }
