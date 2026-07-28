@@ -51,6 +51,10 @@ public abstract class Locomotive extends FreightTank{
 	private boolean fullBrake = false;
 	private boolean emergencyBrake = false;
 	
+	@TagSync
+	@TagField("EMERGENCY")
+	private boolean emergency = false;
+	
 	// TODO How many decimal places?
     @TagSync(floatPrecision = 5)
     @TagField("MAIN_AIR_RESERVOIR")
@@ -823,5 +827,24 @@ public abstract class Locomotive extends FreightTank{
 
     public void setSanding(boolean sanding) {
         isSanding = sanding;
+    }
+    
+    public void setEmergency(boolean emergency) {
+    	if (emergency) {
+        	setThrottle(0);
+        	setTrainBrake(1);
+        	this.emergency = true;
+        	if (!getCurrentSpeed().isZero()) {
+        		setSanding(true);
+        	} else {
+        		setSanding(false);
+        	}
+    	} else {
+    		this.emergency = false;
+    	}
+    }
+    
+    public boolean getEmergency() {
+    	return emergency;
     }
 }

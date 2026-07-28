@@ -45,6 +45,7 @@ public enum Readouts {
     SLIPPING,
     ROLLING_STOCK_PITCH,
     TRACTIVE_EFFORT,
+    EMERGENCY,
     ;
 
     public float getValue(EntityRollingStock stock) {
@@ -145,8 +146,11 @@ public enum Readouts {
             case TRACTIVE_EFFORT:
                 return stock instanceof Locomotive ?
                         ((Locomotive) stock).getCurrentTractiveEffort() : 0;
+            case EMERGENCY:
+            	return stock instanceof Locomotive loco && loco.getEmergency() ? 1 : 0;
+            default:
+            	return 0;
         }
-        return 0;
     }
 
     private float yawToPercent(float yaw, float deltaYaw) {
@@ -228,6 +232,11 @@ public enum Readouts {
                     ((LocomotiveSteam)stock).setCylinderDrains(value > 0.9);
                 }
                 break;
+            case EMERGENCY:
+            	if (stock instanceof Locomotive loco) {
+            		loco.setEmergency(value >= 0.5);
+            	}
+            	break;
         }
     }
 }

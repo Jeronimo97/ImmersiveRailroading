@@ -443,4 +443,12 @@ public class LocomotiveDiesel extends Locomotive {
             getDefinition().getModel().getControls(ModelComponentType.THROTTLE_DYN_BRAKE_X).stream().forEach(c -> setControlPosition(c, getThrottle() / 2 + (1 - getDynamicBrake()) / 2));
         }
     }
+	
+	@Override
+	public void setEmergency(boolean emergency) {
+		super.setEmergency(emergency);
+		if (emergency) {
+			setTurnedOn(false);
+		}
+	}
 }
