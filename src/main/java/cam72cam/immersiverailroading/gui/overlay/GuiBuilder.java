@@ -445,6 +445,7 @@ public class GuiBuilder {
                     case WHISTLE:
                     case HORN:
                     case ENGINE:
+                    case EMERGENCY:
                         break;
                     default:
                         return null;

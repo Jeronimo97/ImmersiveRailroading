@@ -358,6 +358,8 @@ public abstract class Locomotive extends FreightTank{
 		    setControlPosition(control, 0.5f);
 		} else if (control.part.type.equals(ModelComponentType.COMPRESSOR_CONTROL_X)) {
             compressorActive = getControlPosition(control) > 0.5f;
+		} else if (control.part.type.equals(ModelComponentType.EMERGENCY_X)) {
+			setEmergency(getControlPosition(control) > 0.5);
 		}
 	}
 
