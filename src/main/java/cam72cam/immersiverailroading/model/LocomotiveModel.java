@@ -97,6 +97,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addGauge(provider, ModelComponentType.GAUGE_MAIN_AIR_RESERVOIR_X, Readouts.MAIN_AIR_RESERVOIR);
         addGauge(provider, ModelComponentType.GAUGE_SANDING_X, Readouts.SANDING);
         addGauge(provider, ModelComponentType.GAUGE_SLIPPING_X, Readouts.SLIPPING);
+        addGauge(provider, ModelComponentType.GAUGE_EMERGENCY_X, Readouts.EMERGENCY);
 
         addControl(provider, ModelComponentType.BELL_CONTROL_X);
         addControl(provider, ModelComponentType.THROTTLE_BRAKE_X);
@@ -106,6 +107,7 @@ public class LocomotiveModel<ENTITY extends Locomotive, DEFINITION extends Locom
         addControl(provider, ModelComponentType.TRAIN_BRAKE_X);
         addControl(provider, ModelComponentType.SANDING_CONTROL_X);
         addControl(provider, ModelComponentType.COMPRESSOR_CONTROL_X);
+        addControl(provider, ModelComponentType.EMERGENCY_X);
     }
 
     @Override
