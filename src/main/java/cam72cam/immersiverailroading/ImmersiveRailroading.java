@@ -12,8 +12,8 @@ import cam72cam.immersiverailroading.net.*;
 import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.remotecontrol.RemoteControlData;
-import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolClient;
-import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolServer;
+import cam72cam.immersiverailroading.remotecontrol.WirelessRemoteControlClient;
+import cam72cam.immersiverailroading.remotecontrol.WirelessRemoteControlServer;
 import cam72cam.immersiverailroading.render.SmokeParticle;
 import cam72cam.immersiverailroading.render.block.RailBaseModel;
 import cam72cam.immersiverailroading.render.item.*;
@@ -96,7 +96,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(RemoteControlActivePacket::new, PacketDirection.ClientToServer);
 
 				ServerChronoState.register();
-				WirelessRemotecontrolServer.init();
+				WirelessRemoteControlServer.init();
 				
 				IRBlocks.register();
 				IRItems.register();
@@ -182,7 +182,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				EntityRenderer.register(HandCar.class, stockRender);
 
 				Function<KeyTypes, Runnable> onKeyPress = type -> () -> {
-					UUID target = WirelessRemotecontrolClient.getLoco();
+					UUID target = WirelessRemoteControlClient.getLoco();
 					if (target != null) {
 						new KeyPressPacket(type, target).sendToServer(); // Remote control
 					} else if (MinecraftClient.getPlayer().getRiding() instanceof EntityRollingStock) {
@@ -225,17 +225,17 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				});
 				
 				// Remote Overlay
-				WirelessRemotecontrolClient.init();
+				WirelessRemoteControlClient.init();
 		        GlobalRender.registerOverlay((state, _) -> {
-		            UUID activeLoco = WirelessRemotecontrolClient.getLoco();
-		            if (activeLoco == null || WirelessRemotecontrolClient.remoteGui == null) {
+		            UUID activeLoco = WirelessRemoteControlClient.getLoco();
+		            if (activeLoco == null || WirelessRemoteControlClient.remoteGui == null) {
 		                return;
 		            }
-		            RemoteControlData data = WirelessRemotecontrolClient.getData();
+		            RemoteControlData data = WirelessRemoteControlClient.getData();
 		            if(data == null) {
 		                return;
 		            }
-		            WirelessRemotecontrolClient.remoteGui.render(state, data);
+		            WirelessRemoteControlClient.remoteGui.render(state, data);
 		        });
 
 				ClientEvents.MOUSE_GUI.subscribe(evt -> {
@@ -244,11 +244,11 @@ public class ImmersiveRailroading extends ModCore.Mod {
 					}
 					
 					// Remote control
-					UUID activeLoco = WirelessRemotecontrolClient.getLoco();
+					UUID activeLoco = WirelessRemoteControlClient.getLoco();
 				    if (activeLoco != null) {
-				        RemoteControlData data = WirelessRemotecontrolClient.getData();
+				        RemoteControlData data = WirelessRemoteControlClient.getData();
 				        if (data != null) {
-				            return WirelessRemotecontrolClient.remoteGui.click(evt, data);
+				            return WirelessRemoteControlClient.remoteGui.click(evt, data);
 				        }
 				    }
 
@@ -264,7 +264,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 
 				ClientEvents.TICK.subscribe(GuiBuilder::onClientTick);
 				ClientEvents.TICK.subscribe(EntityRollingStockDefinition.ControlSoundsDefinition::cleanupStoppedSounds);
-				ClientEvents.TICK.subscribe(WirelessRemotecontrolClient::onClientTick);
+				ClientEvents.TICK.subscribe(WirelessRemoteControlClient::onClientTick);
 	                                         
 				Particles.SMOKE = Particle.register(SmokeParticle::new, SmokeParticle::renderAll);
 	

@@ -10,10 +10,10 @@ import cam72cam.mod.entity.Entity;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.world.World;
 
-public class WirelessRemotecontrolServer {
+public class WirelessRemoteControlServer {
 	private static final Map<UUID, UUID> playerToLoco = new HashMap<>();
 	
-	private WirelessRemotecontrolServer() {
+	private WirelessRemoteControlServer() {
 	}
 	
     public static void init() {

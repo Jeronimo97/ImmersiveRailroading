@@ -16,17 +16,17 @@ import cam72cam.mod.entity.Player;
 import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.resource.Identifier;
 
-public class WirelessRemotecontrolClient {
+public class WirelessRemoteControlClient {
 	private static UUID loco = null;
 	private static RemoteControlData cachedData = null;
     public static RemoteOverlay remoteGui;
 
-	private WirelessRemotecontrolClient() {
+	private WirelessRemoteControlClient() {
 	}
 
     public static void init() {
         try {
-            WirelessRemotecontrolClient.remoteGui = RemoteOverlay.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/fbg.caml"));
+            WirelessRemoteControlClient.remoteGui = RemoteOverlay.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/fbg.caml"));
         } catch (IOException e) {
             ModCore.catching(e);
         }
