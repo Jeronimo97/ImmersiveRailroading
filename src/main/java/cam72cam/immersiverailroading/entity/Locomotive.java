@@ -379,6 +379,10 @@ public abstract class Locomotive extends FreightTank {
 					this.setTrainBrake(1);
 				}
 			}
+			if (emergency) {
+				this.setThrottle(0);
+				this.setTrainBrake(1);
+			}
 			if (hornTime > 0) {
 				hornTime--;
 			} else if (hornPlayer != null) {
@@ -670,13 +674,7 @@ public abstract class Locomotive extends FreightTank {
 	}
 
     public void setEmergency(boolean emergency) {
-    	if (emergency) {
-        	setThrottle(0);
-        	setTrainBrake(1);
-        	this.emergency = true;
-    	} else {
-    		this.emergency = false;
-    	}
+        this.emergency = emergency;
     }
     
     public boolean getEmergency() {

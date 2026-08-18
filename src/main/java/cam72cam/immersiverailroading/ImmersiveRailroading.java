@@ -4,7 +4,6 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.gui.AugmentFilterGUI;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
-import cam72cam.immersiverailroading.gui.overlay.RemoteOverlay;
 import cam72cam.immersiverailroading.items.ItemPaintBrush;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.StockModel;
@@ -45,7 +44,6 @@ import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.sound.Audio;
 import cam72cam.mod.text.Command;
 
-import java.io.IOException;
 import java.util.UUID;
 import java.util.Random;
 import java.util.function.Function;
@@ -187,8 +185,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 					UUID target = WirelessRemotecontrolClient.getLoco();
 					if (target != null) {
 						new KeyPressPacket(type, target).sendToServer(); // Remote control
-					}
-					else if (MinecraftClient.getPlayer().getRiding() instanceof EntityRollingStock) {
+					} else if (MinecraftClient.getPlayer().getRiding() instanceof EntityRollingStock) {
 						new KeyPressPacket(type).sendToServer();
 					}
 				};
@@ -228,12 +225,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				});
 				
 				// Remote Overlay
-		        try {
-		            WirelessRemotecontrolClient.remoteGui = RemoteOverlay.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/fbg.caml"));
-		        } catch (IOException e) {
-		            e.printStackTrace();
-		        }
-
+				WirelessRemotecontrolClient.init();
 		        GlobalRender.registerOverlay((state, _) -> {
 		            UUID activeLoco = WirelessRemotecontrolClient.getLoco();
 		            if (activeLoco == null || WirelessRemotecontrolClient.remoteGui == null) {
@@ -251,7 +243,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 						return true;
 					}
 					
-					// remote control
+					// Remote control
 					UUID activeLoco = WirelessRemotecontrolClient.getLoco();
 				    if (activeLoco != null) {
 				        RemoteControlData data = WirelessRemotecontrolClient.getData();
@@ -261,11 +253,10 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				    }
 
 					Entity riding = MinecraftClient.getPlayer().getRiding();
-					if (!(riding instanceof EntityRollingStock)) {
+					if (!(riding instanceof EntityRollingStock stock)) {
 						return true;
 					}
-					EntityRollingStock stock = (EntityRollingStock) riding;
-					if (stock.getDefinition().getOverlay() != null) {
+                    if (stock.getDefinition().getOverlay() != null) {
 						return stock.getDefinition().getOverlay().click(evt, stock);
 					}
 					return true;
