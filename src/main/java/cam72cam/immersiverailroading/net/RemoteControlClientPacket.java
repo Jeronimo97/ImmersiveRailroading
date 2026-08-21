@@ -5,7 +5,7 @@ import java.util.UUID;
 import cam72cam.immersiverailroading.entity.Locomotive;
 import cam72cam.immersiverailroading.gui.overlay.Readouts;
 import cam72cam.immersiverailroading.library.Permissions;
-import cam72cam.immersiverailroading.remotecontrol.WirelessRemoteControlServer;
+import cam72cam.immersiverailroading.remote_control.WirelessRemoteControlServer;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.net.Packet;
 import cam72cam.mod.serialization.StrictTagMapper;

@@ -1,4 +1,4 @@
-package cam72cam.immersiverailroading.remotecontrol;
+package cam72cam.immersiverailroading.remote_control;
 
 import java.io.IOException;
 import java.util.Objects;
