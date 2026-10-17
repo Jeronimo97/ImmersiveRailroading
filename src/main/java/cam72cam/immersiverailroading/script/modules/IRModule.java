@@ -507,13 +507,6 @@ public class IRModule implements LuaModule {
     }
     
     @LuaFunction(module = "IR")
-    public void setLiquidCargoAmount(LuaValue amount) {
-        if (stock instanceof FreightTank) {
-            ((FreightTank) stock).setLiquidAmount(amount.toint(), null);
-        }
-    }
-    
-    @LuaFunction(module = "IR")
     public void setLiquidCargoAmount(LuaValue amount, LuaValue liquid) {
         if (stock instanceof FreightTank) {
             ((FreightTank) stock).setLiquidAmount(amount.toint(), liquid.toString());
@@ -523,9 +516,26 @@ public class IRModule implements LuaModule {
     @LuaFunction(module = "IR")
     public LuaValue getLiquidCargoAmount() {
         if (stock instanceof FreightTank) {
-            LuaValue.valueOf(((FreightTank) stock).getLiquidAmount());
+            return LuaValue.valueOf(((FreightTank) stock).getLiquidAmount());
         }
         return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue getMaxLiquidCargoAmount() {
+        if (stock instanceof FreightTank) {
+            return LuaValue.valueOf(((FreightTank) stock).getTankCapacity().MilliBuckets());
+        }
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue getLiquidCargoType() {
+        if (stock instanceof FreightTank) {
+            String type = ((FreightTank) stock).getLiquidType();
+            return LuaValue.valueOf(type != null ? type : "");
+        }
+        return LuaValue.valueOf("");
     }
 
 
