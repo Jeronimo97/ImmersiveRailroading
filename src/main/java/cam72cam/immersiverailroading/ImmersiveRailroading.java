@@ -49,6 +49,9 @@ import java.util.UUID;
 import java.util.Random;
 import java.util.function.Function;
 
+import static cam72cam.immersiverailroading.gui.helpers.MouseHelper.mouseClicked;
+import static cam72cam.immersiverailroading.gui.helpers.MouseHelper.updateMousePosition;
+
 public class ImmersiveRailroading extends ModCore.Mod {
 	public static final String MODID = "immersiverailroading";
 
@@ -259,6 +262,10 @@ public class ImmersiveRailroading extends ModCore.Mod {
 					if (!MinecraftClient.isReady()) {
 						return true;
 					}
+					
+					// MouseHelper
+					updateMousePosition(evt);
+                    mouseClicked(evt.x, evt.y, evt.button);
 					
 					// Remote control
 					UUID activeLoco = WirelessRemoteControlClient.getLoco();
