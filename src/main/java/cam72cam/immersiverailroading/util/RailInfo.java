@@ -9,7 +9,7 @@ import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.TrackModel;
 import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.TrackDefinition;
-import cam72cam.immersiverailroading.render.ExpireableMap;
+import cam72cam.mod.util.collection.ExpireableMap;
 import cam72cam.immersiverailroading.track.*;
 import cam72cam.mod.serialization.*;
 import cam72cam.mod.entity.Player;
@@ -68,6 +68,7 @@ public class RailInfo {
 				this.settings.curvosity,
 				this.settings.nearPointData,
 				this.settings.farPointData,
+				this.settings.trackFaceTransSetting,
 				this.settings.railBed,
 				this.settings.gauge,
 				this.settings.track,
@@ -429,7 +430,23 @@ public class RailInfo {
 			SwitchState switchForced = SwitchState.values()[nbt.getInteger("switchForced")];
 			double tablePos = nbt.getDouble("tablePos");
 
-			RailSettings settings = new RailSettings(gauge, "default", type, type, length, quarters / 4F * 90, 1, type == TrackItems.SLOPE ? TrackSmoothing.NEITHER : TrackSmoothing.BOTH , new EndPointData(0), new EndPointData(10), RollAndOffsetInfo.getDefault(), RollAndOffsetInfo.getDefault(), TrackDirection.NONE, railBed, cam72cam.mod.item.ItemStack.EMPTY, false, false, 1,  1);
+			RailSettings settings = new RailSettings(
+					gauge,
+					"default",
+					type, type,
+					length,
+					quarters / 4F * 90,
+					1,
+					type == TrackItems.SLOPE ? TrackSmoothing.NEITHER : TrackSmoothing.BOTH ,
+					new EndPointData(0), new EndPointData(10),
+					RollAndOffsetInfo.getDefault(), RollAndOffsetInfo.getDefault(),
+					TrackDirection.NONE,
+					new TrackFaceTransSetting(),
+					railBed, cam72cam.mod.item.ItemStack.EMPTY,
+					false,
+					false,
+					1, 1
+			);
 			return new RailInfo(settings, placementInfo, null, switchState, switchForced, tablePos);
 		}
 	}
