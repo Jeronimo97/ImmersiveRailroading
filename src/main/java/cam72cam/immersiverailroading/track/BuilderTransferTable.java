@@ -8,6 +8,7 @@ import cam72cam.immersiverailroading.util.RailInfo;
 import cam72cam.mod.math.Rotation;
 import cam72cam.mod.math.Vec3d;
 import cam72cam.mod.math.Vec3i;
+import cam72cam.mod.util.Facing;
 import cam72cam.mod.world.World;
 
 import java.util.ArrayList;
@@ -82,9 +83,19 @@ public class BuilderTransferTable extends BuilderBase {
 
         Vec3d center = new Vec3d(-info.tablePos, 1, info.settings.length / 2d - 0.5).rotateYaw(-info.placementInfo.facing().getAngle() + 180);
         list.add(new VecYPR(center.x, center.y, center.z, info.placementInfo.facing().getAngle(), 0, 0, info.settings.length, 
-                            TrackModelPart.RAIL_LEFT, TrackModelPart.RAIL_RIGHT, TrackModelPart.TABLE));
-        list.add(new VecYPR(0, center.y, center.z, info.placementInfo.facing().getAngle(), 0, 0, 1, 
-                TrackModelPart.WELL));
+                            TrackModelPart.RAIL_LEFT, TrackModelPart.RAIL_RIGHT));
+        list.add(new VecYPR(center.x, center.y, center.z, info.placementInfo.facing().getAngle(), 0, 0, 1, 
+                TrackModelPart.TABLE));
+        if (info.placementInfo.facing().equals(Facing.NORTH) || info.placementInfo.facing().equals(Facing.SOUTH)) {
+            list.add(new VecYPR(0, center.y, center.z, info.placementInfo.facing().getAngle(), 0, 0, 1, 
+                    TrackModelPart.WELL));
+        } else {
+            list.add(new VecYPR(center.x, center.y, -info.placementInfo.placementPosition.z + (info.placementInfo.facing().equals(Facing.EAST) ? - 1.5 : + 2.5), info.placementInfo.facing().getAngle(), 0, 0, 1, 
+                    TrackModelPart.WELL));
+            
+        }
+            
+        
         return list;
     }
 
