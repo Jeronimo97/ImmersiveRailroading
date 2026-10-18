@@ -8,7 +8,8 @@
 		"weight_kg": 1000,
 		"power_hp": 1,
 		"tractive_effort_lbf": 1000,
-		"max_speed_kmh": 20
+		"max_speed_kmh": 20,
+		"pressure_brake": false
 	},
 	"passenger": {
 		"slots": 4,

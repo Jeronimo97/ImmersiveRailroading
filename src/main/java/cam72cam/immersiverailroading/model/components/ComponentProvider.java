@@ -4,6 +4,7 @@ import cam72cam.immersiverailroading.library.ModelComponentType;
 import cam72cam.immersiverailroading.library.ModelComponentType.ModelPosition;
 import cam72cam.immersiverailroading.model.StockModel;
 import cam72cam.immersiverailroading.util.DataBlock;
+import cam72cam.mod.model.common.mesh.Model;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -11,14 +12,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ComponentProvider {
-    public final StockModel<?, ?> model;
+    public final Model model;
     private final Set<String> groups;
     public Map<String, DataBlock> widgetConfig;
     private final List<ModelComponent> components;
     public double internal_model_scale;
 
-    public ComponentProvider(StockModel<?, ?> model, double internal_model_scale, Map<String, DataBlock> widgetConfig) {
-        this.model = model;
+    public ComponentProvider(StockModel<?, ?> stockModel, double internal_model_scale, Map<String, DataBlock> widgetConfig) {
+        this.model = stockModel.model;
         this.groups = new HashSet<>(model.groups());
         this.widgetConfig = widgetConfig;
         this.components = new ArrayList<>();
@@ -80,7 +81,7 @@ public class ComponentProvider {
         return modelIDMap(
                 type.regex.replace("#ID#", "([\\d]+)")
         ).entrySet().stream().map(e -> {
-            ModelComponent component = new ModelComponent(type, null, e.getKey(), model, e.getValue());
+            ModelComponent component = new ModelComponent(type, null, Integer.parseInt(e.getKey()), model, e.getValue());
             this.components.add(component);
             return component;
         }).collect(Collectors.toList());
@@ -101,7 +102,7 @@ public class ComponentProvider {
             re = re.replace("#ID#", pos + "_([\\d]+)");
         }
         return modelIDMap(re).entrySet().stream().map(e -> {
-            ModelComponent component = new ModelComponent(type, pos, e.getKey(), model, e.getValue());
+            ModelComponent component = new ModelComponent(type, pos, Integer.parseInt(e.getKey()), model, e.getValue());
             this.components.add(component);
             return component;
         }).collect(Collectors.toList());

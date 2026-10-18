@@ -9,6 +9,7 @@ import cam72cam.mod.entity.Player;
 import cam72cam.mod.entity.sync.TagSync;
 import cam72cam.mod.fluid.ITank;
 import cam72cam.mod.fluid.Fluid;
+import cam72cam.mod.fluid.FluidStack;
 import cam72cam.mod.fluid.FluidTank;
 import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.serialization.StrictTagMapper;
@@ -67,11 +68,16 @@ public abstract class FreightTank extends Freight {
 		return fluidAmount;
 	}
 	
+	public String getLiquidType() {
+	    return fluidType;
+	}
+	
 	public void setLiquidAmount(int fluidAmount, String fluidType) {
-		this.fluidAmount = fluidAmount;
-		if (fluidType != null) {
-			this.fluidType = fluidType;
-		}
+	    int diff = fluidAmount - this.fluidAmount;
+	    if (diff > 0)
+	        this.theTank.fill(new FluidStack((fluidType != null ? Fluid.getFluid(fluidType) : getLiquid()), diff), false);
+	    else if (diff < 0)
+	        this.theTank.drain(new FluidStack((fluidType != null ? Fluid.getFluid(fluidType) : getLiquid()), diff * (-1)), false);
 	}
 	
 	public Fluid getLiquid() {

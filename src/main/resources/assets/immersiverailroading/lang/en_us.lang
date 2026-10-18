@@ -22,7 +22,6 @@ item.immersiverailroading:item_radio_control_card.name=Train Radio-control Card
 item.immersiverailroading:item_switch_key.name=Switch Key
 item.immersiverailroading:item_track_exchanger.name=Track Exchanger
 item.immersiverailroading:item_typewriter.name=Typewriter
-
 item.immersiverailroading:item_wireless_remotecontrol.name=Wireless Remote Control
 
 
@@ -69,13 +68,18 @@ chat.immersiverailroading:switch_state.reset=The last-locked switch has been wir
 chat.immersiverailroading:switch_state.cant_reset=You haven't locked any switches with this key!
 chat.immersiverailroading:switch_state.already_reset=The last-locked switch is already unlocked!
 chat.immersiverailroading:typewriter.no_stock=Not looking at any stock
-chat.immersiverailroading:brake.locked=Brake locked: %s
+chat.immersiverailroading:brake.locked=Brake effective
+chat.immersiverailroading:brake.unlocked=Brake ineffective
 chat.immersiverailroading:wireless.remotecontrol.link=Wireless Remotecontrol linked!
 chat.immersiverailroading:wireless.remotecontrol.relink=Wireless Remotecontrol relinked!
 chat.immersiverailroading:wireless.remotecontrol.unlink=Wireless Remotecontrol unlinked!
 chat.immersiverailroading:wireless.remotecontrol.cantlink=Locomotive does not have Wireless control equipment!
 
 chat.immersiverailroading:multiblock.select=Select multiblock: %s
+chat.immersiverailroading:wireless.remotecontrol.link=Wireless Remotecontrol linked!
+chat.immersiverailroading:wireless.remotecontrol.relink=Wireless Remotecontrol relinked!
+chat.immersiverailroading:wireless.remotecontrol.unlink=Wireless Remotecontrol unlinked!
+chat.immersiverailroading:wireless.remotecontrol.cantlink=Locomotive does not have Wireless control equipment!
 
 gui.immersiverailroading:label.brake=Brake
 gui.immersiverailroading:label.throttle=Throttle
@@ -97,11 +101,16 @@ gui.immersiverailroading:label.pitch_setting=Pitch Calculating Method
 gui.immersiverailroading:label.pos_yaw_type=Direction Type
 gui.immersiverailroading:label.near=Near End
 gui.immersiverailroading:label.far=Far End
-gui.immersiverailroading:label.snap_pos=Enable Track Snap
+gui.immersiverailroading:label.snap_pos=Enable Snap
+gui.immersiverailroading:label.snap_inverted=Invert Snap
+gui.immersiverailroading:label.snap_pos_offset=Offset
 gui.immersiverailroading:label.snap_height=Snap Height
 gui.immersiverailroading:label.snap_yaw=Snap Yaw
 gui.immersiverailroading:label.snap_pitch=Snap Pitch
 gui.immersiverailroading:label.snap_roll=Snap Roll
+gui.immersiverailroading:label.bed_thickness=Bed Thickness
+gui.immersiverailroading:label.track_pivot_offset=Track Pivot Offset
+
 gui.immersiverailroading:slider.zoom=Zoom:
 gui.immersiverailroading:selector.page=Page %s of %s
 gui.immersiverailroading:selector.type=Type: %s
@@ -139,6 +148,7 @@ gui.immersiverailroading:checkbox.global= Global
 gui.immersiverailroading:selector.paintbrush_random=Apply random variant
 gui.immersiverailroading:selector.paintbrush_apply_to_stock=Apply to single stock
 gui.immersiverailroading:selector.paintbrush_apply_to_train=Apply to whole train
+gui.immersiverailroading:selector.track_pivot_type=Pivot Type: %s
 # Migrated from old detector translations which already contain "Detecting", don't need for this
 gui.immersiverailroading:selector.augment.detect=Current:
 gui.immersiverailroading:selector.augment.redstone=Redstone Mode:
@@ -156,6 +166,9 @@ gui.immersiverailroading:item.track_exchanger=Right-Click in air to open the sel
 gui.immersiverailroading:item.paint_brush.mode=Current mode: %s
 gui.immersiverailroading:item.paint_brush.description=Sneak-Right-Click to cycle modes
 gui.immersiverailroading:none=None
+
+gui.immersiverailroading:item.remote_control_linked=Linked to: %s
+gui.immersiverailroading:item.remote_control_not_linked=Not linked to any locomotive
 
 gui.immersiverailroading:track.type=Type:      %s
 gui.immersiverailroading:track.length=Length:    %s
@@ -261,6 +274,10 @@ track.immersiverailroading:extra_info_type.z_offset=Horizontal Offset
 track.immersiverailroading:roll_vert_offset_align_type.mid=Align To Mid
 track.immersiverailroading:roll_vert_offset_align_type.left=Align Left Track
 track.immersiverailroading:roll_vert_offset_align_type.right=Align Right Track
+
+track.immersiverailroading:face_pivot_type.rail_face_center=Rail Face Center
+track.immersiverailroading:face_pivot_type.curve_center=Curve Center
+track.immersiverailroading:face_pivot_type.custom=Custom
 
 part.immersiverailroading:component.frame=Frame
 part.immersiverailroading:component.front_frame=Front Frame

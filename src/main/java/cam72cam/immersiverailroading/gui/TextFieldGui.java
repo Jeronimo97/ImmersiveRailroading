@@ -14,8 +14,8 @@ import cam72cam.mod.entity.Player;
 import cam72cam.mod.gui.helpers.GUIHelpers;
 import cam72cam.mod.gui.screen.*;
 import cam72cam.mod.math.Vec3d;
-import cam72cam.mod.model.obj.FaceAccessor;
-import cam72cam.mod.model.obj.OBJFace;
+import cam72cam.mod.model.common.mesh.Face;
+import cam72cam.mod.model.common.util.FaceAccessor;
 import cam72cam.mod.render.opengl.RenderState;
 import cam72cam.mod.resource.Identifier;
 
@@ -337,13 +337,13 @@ public class TextFieldGui implements IScreen {
 
         StockModel<?, ?> model = stock.getDefinition().getModel();
 
-        FaceAccessor accessor = stock.getDefinition().getModel().getFaceAccessor();
+        FaceAccessor accessor = stock.getDefinition().getModel().model.getFaceAccessor();
 
         // Not great TODO change!
-        String fullName = stock.getDefinition().getModel().groups().stream().filter(g -> g.contains(textField.getObject())).collect(Collectors.toList()).get(0);
-        FaceAccessor sub = accessor.getSubByGroup(fullName);
+        String fullName = stock.getDefinition().getModel().model.groups().stream().filter(g -> g.contains(textField.getObject())).collect(Collectors.toList()).get(0);
+        FaceAccessor sub = accessor.ofGroup(fullName);
 
-        OBJFace face1 = sub.stream().findFirst().get().asOBJFace();
+        Face face1 = sub.stream().findFirst().get().snapFace();
 
         int scale = (int) ((double) GUIHelpers.getScreenWidth() / 40 * zoom);
         state.translate(200 + (double) (GUIHelpers.getScreenWidth() - 200) / 2, (double) builder.getHeight() / 2 + 10, 400);

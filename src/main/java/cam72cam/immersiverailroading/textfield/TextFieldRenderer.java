@@ -7,8 +7,8 @@ import cam72cam.immersiverailroading.font.FontLoader;
 import cam72cam.immersiverailroading.textfield.library.GroupInfo;
 import cam72cam.immersiverailroading.textfield.library.RGBA;
 import cam72cam.mod.math.Vec3d;
-import cam72cam.mod.model.obj.FaceAccessor;
-import cam72cam.mod.model.obj.OBJFace;
+import cam72cam.mod.model.common.mesh.Face;
+import cam72cam.mod.model.common.util.FaceAccessor;
 import cam72cam.mod.model.obj.Vec2f;
 import cam72cam.mod.model.obj.VertexBuffer;
 import cam72cam.mod.render.opengl.RenderContext;
@@ -34,13 +34,13 @@ public class TextFieldRenderer {
     public void refresh(TextFieldConfig config, EntityRollingStock stock) {
         // TODO add checks. Could produce null pointer
         GroupInfo groupInfo = groupInfos.computeIfAbsent(config.getObject(), conf -> {
-            List<OBJFace> group = new ArrayList<>();
-            FaceAccessor accessor = stock.getDefinition().getModel().getFaceAccessor();
+            List<Face> group = new ArrayList<>();
+            FaceAccessor accessor = stock.getDefinition().getModel().model.getFaceAccessor();
 
-            String fullName = stock.getDefinition().getModel().groups().stream().filter(g -> g.contains(conf)).collect(Collectors.toList()).get(0);
+            String fullName = stock.getDefinition().getModel().model.groups().stream().filter(g -> g.contains(conf)).collect(Collectors.toList()).get(0);
 
-            FaceAccessor sub = accessor.getSubByGroup(fullName);
-            sub.forEach(g -> group.add(g.asOBJFace()));
+            FaceAccessor sub = accessor.ofGroup(fullName);
+            sub.forEach(g -> group.add(g.snapFace()));
 
             return GroupInfo.initGroup(group, config.getResolutionX(), config.getResolutionY());
         });

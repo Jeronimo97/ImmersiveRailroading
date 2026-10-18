@@ -4,12 +4,12 @@ import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.entity.physics.SimulationState;
 import cam72cam.immersiverailroading.items.ItemRadioCtrlCard;
-import cam72cam.immersiverailroading.items.ItemWirelessRemotecontrol;
+import cam72cam.immersiverailroading.items.ItemWirelessRemoteControl;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.physics.MovementTrack;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
-import cam72cam.immersiverailroading.remotecontrol.RemoteControlData;
+import cam72cam.immersiverailroading.remote_control.RemoteControlData;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.immersiverailroading.tile.TileRailBase;
 import cam72cam.immersiverailroading.util.MathUtil;
@@ -22,6 +22,7 @@ import cam72cam.mod.item.ItemStack;
 import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import org.luaj.vm2.LuaValue;
+
 import java.util.OptionalDouble;
 import java.util.UUID;
 
@@ -49,10 +50,6 @@ public abstract class Locomotive extends FreightTank{
 	private boolean fullBrake = false;
 	private boolean emergencyBrake = false;
 	
-	@TagSync
-	@TagField("EMERGENCY")
-	private boolean emergency = false;
-	
 	// TODO How many decimal places?
     @TagSync(floatPrecision = 5)
     @TagField("MAIN_AIR_RESERVOIR")
@@ -64,6 +61,10 @@ public abstract class Locomotive extends FreightTank{
     @TagSync
     @TagField("COMPRESSOR_ACTIVE")
     public boolean compressorActive = true;
+
+	@TagSync
+	@TagField("EMERGENCY")
+	private boolean emergency = false;
 
 	@TagSync
 	@TagField("HORN")
@@ -447,28 +448,25 @@ public abstract class Locomotive extends FreightTank{
 			}
 			return ClickResult.ACCEPTED;
 		}
-		if (player.getHeldItem(hand).is(IRItems.ITEM_WIRELESS_REMOTECONTROL ) && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
-			if (getWorld().isClient) {
-				return ClickResult.ACCEPTED;
-			}
-			if(this.gauge.isModel() || this.getDefinition().getRadioCapability() || !Config.ConfigBalance.RadioEquipmentRequired) {
-				ItemWirelessRemotecontrol.Data data = new ItemWirelessRemotecontrol.Data(player.getHeldItem(hand));
-				if (player.isCrouching()) {
-					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_NOLINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_UNLINK.getMessage());
-					data.linked = null;
-				} else {
-					player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_LINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_RELINK.getMessage());
-					data.linked = this.getUUID();
-				}
-				data.write();
-				
-			}
-			
-			else {
-				player.sendMessage(ChatText.WIRELESS_REMOTECONTROL_CANTLINK.getMessage(this.getDefinition().name()));;
-			}
-			return ClickResult.ACCEPTED;
-		} 
+		if (player.getHeldItem(hand).is(IRItems.ITEM_WIRELESS_REMOTECONTROL) && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+            if (getWorld().isClient) {
+                return ClickResult.ACCEPTED;
+            }
+            if(this.gauge.isModel() || this.getDefinition().getRadioCapability() || !Config.ConfigBalance.RadioEquipmentRequired) {
+                ItemWirelessRemoteControl.Data data = new ItemWirelessRemoteControl.Data(player.getHeldItem(hand));
+                if (player.isCrouching()) {
+                    player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_NOLINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_UNLINK.getMessage());
+                    data.linked = null;
+                } else {
+                    player.sendMessage(data.linked == null ? ChatText.WIRELESS_REMOTECONTROL_LINK.getMessage() : ChatText.WIRELESS_REMOTECONTROL_RELINK.getMessage());
+                    data.linked = this.getUUID();
+                }
+                data.write();
+            } else {
+                player.sendMessage(ChatText.WIRELESS_REMOTECONTROL_CANTLINK.getMessage(this.getDefinition().name()));;
+            }
+            return ClickResult.ACCEPTED;
+        }
 		return super.onClick(player, hand);
 	}
     
@@ -513,6 +511,10 @@ public abstract class Locomotive extends FreightTank{
 					this.setThrottle(0);
 					this.setTrainBrake(1);
 				}
+			}
+			if (emergency) {
+				this.setThrottle(0);
+				this.setTrainBrake(1);
 			}
 			if (hornTime > 0) {
 				hornTime--;
@@ -929,18 +931,7 @@ public abstract class Locomotive extends FreightTank{
     }
     
     public void setEmergency(boolean emergency) {
-    	if (emergency) {
-        	setThrottle(0);
-        	setTrainBrake(1);
-        	this.emergency = true;
-        	if (!getCurrentSpeed().isZero()) {
-        		setSanding(true);
-        	} else {
-        		setSanding(false);
-        	}
-    	} else {
-    		this.emergency = false;
-    	}
+    	this.emergency = emergency;
     }
     
     public boolean getEmergency() {

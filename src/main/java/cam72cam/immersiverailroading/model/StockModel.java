@@ -15,18 +15,22 @@ import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition.SoundDefinition;
 import cam72cam.immersiverailroading.script.sound.ServerSideSound;
 import cam72cam.immersiverailroading.script.sound.SoundConfig;
+import cam72cam.immersiverailroading.sound.StockSound;
 import cam72cam.mod.MinecraftClient;
-import cam72cam.mod.model.obj.OBJModel;
+import cam72cam.mod.model.common.ModelLoader;
+import cam72cam.mod.model.common.mesh.Model;
 import cam72cam.mod.render.OptiFine;
-import cam72cam.mod.render.obj.OBJRender;
+import cam72cam.mod.render.common.ModelConfig;
+import cam72cam.mod.render.common.ModelRenderer;
 import cam72cam.mod.render.opengl.RenderState;
 import util.Matrix4;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> extends OBJModel {
-    @SuppressWarnings("unused")
+public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION extends EntityRollingStockDefinition> {
+    public final Model model;
+
     private final DEFINITION def;
     public final List<ModelComponent> allComponents;
     protected ModelState base;
@@ -42,7 +46,6 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
     private ModelComponent shell;
     private ModelComponent remaining;
     public ModelComponent floor;
-    public ModelComponent collision;
     protected final List<TextField<ENTITY>> textFields;
     protected final List<Door<ENTITY>> doors;
     protected final List<Control<ENTITY>> controls;
@@ -75,17 +78,19 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
     private CustomParticleEmitter customParticles;
     private VanillaParticle steamParticle;
+    private List<StockSound> customSounds = new ArrayList<>();
 
     public StockModel(DEFINITION def) throws Exception {
-        super(def.modelLoc, def.darken, def.internal_model_scale, def.textureNames.keySet(), ConfigGraphics.textureCacheSeconds, i -> {
-            List<Integer> lodSizes = new ArrayList<>();
-            lodSizes.add(LOD_LARGE);
-            lodSizes.add(LOD_SMALL);
-            return lodSizes;
-        });
+        this.model = ModelLoader.load(def.modelLoc, def.internal_model_scale, def.textureNames.keySet(), ConfigGraphics.textureCacheSeconds,
+                                      maxSize -> {
+                                          List<Integer> lodSizes = new ArrayList<>();
+                                          lodSizes.add(LOD_LARGE);
+                                          lodSizes.add(LOD_SMALL);
+                                          return lodSizes;
+                                      });
 
         this.def = def;
-        boolean hasInterior = this.groups().stream().anyMatch(x -> x.contains("INTERIOR"));
+        boolean hasInterior = model.groups().stream().anyMatch(x -> x.contains("INTERIOR"));
 
         this.doors = new ArrayList<>();
         this.seats = new ArrayList<>();
@@ -154,7 +159,6 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         // Parse Floor and Collision Meshes
         this.floor = provider.parse(ModelComponentType.FLOOR);
-        this.collision = provider.parse(ModelComponentType.COLLISION);
 
         parseComponents(provider, def);
         provider.parse(ModelComponentType.IMMERSIVERAILROADING_BASE_COMPONENT);
@@ -174,6 +178,10 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         brakePressureSound = new PartSound(def.brakePressureSound, true, 40, ConfigSound.SoundCategories.RollingStock::brake);
         flangeSound = new FlangeSound(def.flange_sound, true, 40);
         sway = new SwaySimulator();
+
+        if (def.customSounds != null) {
+            this.customSounds = def.customSounds;
+        }
         
         //TODO Performance Testing
         buildControlMap();
@@ -333,6 +341,8 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
         sway.effects(stock);
 
         serverSideSounds.forEach((n, s) -> s.effects(stock));
+        // TODO how to handle stock that is off??
+        customSounds.forEach(s -> s.play(stock));
     }
 
     @SuppressWarnings("unchecked")
@@ -358,6 +368,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
 
         serverSideSounds.forEach((n, s) -> s.removed(stock));
         textFields.forEach(c -> c.removed(stock));
+        customSounds.forEach(s -> s.removed(stock));
     }
 
     private int lod_level = LOD_LARGE;
@@ -372,7 +383,7 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
                 .rescale_normal(true)
                 .scale(stock.gauge.scale(), stock.gauge.scale(), stock.gauge.scale());
 
-        if ((ConfigGraphics.OptifineEntityShaderOverrideAll || !normals.isEmpty() || !speculars.isEmpty()) &&
+        if ((ConfigGraphics.OptifineEntityShaderOverrideAll || !model.getNormals().isEmpty() || !model.getSpeculars().isEmpty()) &&
                 ConfigGraphics.OptiFineEntityShader != OptiFine.Shaders.Entities) {
             state = state.shader(ConfigGraphics.OptiFineEntityShader);
         }
@@ -394,9 +405,9 @@ public class StockModel<ENTITY extends EntityMoveableRollingStock, DEFINITION ex
             }
         }
 
-        Binder binder = binder().texture(stock.getTexture()).lod(lod_level);
+        ModelConfig cfg = new ModelConfig().variant(stock.getTexture()).lod(lod_level);
         try (
-                OBJRender.Binding bound = binder.bind(state)
+                ModelRenderer.Binding bound = ModelRenderer.getRendererFor(this.model).bind(cfg, state);
         ) {
             double backup = stock.distanceTraveled;
 

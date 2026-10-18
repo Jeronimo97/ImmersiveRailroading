@@ -17,12 +17,13 @@ import cam72cam.immersiverailroading.textfield.library.RGBA;
 import cam72cam.immersiverailroading.util.Speed;
 import cam72cam.mod.ModCore;
 import cam72cam.mod.math.Vec3d;
-import cam72cam.mod.model.obj.OBJGroup;
+import cam72cam.mod.model.common.mesh.ModelGroup;
 import cam72cam.mod.resource.Identifier;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class IRModule implements LuaModule {
     private final EntityScriptableRollingStock stock;
@@ -219,12 +220,12 @@ public class IRModule implements LuaModule {
         for (EntityCoupleableRollingStock.DirectionalStock rollingStock : train) {
             LuaTable stockTable = new LuaTable();
 
-            stockTable.set("UUID", LuaValue.valueOf(rollingStock.stock.getUUID().toString()));
-            stockTable.set("stock", ((EntityScriptableRollingStock) rollingStock.stock).getGlobals());
-            stockTable.set("ID", LuaValue.valueOf(rollingStock.stock.getDefinitionID()));
-            stockTable.set("coupledFront", rollingStock.stock.coupledFront != null ? LuaValue.valueOf(rollingStock.stock.coupledFront.toString()) : LuaValue.NIL);
-            stockTable.set("coupledBack", rollingStock.stock.coupledBack != null ? LuaValue.valueOf(rollingStock.stock.coupledBack.toString()) : LuaValue.NIL);
-            stockTable.set("flipped", LuaValue.valueOf(!rollingStock.direction));
+            stockTable.set("UUID", LuaValue.valueOf(rollingStock.stock().getUUID().toString()));
+            stockTable.set("stock", ((EntityScriptableRollingStock) rollingStock.stock()).getGlobals());
+            stockTable.set("ID", LuaValue.valueOf(rollingStock.stock().getDefinitionID()));
+            stockTable.set("coupledFront", rollingStock.stock().coupledFront != null ? LuaValue.valueOf(rollingStock.stock().coupledFront.toString()) : LuaValue.NIL);
+            stockTable.set("coupledBack", rollingStock.stock().coupledBack != null ? LuaValue.valueOf(rollingStock.stock().coupledBack.toString()) : LuaValue.NIL);
+            stockTable.set("flipped", LuaValue.valueOf(!rollingStock.direction()));
 
             consist.set(i++, stockTable);
         }
@@ -286,7 +287,7 @@ public class IRModule implements LuaModule {
     public LuaValue initTextField(LuaValue group, LuaValue resX, LuaValue resY) {
         String groupName = String.format("TEXTFIELD_%s", group.tojstring());
 
-        long objectCount = stock.getDefinition().getModel().groups().stream().filter(s -> s.contains(groupName)).count();
+        long objectCount = stock.getDefinition().getModel().model.groups().stream().filter(s -> s.contains(groupName)).count();
 
         if (objectCount == 0L) {
             ModCore.error("[Lua] Found no TextField named %s in: %s", groupName, stock.getDefinitionID());
@@ -396,15 +397,15 @@ public class IRModule implements LuaModule {
 
     @LuaFunction(module = "IR")
     public LuaValue getObjectPos(LuaValue name) {
-        Optional<Map.Entry<String, OBJGroup>> entryMap = stock.getDefinition().getModel().groups.entrySet().stream().filter(e -> e.getKey().contains(name.tojstring())).findFirst();
+        Optional<Entry<String, ModelGroup>> entryMap = stock.getDefinition().getModel().model.getGroups().entrySet().stream().filter(e -> e.getKey().contains(name.tojstring())).findFirst();
 
         if (!entryMap.isPresent()) {
             return LuaValue.NIL;
         }
 
-        OBJGroup group = entryMap.get().getValue();
+        ModelGroup group = entryMap.get().getValue();
 
-        Vec3d center = group.min.add(group.max.subtract(group.min).scale(0.5));
+        Vec3d center = group.min().add(group.max().subtract(group.min()).scale(0.5));
         return ScriptVectorUtil.constructVec3Table(center);
     }
 
@@ -457,8 +458,8 @@ public class IRModule implements LuaModule {
 
         boolean flipped = false;
         for (EntityCoupleableRollingStock.DirectionalStock directionalStock : train) {
-            if (directionalStock.stock.getUUID().equals(stock.getUUID())) {
-                flipped = !directionalStock.direction;
+            if (directionalStock.stock().getUUID().equals(stock.getUUID())) {
+                flipped = !directionalStock.direction();
                 break;
             }
         }
@@ -507,13 +508,6 @@ public class IRModule implements LuaModule {
     }
     
     @LuaFunction(module = "IR")
-    public void setLiquidCargoAmount(LuaValue amount) {
-        if (stock instanceof FreightTank) {
-            ((FreightTank) stock).setLiquidAmount(amount.toint(), null);
-        }
-    }
-    
-    @LuaFunction(module = "IR")
     public void setLiquidCargoAmount(LuaValue amount, LuaValue liquid) {
         if (stock instanceof FreightTank) {
             ((FreightTank) stock).setLiquidAmount(amount.toint(), liquid.toString());
@@ -523,9 +517,26 @@ public class IRModule implements LuaModule {
     @LuaFunction(module = "IR")
     public LuaValue getLiquidCargoAmount() {
         if (stock instanceof FreightTank) {
-            LuaValue.valueOf(((FreightTank) stock).getLiquidAmount());
+            return LuaValue.valueOf(((FreightTank) stock).getLiquidAmount());
         }
         return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue getMaxLiquidCargoAmount() {
+        if (stock instanceof FreightTank) {
+            return LuaValue.valueOf(((FreightTank) stock).getTankCapacity().MilliBuckets());
+        }
+        return LuaValue.valueOf(0);
+    }
+    
+    @LuaFunction(module = "IR")
+    public LuaValue getLiquidCargoType() {
+        if (stock instanceof FreightTank) {
+            String type = ((FreightTank) stock).getLiquidType();
+            return LuaValue.valueOf(type != null ? type : "");
+        }
+        return LuaValue.valueOf("");
     }
 
 

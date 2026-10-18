@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovement implements ICollision {
+public abstract class EntityMoveableRollingStock extends EntityRidableRollingStock implements ICollision {
     @TagField("frontYaw")
     private Float frontYaw;
     @TagField("rearYaw")
@@ -228,12 +228,15 @@ public abstract class EntityMoveableRollingStock extends EntityCustomPlayerMovem
     @Override
     public ClickResult onClick(Player player, Hand hand) {
         if (player.getHeldItem(Hand.PRIMARY).is(IRItems.ITEM_SWITCH_KEY) && player.hasPermission(Permissions.COUPLING_HOOK)) {
-            if (locked) {
-                locked = false;
-            } else {
-                locked = true;
+            if (getWorld().isServer) {
+                if (locked) {
+                    locked = false;
+                    player.sendMessage(ChatText.UNLOCKED_BRAKE.getMessage());
+                } else {
+                    locked = true;
+                    player.sendMessage(ChatText.LOCKED_BRAKE.getMessage());
+                } 
             }
-            player.sendMessage(ChatText.LOCKED_BRAKE.getMessage(locked));
             return ClickResult.ACCEPTED;
         }
         return super.onClick(player, hand);

@@ -141,11 +141,12 @@ public enum ModelComponentType {
     GAUGE_SLIPPING_X("GAUGE_SLIPPING_#ID#"),
     GAUGE_EMERGENCY_X("GAUGE_EMERGENCY_#ID#"),
 
-	TEXTFIELD_X("TEXTFIELD"),
+	TEXTFIELD_X("TEXTFIELD_.*?#ID#$"),
 
 	// Floor
 	FLOOR("FLOOR"),
-	COLLISION("COLLISION"),
+	//TODO Find a proper way to implement this
+    //COLLISION("COLLISION"),
 
 	// REST
 	IMMERSIVERAILROADING_BASE_COMPONENT("IMMERSIVERAILROADING_BASE_COMPNOENT"),
@@ -164,7 +165,7 @@ public enum ModelComponentType {
 	}
 
 	public static boolean shouldRender(String group) {
-		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS") || group.contains("TEXTFIELD_");
+		return group.contains("CHIMNEY_") || group.contains("CHIMINEY_") || group.contains("PRESSURE_VALVE_") || group.contains("EXHAUST_") || group.contains("CARGO_ITEMS") || group.contains("FLOOR") || group.contains("TEXTFIELD_");
 	}
 
 	//TODO add new parts

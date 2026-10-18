@@ -24,10 +24,14 @@ public enum GuiText {
 	LABEL_NEAR("label.near"),
 	LABEL_FAR("label.far"),
 	LABEL_SNAP_POS("label.snap_pos"),
+	LABEL_SNAP_INVERTED("label.snap_inverted"),
+	LABEL_SNAP_POS_OFFSET("label.snap_pos_offset"),
 	LABEL_SNAP_HEIGHT("label.snap_height"),
 	LABEL_SNAP_YAW("label.snap_yaw"),
 	LABEL_SNAP_PITCH("label.snap_pitch"),
 	LABEL_SNAP_ROLL("label.snap_roll"),
+	LABEL_BED_THICKNESS("label.bed_thickness"),
+	LABEL_TRACK_PIVOT_OFFSET("label.track_pivot_offset"),
 	SLIDER_ZOOM("slider.zoom"), //Need colon
 	SELECTOR_PAGE("selector.page"),
 	SELECTOR_TYPE("selector.type"),
@@ -71,6 +75,7 @@ public enum GuiText {
 	SELECTOR_PAINTBRUSH_RANDOM("selector.paintbrush_random"),
 	SELECTOR_PAINTBRUSH_TO_STOCK("selector.paintbrush_apply_to_stock"),
 	SELECTOR_PAINTBRUSH_TO_TRAIN("selector.paintbrush_apply_to_train"),
+	SELECTOR_TRACK_PIVOT_TYPE("selector.track_pivot_type"),
 
 	TRACK_TYPE("track.type"),
 	TRACK_LENGTH("track.length"),
@@ -126,6 +131,8 @@ public enum GuiText {
 	TRACK_SWITCHER_TOOLTIP("item.track_exchanger"),
 	PAINT_BRUSH_MODE_TOOLTIP("item.paint_brush.mode"),
 	PAINT_BRUSH_DESCRIPTION_TOOLTIP("item.paint_brush.description"),
+	REMOTE_CONTROL_LINKED_TOOLTIP("item.remote_control_linked"),
+	REMOTE_CONTROL_NOT_LINKED_TOOLTIP("item.remote_control_not_linked"),
 
 	LABEL_CURRENT_AUGMENT("label.current_augment"),
 	LABEL_ACTUATOR_FILTER("label.actuator_filter"),
