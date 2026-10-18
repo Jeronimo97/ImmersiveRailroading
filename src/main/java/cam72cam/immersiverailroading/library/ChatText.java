@@ -45,6 +45,7 @@ public enum ChatText {
 	TYPEWRITER_NO_STOCK("typewriter.no_stock"),
 	MULTIBLOCK_SELECTING("multiblock.select"),
 	LOCKED_BRAKE("brake.locked"),
+	UNLOCKED_BRAKE("brake.unlocked"),
 	;
 	
 	private String value;
