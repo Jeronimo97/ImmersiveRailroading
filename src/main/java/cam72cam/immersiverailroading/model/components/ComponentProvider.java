@@ -81,7 +81,7 @@ public class ComponentProvider {
         return modelIDMap(
                 type.regex.replace("#ID#", "([\\d]+)")
         ).entrySet().stream().map(e -> {
-            ModelComponent component = new ModelComponent(type, null, e.getKey(), model, e.getValue());
+            ModelComponent component = new ModelComponent(type, null, Integer.parseInt(e.getKey()), model, e.getValue());
             this.components.add(component);
             return component;
         }).collect(Collectors.toList());
@@ -102,7 +102,7 @@ public class ComponentProvider {
             re = re.replace("#ID#", pos + "_([\\d]+)");
         }
         return modelIDMap(re).entrySet().stream().map(e -> {
-            ModelComponent component = new ModelComponent(type, pos, e.getKey(), model, e.getValue());
+            ModelComponent component = new ModelComponent(type, pos, Integer.parseInt(e.getKey()), model, e.getValue());
             this.components.add(component);
             return component;
         }).collect(Collectors.toList());

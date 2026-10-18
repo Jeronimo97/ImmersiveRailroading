@@ -4,7 +4,6 @@ import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.physics.chrono.ServerChronoState;
 import cam72cam.immersiverailroading.gui.RailAugmentGUI;
 import cam72cam.immersiverailroading.gui.overlay.GuiBuilder;
-import cam72cam.immersiverailroading.gui.overlay.RemoteOverlay;
 import cam72cam.immersiverailroading.items.ItemPaintBrush;
 import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.StockModel;
@@ -14,10 +13,8 @@ import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.LuaAugmentDefinition;
 import cam72cam.immersiverailroading.remote_control.WirelessRemoteControlClient;
-import cam72cam.immersiverailroading.remotecontrol.RemoteControlData;
-import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolClient;
-import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolServer;
-import cam72cam.immersiverailroading.render.CustomParticle;
+import cam72cam.immersiverailroading.remote_control.WirelessRemoteControlServer;
+import cam72cam.immersiverailroading.remote_control.RemoteControlData;
 import cam72cam.immersiverailroading.render.SmokeParticle;
 import cam72cam.immersiverailroading.render.block.RailBaseModel;
 import cam72cam.immersiverailroading.render.item.*;
@@ -52,17 +49,12 @@ import java.util.UUID;
 import java.util.Random;
 import java.util.function.Function;
 
-import static cam72cam.immersiverailroading.gui.helpers.MouseHelper.mouseClicked;
-import static cam72cam.immersiverailroading.gui.helpers.MouseHelper.updateMousePosition;
-
 public class ImmersiveRailroading extends ModCore.Mod {
 	public static final String MODID = "immersiverailroading";
 
 	public static final Random RANDOM = new Random();
 	public static final int ENTITY_SYNC_DISTANCE = 512;
 	private static ImmersiveRailroading instance;
-	
-	private static RemoteOverlay remoteGui;
 
 	public ImmersiveRailroading() {
 		instance = this;
@@ -110,7 +102,7 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				Packet.register(RemoteControlActivePacket::new, PacketDirection.ClientToServer);
 
 				ServerChronoState.register();
-				WirelessRemotecontrolServer.init();
+				WirelessRemoteControlServer.init();
 				
 				IRBlocks.register();
 				IRItems.register();

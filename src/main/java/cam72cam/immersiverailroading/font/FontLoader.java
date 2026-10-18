@@ -14,9 +14,10 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FontLoader {
-    public static final Map<Identifier, Font> fonts = new HashMap<>();
+    public static final Map<Identifier, Font> fonts = new ConcurrentHashMap<>();
     public static final Identifier DEFAULT = new Identifier("minecraft", "textures/font/ascii.png");
 
     private FontLoader() {}
@@ -28,16 +29,15 @@ public class FontLoader {
      * @see Font
      */
     public static Font getOrCreateFont(Identifier font) {
-        if (!fonts.containsKey(DEFAULT)) {
-            initDefaultFont();
-        }
-        return fonts.computeIfAbsent(font, i -> loadFont(i, null));
-    }
+        fonts.computeIfAbsent(DEFAULT, key -> {
+            Identifier jsonLocation = new Identifier(
+                    ImmersiveRailroading.MODID,
+                    "textures/font/ascii.json"
+            );
+            return loadFont(key, jsonLocation);
+        });
 
-    private static void initDefaultFont() {
-        Identifier jsonLocation = new Identifier(ImmersiveRailroading.MODID, "textures/font/ascii.json");
-        Font font = loadFont(DEFAULT, jsonLocation);
-        fonts.put(DEFAULT, font);
+        return fonts.computeIfAbsent(font, key -> loadFont(key, null));
     }
 
     /**

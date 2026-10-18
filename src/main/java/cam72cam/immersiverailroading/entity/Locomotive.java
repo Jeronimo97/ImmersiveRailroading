@@ -9,7 +9,7 @@ import cam72cam.immersiverailroading.library.*;
 import cam72cam.immersiverailroading.model.part.Control;
 import cam72cam.immersiverailroading.physics.MovementTrack;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
-import cam72cam.immersiverailroading.remotecontrol.RemoteControlData;
+import cam72cam.immersiverailroading.remote_control.RemoteControlData;
 import cam72cam.immersiverailroading.thirdparty.trackapi.ITrack;
 import cam72cam.immersiverailroading.tile.TileRailBase;
 import cam72cam.immersiverailroading.util.MathUtil;
@@ -23,7 +23,6 @@ import cam72cam.mod.serialization.StrictTagMapper;
 import cam72cam.mod.serialization.TagField;
 import org.luaj.vm2.LuaValue;
 
-import java.security.Permissions;
 import java.util.OptionalDouble;
 import java.util.UUID;
 

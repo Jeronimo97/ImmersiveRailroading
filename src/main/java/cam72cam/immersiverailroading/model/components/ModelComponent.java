@@ -74,12 +74,7 @@ public class ModelComponent {
     public ModelComponent(ModelComponentType type, ModelPosition pos, Integer id, Model model, Set<String> modelIDs) {
         this.type = type;
         this.pos = pos;
-        // That's horrible TODO replace!
-        try {
-            this.id = Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            this.name = id;
-        }
+        this.id = id;
         this.modelIDs = modelIDs;
         this.groups = modelIDs.stream().map(ModelGroupData::new).collect(Collectors.toList());
         this.key = String.join(" ", modelIDs);
@@ -88,7 +83,6 @@ public class ModelComponent {
         max = model.maxOfGroups(this.modelIDs);
         center = new Vec3d((min.x + max.x)/2, (min.y + max.y)/2, (min.z + max.z)/2);
         wooden = modelIDs.stream().anyMatch(g -> g.contains("WOOD"));
-
     }
 
     public double length() {

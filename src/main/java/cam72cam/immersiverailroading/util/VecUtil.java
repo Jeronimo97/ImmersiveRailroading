@@ -94,15 +94,6 @@ public class VecUtil {
     public static double dotProduct(Vec3d a, Vec3d b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
-
-	public static double getByAxis(Vec3d vec, Axis axis) {
-		switch (axis) {
-			case X: return vec.x;
-			case Y: return vec.y;
-			case Z: return vec.z;
-			default: throw new IllegalArgumentException("Invalid axis, did you provide a null?");
-		}
-	}
 	
 	@Deprecated
 	//TODO REMOVE

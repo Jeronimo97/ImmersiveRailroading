@@ -755,13 +755,13 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 		ticksExisted += 1;
 		Vec3i pos = getPos();
 		
-		if (ConfigDebug.snowAccumulateRate > 0 && ((int) (Math.random() * ConfigDebug.snowAccumulateRate * 10) == 0)) {
+		if (ConfigBalance.snowAccumulateRate > 0 && ((int) (Math.random() * ConfigBalance.snowAccumulateRate * 10) == 0)) {
 			if (world.isSnowing(pos) && world.canSeeSky(pos.up())) {
 				this.handleSnowTick();
 			}
 		}
-		if (ConfigDebug.snowMeltRate != 0 && this.snowLayers != 0) {
-			if ((int) (Math.random() * ConfigDebug.snowMeltRate * 10) == 0) {
+		if (ConfigBalance.snowMeltRate != 0 && this.snowLayers != 0) {
+			if ((int) (Math.random() * ConfigBalance.snowMeltRate * 10) == 0) {
 				if (!world.isSnowing(pos)) {
 					this.setSnowLayers(this.snowLayers -= 1);
 				}

@@ -9,8 +9,8 @@ import java.util.UUID;
 import cam72cam.immersiverailroading.ConfigGraphics;
 import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.net.RemoteControlClientPacket;
-import cam72cam.immersiverailroading.remotecontrol.RemoteControlData;
-import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolClient;
+import cam72cam.immersiverailroading.remote_control.RemoteControlData;
+import cam72cam.immersiverailroading.remote_control.WirelessRemoteControlClient;
 import cam72cam.immersiverailroading.util.DataBlock;
 import cam72cam.immersiverailroading.util.MathUtil;
 import cam72cam.mod.MinecraftClient;
@@ -389,12 +389,12 @@ public class RemoteOverlay extends GuiBuilder {
     }
 	
 	private void sendRemoteControlChange(float value) {
-	    UUID activeLoco = WirelessRemotecontrolClient.getLoco();
+	    UUID activeLoco = WirelessRemoteControlClient.getLoco();
 	    if (activeLoco == null || readout == null) {
 	        return;
 	    }
 	    new RemoteControlClientPacket(activeLoco, readout, value).sendToServer();
-	    WirelessRemotecontrolClient.applyLocalReadoutUpdate(readout, value);
+	    WirelessRemoteControlClient.applyLocalReadoutUpdate(readout, value);
 	}
 
 }

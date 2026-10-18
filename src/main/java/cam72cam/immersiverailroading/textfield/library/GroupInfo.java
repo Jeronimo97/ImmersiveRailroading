@@ -3,7 +3,7 @@ package cam72cam.immersiverailroading.textfield.library;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.util.VecUtil;
 import cam72cam.mod.math.Vec3d;
-import cam72cam.mod.model.obj.OBJFace;
+import cam72cam.mod.model.common.mesh.Face;
 import cam72cam.mod.model.obj.Vec2f;
 import cam72cam.mod.serialization.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -54,12 +54,12 @@ public class GroupInfo {
     }
 
     @SuppressWarnings("deprecation")
-    public static GroupInfo initGroup(List<OBJFace> group, int resX, int resY) {
+    public static GroupInfo initGroup(List<Face> group, int resX, int resY) {
         GroupInfo info = new GroupInfo();
-        OBJFace face = group.get(0);
+        Face face = group.get(0);
 
         List<Pair<Vec3d, Vec2f>> vertices = group.stream()
-                .flatMap((OBJFace f) -> Stream.<OBJFace.Vertex>of(f.vertex0, f.vertex1, f.vertex2))
+                .flatMap((Face f) -> Stream.<Face.Vertex>of(f.vertex0, f.vertex1, f.vertex2))
                 .map(v -> Pair.of(v.pos, v.uv)).distinct().collect(Collectors.toList());
 
 
