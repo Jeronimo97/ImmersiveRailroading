@@ -20,6 +20,7 @@ item.immersiverailroading:item_golden_spike.name=Goldener Schienennagel
 item.immersiverailroading:item_radio_control_card.name=Zug-Funksteuerungs-Chip
 item.immersiverailroading:item_switch_key.name=Weichenschlüssel
 item.immersiverailroading:item_track_exchanger.name=Schienenaustausch Werkzeug
+item.immersiverailroading:item_wireless_remotecontrol.name=Funkfernsteuerung
 
 item.immersiverailroading:item_wireless_remotecontrol.name=Funkfernsteuerung
 
@@ -121,6 +122,9 @@ gui.immersiverailroading:item.track_exchanger=Rechtsklick in die Luft, um das Au
 gui.immersiverailroading:item.paint_brush.mode=Aktueller Modus: %s
 gui.immersiverailroading:item.paint_brush.description=Schleichen + Rechtsklick um den Modus durchwechseln
 gui.immersiverailroading:none=kein
+
+gui.immersiverailroading:item.remote_control_linked=Verlinkt mit: %s
+gui.immersiverailroading:item.remote_control_not_linked=Nicht mit einer Lokomotive verlinkt
 
 gui.immersiverailroading:track.type=Typ:                   %s
 gui.immersiverailroading:track.length= Länge:                 %s

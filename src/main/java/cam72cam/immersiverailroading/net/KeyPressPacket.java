@@ -5,7 +5,7 @@ import java.util.UUID;
 import cam72cam.immersiverailroading.Config;
 import cam72cam.immersiverailroading.entity.EntityRollingStock;
 import cam72cam.immersiverailroading.entity.Locomotive;
-import cam72cam.immersiverailroading.items.ItemWirelessRemotecontrol;
+import cam72cam.immersiverailroading.items.ItemWirelessRemoteControl;
 import cam72cam.immersiverailroading.library.KeyTypes;
 import cam72cam.immersiverailroading.library.Permissions;
 import cam72cam.mod.MinecraftClient;
@@ -45,23 +45,22 @@ public class KeyPressPacket extends Packet {
 	protected void handle() {
 		Player player = getPlayer();
 
-		// Player controls with Wireless Remote Control
 		if (loco != null) {
+			// Player controls with Wireless Remote Control
 			handleRemoteControl(player);
-		}
-		// Player is in the Locomotive
-		else if (player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+		} else if (player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+			// Player is in the Locomotive
 			player.getRiding().as(EntityRollingStock.class).handleKeyPress(player, type, disableIndependentThrottle);
 		}
 	}
 	
 	private void handleRemoteControl(Player player) {
-		EntityRollingStock stock = getWorld().getEntity(loco, Locomotive.class); 
-		if (stock != null && (stock instanceof Locomotive || player.getRiding() instanceof EntityRollingStock) && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
+		Locomotive stock = getWorld().getEntity(loco, Locomotive.class); 
+		if (stock != null && player.hasPermission(Permissions.LOCOMOTIVE_CONTROL)) {
 			ItemStack held = player.getHeldItem(Player.Hand.SECONDARY); 
-			ItemWirelessRemotecontrol.Data data = new ItemWirelessRemotecontrol.Data(held);
+			ItemWirelessRemoteControl.Data data = new ItemWirelessRemoteControl.Data(held);
 			if (loco.equals(data.linked)) {
-				((Locomotive) stock).handleKeyPress(player, type, disableIndependentThrottle);
+				stock.handleKeyPress(player, type, disableIndependentThrottle);
 			}
 		}
 	}

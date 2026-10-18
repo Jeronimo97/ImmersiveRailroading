@@ -76,6 +76,7 @@ public class ConfigSound {
 			public static float couple() { return immersive_railroading / 100f * category / 100f * couple / 100f; }
 			public static float collision() { return immersive_railroading / 100f * category / 100f * collision / 100f; }
 			public static float brake() { return immersive_railroading / 100f * category / 100f * brake / 100f; }
+			public static float general() { return immersive_railroading / 100f * category / 100f; }
 		}
 		@Name("Locomotive")
 		public static class Locomotive {

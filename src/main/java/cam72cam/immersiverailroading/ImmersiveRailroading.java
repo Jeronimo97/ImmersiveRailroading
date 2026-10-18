@@ -13,6 +13,7 @@ import cam72cam.immersiverailroading.net.*;
 import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.LuaAugmentDefinition;
+import cam72cam.immersiverailroading.remote_control.WirelessRemoteControlClient;
 import cam72cam.immersiverailroading.remotecontrol.RemoteControlData;
 import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolClient;
 import cam72cam.immersiverailroading.remotecontrol.WirelessRemotecontrolServer;
@@ -47,7 +48,6 @@ import cam72cam.mod.resource.Identifier;
 import cam72cam.mod.sound.Audio;
 import cam72cam.mod.text.Command;
 
-import java.io.IOException;
 import java.util.UUID;
 import java.util.Random;
 import java.util.function.Function;
@@ -200,11 +200,10 @@ public class ImmersiveRailroading extends ModCore.Mod {
 				EntityRenderer.register(HandCar.class, stockRender);
 
 				Function<KeyTypes, Runnable> onKeyPress = type -> () -> {
-					UUID target = WirelessRemotecontrolClient.getLoco();
+					UUID target = WirelessRemoteControlClient.getLoco();
 					if (target != null) {
 						new KeyPressPacket(type, target).sendToServer(); // Remote control
-					}
-					else if (MinecraftClient.getPlayer().getRiding() instanceof EntityRollingStock) {
+					} else if (MinecraftClient.getPlayer().getRiding() instanceof EntityRollingStock) {
 						new KeyPressPacket(type).sendToServer();
 					}
 				};
@@ -249,60 +248,50 @@ public class ImmersiveRailroading extends ModCore.Mod {
 						stock.getDefinition().getOverlay().render(state, stock);
 					}
 				});
+				
 				// Remote Overlay
-				try {
-				    remoteGui = RemoteOverlay.parse(new Identifier(ImmersiveRailroading.MODID, "gui/default/fbg.json"));
-				} catch (IOException e) {
-				    e.printStackTrace();
-				}
-
-				GlobalRender.registerOverlay((state, _) -> {
-				    UUID activeLoco = WirelessRemotecontrolClient.getLoco();
-			        if (activeLoco == null || remoteGui == null) {
-			            return;
-			        }
-					RemoteControlData data = WirelessRemotecontrolClient.getData();
-			        if(data == null) {
-			            return;
-			        }
-			        remoteGui.render(state, data);
-				});
+				WirelessRemoteControlClient.init();
+		        GlobalRender.registerOverlay((state, _) -> {
+		            UUID activeLoco = WirelessRemoteControlClient.getLoco();
+		            if (activeLoco == null || WirelessRemoteControlClient.remoteGui == null) {
+		                return;
+		            }
+		            RemoteControlData data = WirelessRemoteControlClient.getData();
+		            if(data == null) {
+		                return;
+		            }
+		            WirelessRemoteControlClient.remoteGui.render(state, data);
+		        });
 
 				ClientEvents.MOUSE_GUI.subscribe(evt -> {
 					if (!MinecraftClient.isReady()) {
 						return true;
 					}
-
-					updateMousePosition(evt);
-					mouseClicked(evt.x, evt.y, evt.button);
 					
-					// remote control
-					UUID activeLoco = WirelessRemotecontrolClient.getLoco();
+					// Remote control
+					UUID activeLoco = WirelessRemoteControlClient.getLoco();
 				    if (activeLoco != null) {
-				        RemoteControlData data = WirelessRemotecontrolClient.getData();
+				        RemoteControlData data = WirelessRemoteControlClient.getData();
 				        if (data != null) {
-				            return remoteGui.click(evt, data);
+				            return WirelessRemoteControlClient.remoteGui.click(evt, data);
 				        }
 				    }
-				    //
 
 					Entity riding = MinecraftClient.getPlayer().getRiding();
-					if (!(riding instanceof EntityRollingStock)) {
+					if (!(riding instanceof EntityRollingStock stock)) {
 						return true;
 					}
-                    EntityRollingStock stock = (EntityRollingStock) riding;
                     if (stock.getDefinition().getOverlay() != null) {
-                        return stock.getDefinition().getOverlay().click(evt, stock);
-                    }
-                    return true;
-                });
+						return stock.getDefinition().getOverlay().click(evt, stock);
+					}
+					return true;
+				});
 
 				ClientEvents.TICK.subscribe(GuiBuilder::onClientTick);
 				ClientEvents.TICK.subscribe(EntityRollingStockDefinition.ControlSoundsDefinition::cleanupStoppedSounds);
-				ClientEvents.TICK.subscribe(WirelessRemotecontrolClient::onClientTick);
+				ClientEvents.TICK.subscribe(WirelessRemoteControlClient::onClientTick);
 	                                         
 				Particles.SMOKE = Particle.register(SmokeParticle::new, SmokeParticle::renderAll);
-				Particles.CUSTOM = Particle.register(CustomParticle::new, CustomParticle::renderAll);
 	
 				ClientPartDragging.register();
 				break;

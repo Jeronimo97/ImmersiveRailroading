@@ -82,7 +82,9 @@ public class LocomotiveDieselDefinition extends LocomotiveDefinition {
         isLinkedBrakeDynBrake = properties.getValue("isLinkedBrakeDynamicBrake").asBoolean(false);
         
         DataBlock sounds = data.getBlock("sounds");
-        idle = SoundDefinition.getOrDefault(sounds, "idle");
+        boolean hasCustom = sounds.getValue("file").asIdentifier() != null;
+
+        idle = hasCustom ? null : SoundDefinition.getOrDefault(sounds, "idle");
         running = SoundDefinition.getOrDefault(sounds, "running");
         enginePitchRange = sounds.getValue("engine_pitch_range").asFloat();
         horn = SoundDefinition.getOrDefault(sounds, "horn");
