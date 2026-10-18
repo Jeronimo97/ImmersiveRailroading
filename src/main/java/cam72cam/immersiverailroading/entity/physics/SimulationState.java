@@ -501,8 +501,11 @@ public class SimulationState {
     }
     
     private float calculateBrakePressure() {
-        float cylinderPressure = config.hasPressureBrake ? Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
-                1 - config.trainBrakePressure : (1 - config.trainBrakePressure) / 0.3f, 1) : 0;
+        if (!config.hasPressureBrake) {
+            return config.brakeCylinderPressure = config.independentBrake;
+        }
+        float cylinderPressure = Math.min(Config.ImmersionConfig.brakeMode.equals(BrakeMode.DEFAULT) ?
+                1 - config.trainBrakePressure : (1 - config.trainBrakePressure) / 0.3f, 1);
         if (!config.brakeLocked) {
             cylinderPressure = 0;
         }
@@ -569,6 +572,7 @@ public class SimulationState {
             System.out.println("Magnetic Brake: " + magnetBrakeNewtons);
             System.out.println("Curve Resistance: " + curveResistanceNewtons);
             System.out.println("Drag Resistance: " + dragResistanceNewtons);
+            System.out.println("Brake Pressure: " + brakePressure);
             System.out.println("--------");
         }
         
