@@ -8,7 +8,6 @@ import cam72cam.immersiverailroading.IRItems;
 import cam72cam.immersiverailroading.ImmersiveRailroading;
 import cam72cam.immersiverailroading.entity.*;
 import cam72cam.immersiverailroading.entity.EntityCoupleableRollingStock.CouplerType;
-import cam72cam.immersiverailroading.entity.physics.SimulationState;
 import cam72cam.immersiverailroading.gui.RailAugmentGUI;
 import cam72cam.immersiverailroading.items.ItemRailAugment;
 import cam72cam.immersiverailroading.items.ItemTrackBlueprint;
@@ -103,6 +102,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 	@TagField("stockTag")
 	private String stockTag;
 	private EntityMoveableRollingStock overhead;
+	private int overheadTick = 0;
 	@TagField("pushPull")
 	private boolean pushPull = true;
 	@TagField("powered")
@@ -777,11 +777,8 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			return;
 		}
 
-		if (overhead != null && ticksExisted % 5 == 0) {
-			SimulationState state = overhead.getCurrentState();
-			if (state == null || !state.trackToUpdate.contains(pos)) {
-				overhead = null;
-			}
+		if (overhead != null && ticksExisted - overheadTick > 10) {
+		    overhead = null;
 		}
 
 		/*
@@ -1359,6 +1356,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
     public void stockOverhead(EntityMoveableRollingStock stock) {
 		this.overhead = stock;
+		this.overheadTick = this.ticksExisted;
     }
 
 	public void setSelectedScript(RailAugmentGUI.ScriptDef def) {
