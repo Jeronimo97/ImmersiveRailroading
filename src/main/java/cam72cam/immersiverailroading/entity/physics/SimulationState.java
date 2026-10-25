@@ -340,7 +340,7 @@ public class SimulationState {
     }
 
     public void calculateBlockCollisions(Set<Vec3i> blocksAlreadyBroken) {
-        this.collidingBlocks = config.world.blocksInBounds(this.bounds);
+        this.collidingBlocks = config.world.blocksInBounds(this.bounds.expand(new Vec3d(0, -0.5, 0)));
         this.trackToUpdate = new ArrayList<>();
         this.interferingBlocks = new ArrayList<>();
         this.interferingResistance = 0;
