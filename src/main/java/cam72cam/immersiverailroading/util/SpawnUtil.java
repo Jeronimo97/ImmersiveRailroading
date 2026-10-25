@@ -122,15 +122,14 @@ public class SpawnUtil {
 	}
 	
 	public static ClickResult placeUnit(Player player, Player.Hand hand, World worldIn, Vec3i pos, UnitDefinition unit) {
-		Vec3d spawnPos = new Vec3d(pos);
+	    ItemRollingStock.Data data = new ItemRollingStock.Data(player.getHeldItem(hand));
+	    Vec3d spawnPos = new Vec3d(pos);
 
 		for (UnitDefinition.Stock rollingStock : unit.unitList) {
 			EntityRollingStockDefinition def = rollingStock.definition;
 			boolean isFlipped = rollingStock.direction.getDirection();
 
 			List<ItemComponentType> list = def.getItemComponents();
-
-			ItemMultipleUnit.Data data = new ItemMultipleUnit.Data(player.getHeldItem(hand));
 
 			ITrack initte = ITrack.get(worldIn, spawnPos.add(0, 0.7, 0), true);
 			if (initte == null) {
@@ -171,8 +170,7 @@ public class SpawnUtil {
 				// Set default control group values
 				rollingStock.controlGroup.forEach(stock::setControlPosition);
 
-				if (stock instanceof EntityMoveableRollingStock) {
-					EntityMoveableRollingStock moveable = (EntityMoveableRollingStock)stock;
+				if (stock instanceof EntityMoveableRollingStock moveable) {
 					ITrack centerte = ITrack.get(worldIn, center.getUMCPos(), true);
 					if (centerte != null) {
 						float frontDistance = moveable.getDefinition().getBogeyFront(gauge);

@@ -125,6 +125,7 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 	public void setBedHeight(float height) {
 		this.bedHeight = height;
 	}
+	
 	public float getBedHeight() {
 		if (this.replaced != null && this.replaced.hasKey("height")) {
 			float replacedHeight = this.replaced.getFloat("height");
@@ -133,7 +134,10 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 		return this.bedHeight;
 	}
 
-	public void setBedFace(Plane bedFace) { this.bedFace = bedFace; }
+	public void setBedFace(Plane bedFace) {
+	    this.bedFace = bedFace;
+	}
+	
 	public Plane getBedFace() {
 		if (this.replaced != null && this.replaced.hasKey("bedFace")) {// TODO
 			TagCompound bedFace = replaced.get("bedFace");
@@ -204,13 +208,6 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 		if (augment == Augment.LUA_SCRIPTER) {
 			initLuaAugment();
 		}
-
-		//TODO remove?
-		//setAugmentFilter(null);
-		//redstoneMode = RedstoneMode.ENABLED;
-		//this.markDirty();
-
-		properties.redstoneMode = RedstoneMode.ENABLED;
 		setAugmentProperties(properties);
 		this.markDirty();
 	}
@@ -247,24 +244,14 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 
 		context.refreshSerialization(tagFields);
 	}
-
-	public void setRedstoneLevel(int newLevel) {
-		if (!setNewRedstone) {
-			this.redstoneLevel = newLevel;
-			this.markDirty(); // Maybe I don't need this
-			setNewRedstone = true;
-		}
-	}
-
-	public boolean setAugmentFilter(String definitionID) {
-		if (definitionID != null && !definitionID.equals(augmentFilterID)) {
-			this.augmentFilterID = definitionID;
-		} else {
-			this.augmentFilterID = null;
-		}
-		this.markDirty();
-		return this.augmentFilterID != null;
-	}
+	
+    public void setRedstoneLevel(int newLevel) {
+        if (!setNewRedstone) {
+            this.redstoneLevel = newLevel;
+            this.markDirty(); // Maybe I don't need this
+            setNewRedstone = true;
+        }
+    }
 
 	public void setAugmentProperties(Augment.Properties properties) {
 		this.positive = properties.positiveFilter;
@@ -462,23 +449,11 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 		}
 		this.compileFilter();
 	}
+	
 	@Override
 	public void save(TagCompound nbt) {
 		nbt.setInteger("version", 6);
 	}
-
-	/* TODO Jeronimo remove this old code
-	public TileRail getParentTile() {
-		if (this.getParent() == null) {
-			return null;
-		}
-		TileRail te = getWorld().getBlockEntity(this.getParent(), TileRail.class);
-		if (te == null || te.info == null) {
-			return null;
-		}
-		return te;
-	}
-	*/
 	
 	public TileRail getParentTile() {
 	    Vec3i currentParent = this.getParent();
@@ -690,14 +665,14 @@ public class TileRailBase extends BlockEntityTrackTickable implements IRedstoneP
 			return null;
 		}
 		if(!canInteractWith(overhead)) {
-			return overhead.as(type);
+			return null;
 		}
 
 		return overhead.as(type);
 	}
 
 	public boolean canInteractWith(EntityRollingStock stock) {
-        return compiledFilter == null || compiledFilter.test(stock);
+	    return compiledFilter == null || compiledFilter.test(stock);
     }
 
 	private boolean canOperate() {

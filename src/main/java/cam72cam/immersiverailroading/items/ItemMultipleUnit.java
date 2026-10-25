@@ -1,15 +1,12 @@
 package cam72cam.immersiverailroading.items;
 
 import cam72cam.immersiverailroading.ImmersiveRailroading;
-import cam72cam.immersiverailroading.library.ChatText;
 import cam72cam.immersiverailroading.library.Gauge;
 import cam72cam.immersiverailroading.library.GuiText;
 import cam72cam.immersiverailroading.registry.DefinitionManager;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.immersiverailroading.registry.LocomotiveDefinition;
 import cam72cam.immersiverailroading.registry.UnitDefinition;
-import cam72cam.immersiverailroading.tile.TileRailBase;
-import cam72cam.immersiverailroading.util.BlockUtil;
 import cam72cam.mod.entity.Player;
 import cam72cam.mod.item.ClickResult;
 import cam72cam.mod.item.CreativeTab;
@@ -148,31 +145,6 @@ public class ItemMultipleUnit extends BaseItemRollingStock {
 
     @Override
     public ClickResult onClickBlock(Player player, World world, Vec3i pos, Player.Hand hand, Facing facing, Vec3d hit) {
-        if (BlockUtil.isIRRail(world, pos)) {
-            TileRailBase te = world.getBlockEntity(pos, TileRailBase.class);
-            if (te.getAugment() != null) {
-                switch(te.getAugment()) {
-                    case DETECTOR:
-                    case LOCO_CONTROL:
-                    case FLUID_LOADER:
-                    case FLUID_UNLOADER:
-                    case ITEM_LOADER:
-                    case ITEM_UNLOADER:
-                        if (world.isServer) {
-                            ItemRollingStock.Data data = new ItemRollingStock.Data(player.getHeldItem(hand));
-                            boolean set = te.setAugmentFilter(data.def != null ? data.def.defID : null);
-                            if (set) {
-                                player.sendMessage(ChatText.SET_AUGMENT_FILTER.getMessage(data.def != null ? data.def.name() : "Unknown"));
-                            } else {
-                                player.sendMessage(ChatText.RESET_AUGMENT_FILTER.getMessage());
-                            }
-                        }
-                        return ClickResult.ACCEPTED;
-                    default:
-                        break;
-                }
-            }
-        }
         return tryPlaceStock(player, world, pos, hand, null);
     }
 
